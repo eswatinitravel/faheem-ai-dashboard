@@ -30,6 +30,7 @@ try {
   cmd /c "npm run build"
   if ($LASTEXITCODE -ne 0) { throw "build fail" }
 
+  try { & (Join-Path $root "scripts\make-shortcut.ps1") } catch {}
   Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
   Write-Host "Update mukammal! App dobara khul rahi hai..."
   & (Join-Path $root "scripts\start.ps1")

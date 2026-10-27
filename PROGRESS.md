@@ -44,3 +44,6 @@
 
 ## v3.6.2
 - HERMES-SKILLS.bat: hallmark Hermes index mein purana tha; ab seedha GitHub (Nutlope/hallmark) se %LOCALAPPDATA%\hermes\skills\hallmark mein copy hota hai.
+
+## v3.6.3
+- Update button: ab UPDATE.bat explorer.exe se khulta hai (double-click jaisa), app window band hoti hai, dikhne wali install window chalti hai, phir app khud dobara khulti hai. Ek waqt mein ek hi updater; log data/update.log.

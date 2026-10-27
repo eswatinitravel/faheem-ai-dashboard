@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Settings from "./components/Settings";
 import Message from "./components/Message";
+import LiveScreen from "./components/LiveScreen";
 
 const Scene3D = dynamic(() => import("./components/Scene3D"), { ssr: false });
 
@@ -35,6 +36,9 @@ export default function Home() {
   const [voiceList, setVoiceList] = useState([]);
   const [showSettings, setShowSettings] = useState(false);
   const [notice, setNotice] = useState("");
+  const [showLive, setShowLive] = useState(false);
+  useEffect(() => { setShowLive(localStorage.getItem("faheem-ai-live") === "1"); }, []);
+  const toggleLive = (v) => { setShowLive(v); localStorage.setItem("faheem-ai-live", v ? "1" : "0"); };
 
   const endRef = useRef(null);
   const levelRef = useRef(0);
@@ -234,12 +238,12 @@ export default function Home() {
   const status = { idle: voiceOn ? "Ready" : "Online", listening: "Sun raha hoon…", thinking: "Soch raha hoon…", speaking: "Bol raha hoon…" }[mode];
 
   return (
-    <main className="shell">
+    <main className={"shell" + (showLive ? " with-live" : "")}>
       <div className="aurora" aria-hidden="true" />
       <Scene3D mode={mode} levelRef={levelRef} />
 
       <aside className="panel side">
-        <div className="brand"><span className="dot" /> Faheem AI</div>
+        <div className="brand"><img src="/icon.png" alt="" className="logo" /> Faheem AI</div>
         <div className={"status " + mode}><span className="pulse" />{status}</div>
 
         {update?.available && (
@@ -308,7 +312,7 @@ export default function Home() {
 
         <div className="sites">
           <small>🌐 Meri websites</small>
-          <a className="sitecard" href="/sites/vestire/index.html" target="_blank" rel="noreferrer">
+          <a className="sitecard" href="/sites/vestire/index.html" onClick={(e) => { e.preventDefault(); toggleLive(true); }}>
             <img src="/sites/vestire/img/panel-men.jpg" alt="" />
             <div><b>Vestire Collection</b><span>Men · Women · Juniors</span></div>
           </a>
@@ -316,6 +320,7 @@ export default function Home() {
 
         <div className="side-actions">
           <button className="ghost" onClick={() => { setMessages([]); setLast(null); }}>＋ New chat</button>
+          <button className="ghost" onClick={() => toggleLive(!showLive)}>{showLive ? "◧ Live screen band" : "◨ Live screen kholein"}</button>
           <button className="ghost" onClick={() => setShowSettings(true)}>⚙ Settings / Keys</button>
           <button className="ghost hark" onClick={() => { const q = [...messages].reverse().find((m) => m.role === "user")?.content; if (q) navigator.clipboard.writeText(q).catch(() => {}); window.open("https://hark.com", "_blank"); }}>
             ✦ Bada kaam? Hark se karwao
@@ -365,6 +370,8 @@ export default function Home() {
           <button type="submit" disabled={mode === "thinking" || !input.trim()}>Send ➤</button>
         </form>
       </section>
+
+      {showLive && <LiveScreen onClose={() => toggleLive(false)} />}
 
       {showSettings && <Settings onClose={() => { setShowSettings(false); loadProviders(); }} />}
     </main>

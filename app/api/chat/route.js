@@ -1,7 +1,7 @@
 import vm from "vm";
 import { getProviders, callProvider, isCooling, visionProviders } from "../../../lib/providers";
 import { AGENTS, BASE, routeAgent } from "../../../lib/agents";
-import { DESIGN_RULES, designCheck } from "../../../lib/design";
+import { DESIGN_RULES, designCheckFull } from "../../../lib/design";
 import { designBrief } from "../../../lib/uupm/index.js";
 import { runtimeTest } from "../../../lib/runtime";
 
@@ -226,7 +226,7 @@ ${designBrief(String(rawText || ""))}`;
           for (let round = 1; round <= 3; round++) {
             const code = (reply.match(/```html\s*([\s\S]*?)```/i) || [])[1] || "";
             const issues = staticCheck(code, rawText);
-            const tips = code ? designCheck(code) : [];
+            const tips = code ? await designCheckFull(code) : [];
             // Design tips sirf pehle 2 rounds mein theek karwayein; asli ghaltiyan har round.
             if (round < 3) issues.push(...tips);
             step("🧪 Tester Agent", `Test ${round}: code check kar raha hoon…`);

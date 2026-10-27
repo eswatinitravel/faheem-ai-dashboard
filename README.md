@@ -24,6 +24,8 @@ App mein **⚙ Settings / Keys** dabayein aur free keys paste karein (koi card n
 - Groq (chat + voice): https://console.groq.com/keys
 - Gemini: https://aistudio.google.com/apikey
 - OpenRouter: https://openrouter.ai/keys
+- Z.ai GLM (glm-4.7-flash hamesha free): https://z.ai/manage-apikey/apikey-list
+- Mistral (free Experiment plan): https://console.mistral.ai/api-keys
 
 Keys sirf isi laptop par `data/keys.json` mein rehti hain. Purani `.env.local` bhi chalti hai.
 

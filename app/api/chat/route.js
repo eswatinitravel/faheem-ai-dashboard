@@ -178,7 +178,9 @@ export async function POST(req) {
 - JavaScript must be valid: every template literal opened with a backtick is closed with a backtick.
 - After the code block, write 3-5 short lines saying what was built.`;
           step(agent.name, "🔨 Plan ke mutabiq poora code likh raha hoon…");
-          let { reply, p } = await ask([...messages, { role: "system", content: `Plan:\n${plan}\n\n${RULES}` }], "Build");
+          // Sirf naya request + plan: purani chat (jaise pichla store) naye kaam mein na mile.
+          const fresh = [...system, { role: "system", content: `Plan:\n${plan}\n\n${RULES}` }, { role: "user", content: lastUser }];
+          let { reply, p } = await ask(fresh, "Build");
           let fixes = 0;
           for (let round = 1; round <= 3; round++) {
             const code = (reply.match(/```html\s*([\s\S]*?)```/i) || [])[1] || "";
@@ -198,7 +200,7 @@ export async function POST(req) {
             step("🧪 Tester Agent", `⚠ ${issues.length} masle: ${issues.join(" | ").slice(0, 300)}`);
             if (round === 3) break;
             step("🔧 Fixer Agent", "Masle theek kar raha hoon…");
-            ({ reply, p } = await ask([...messages, { role: "assistant", content: reply }, { role: "user", content: `Fix ALL these problems and return the COMPLETE corrected page again:\n- ${issues.join("\n- ")}\n\n${RULES}` }], "Fix"));
+            ({ reply, p } = await ask([...fresh, { role: "assistant", content: reply }, { role: "user", content: `Fix ALL these problems and return the COMPLETE corrected page again:\n- ${issues.join("\n- ")}\n\n${RULES}` }], "Fix"));
             fixes++;
           }
           step(agent.name, `✓ Tayyar${fixes ? ` (${fixes} dafa theek kiya)` : ""}.`);

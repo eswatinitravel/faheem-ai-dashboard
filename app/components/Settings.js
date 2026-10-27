@@ -15,7 +15,7 @@ export default function Settings({ onClose }) {
   useEffect(() => {
     fetch("/api/settings").then((r) => r.json()).then((d) => {
       setCfg(d);
-      setForm({ GROQ_MODEL: d.GROQ_MODEL, GEMINI_MODEL: d.GEMINI_MODEL, OPENROUTER_MODEL: d.OPENROUTER_MODEL, OLLAMA_MODEL: d.OLLAMA_MODEL, OLLAMA_ENABLED: d.OLLAMA_ENABLED || "true" });
+      setForm({ GROQ_MODEL: d.GROQ_MODEL, GEMINI_MODEL: d.GEMINI_MODEL, OPENROUTER_MODEL: d.OPENROUTER_MODEL, OLLAMA_MODEL: d.OLLAMA_MODEL, OLLAMA_ENABLED: d.OLLAMA_ENABLED || "true", FREE_ENABLED: d.FREE_ENABLED || "true" });
     });
   }, []);
 
@@ -34,7 +34,7 @@ export default function Settings({ onClose }) {
           <h2>Settings</h2>
           <button className="x" onClick={onClose}>✕</button>
         </div>
-        <p className="muted">Keys sirf isi laptop par save hoti hain. Jitni zyada keys, utni zyada free limit.</p>
+        <p className="muted">Ab chat bina kisi key ke bhi chalti hai (free pipeline). Keys optional hain: lagayein to tez aur zyada limit. Keys sirf isi laptop par save hoti hain.</p>
         {!cfg && <p className="muted">Loading…</p>}
         {cfg && PROVIDERS.map((p) => (
           <div key={p.key} className="field">
@@ -47,6 +47,16 @@ export default function Settings({ onClose }) {
             <input placeholder={`Model (default: ${p.def})`} value={form[p.model] || ""} onChange={set(p.model)} />
           </div>
         ))}
+        {cfg && (
+          <div className="field">
+            <div className="field-head"><b>Free pipeline (bina key) ✓</b></div>
+            <small className="muted">Pollinations + LLM7: koi key nahi chahiye. Key wale brains busy hon ya na hon to yeh khud jawab dete hain.</small>
+            <select value={form.FREE_ENABLED || "true"} onChange={set("FREE_ENABLED")}>
+              <option value="true">On</option>
+              <option value="false">Off</option>
+            </select>
+          </div>
+        )}
         {cfg && (
           <div className="field">
             <div className="field-head"><b>Ollama (laptop, bina limit)</b><a href="https://ollama.com/download" target="_blank" rel="noreferrer">Download ↗</a></div>

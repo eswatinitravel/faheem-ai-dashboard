@@ -306,6 +306,14 @@ export default function Home() {
           </div>
         )}
 
+        <div className="sites">
+          <small>🌐 Meri websites</small>
+          <a className="sitecard" href="/sites/vestire/index.html" target="_blank" rel="noreferrer">
+            <img src="/sites/vestire/img/men-hero.jpg" alt="" />
+            <div><b>Vestire Collection</b><span>Mard · Aurat · Bachay</span></div>
+          </a>
+        </div>
+
         <div className="side-actions">
           <button className="ghost" onClick={() => { setMessages([]); setLast(null); }}>＋ New chat</button>
           <button className="ghost" onClick={() => setShowSettings(true)}>⚙ Settings / Keys</button>

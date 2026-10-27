@@ -22,12 +22,13 @@ export default function Settings({ onClose }) {
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   const [err, setErr] = useState("");
-  const PREFIX = { GROQ_API_KEY: "gsk_", GEMINI_API_KEY: "AIza", OPENROUTER_API_KEY: "sk-or-" };
+  // Prefix check nahi (Google ne nayi keys "AQ." kar di). Sirf saaf ghalti pakarein: space, bohat chhoti, ya email.
+  const PREFIX = { GROQ_API_KEY: 1, GEMINI_API_KEY: 1, OPENROUTER_API_KEY: 1 };
   async function save() {
     // Browser kabhi kabhi apna saved password key ke khane mein bhar deta hai; ghalat shakal wali key save na karein.
     for (const [k, pre] of Object.entries(PREFIX)) {
       const v = (form[k] || "").trim();
-      if (v && !v.startsWith(pre)) { setErr(`${k.split("_")[0]} key "${pre}…" se shuru honi chahiye — yeh key save nahi ki.`); return; }
+      if (v && (v.length < 20 || /\s|@/.test(v))) { setErr(`${k.split("_")[0]} key sahi nahi lagti (shayad browser ne password bhar diya) — poori key dobara paste karein.`); return; }
     }
     setErr("");
     await fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });

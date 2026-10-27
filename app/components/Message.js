@@ -33,8 +33,18 @@ export default function Message({ m }) {
     if (blocks[i]) out.push(<div key={i} className="text"><Inline text={blocks[i]} /></div>);
     if (blocks[i + 2] !== undefined) out.push(<Code key={i + "c"} lang={blocks[i + 1]} code={blocks[i + 2].replace(/\n$/, "")} />);
   }
+  const att = m.attachments || [];
   return (
     <div className={"msg " + m.role}>
+      {att.length > 0 && (
+        <div className="atts">
+          {att.map((a, i) =>
+            a.kind === "image" && a.dataUrl ? <a key={i} href={a.dataUrl} target="_blank" rel="noreferrer" className="att-img"><img src={a.dataUrl} alt={a.name} /></a>
+            : a.kind === "video" && a.url ? <video key={i} className="att-vid" src={a.url} controls />
+            : <span key={i} className="att-file">{a.kind === "image" ? "🖼" : a.kind === "video" ? "🎬" : a.kind === "text" ? "📄" : "📎"} {a.name}</span>
+          )}
+        </div>
+      )}
       <div className="bubble">{out}</div>
       <small className="meta">{m.role === "user" ? (m.voice ? "🎙 voice" : "") : m.meta}</small>
     </div>

@@ -189,3 +189,28 @@ option { background: var(--bg); color: var(--text); }
   .front.ws-on { grid-template-columns: 1fr; grid-template-rows: 40% 1fr; }
   .balls { gap: 4px; padding: 4px 6px; } .ball { width: 13px; height: 13px; }
 }
+
+/* v3.1: attachments */
+.attach { width: 44px; height: 44px; flex: none; padding: 0; display: grid; place-items: center; border-radius: 50%; background: var(--field); color: var(--text); border: 1px solid var(--line); }
+.composer.drag { outline: 2px dashed var(--accent); outline-offset: 3px; }
+.pending { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 6px 8px; }
+.pend { position: relative; width: 84px; display: flex; flex-direction: column; gap: 3px; padding: 4px; border-radius: 12px; background: var(--glass); border: 1px solid var(--line); backdrop-filter: blur(12px); }
+.pend img, .pend video { width: 100%; height: 60px; object-fit: cover; border-radius: 8px; background: #000; }
+.pend-ico { height: 60px; display: grid; place-items: center; font-size: 26px; }
+.pend small { font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pend button { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; padding: 0; border-radius: 50%; font-size: 10px; display: grid; place-items: center; }
+.atts { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; justify-content: flex-end; }
+.assistant .atts { justify-content: flex-start; }
+.att-img img { width: 140px; height: 140px; object-fit: cover; border-radius: 14px; border: 1px solid var(--line); display: block; }
+.att-vid { width: 220px; max-height: 160px; border-radius: 14px; background: #000; }
+.att-file { font-size: 12px; padding: 6px 10px; border-radius: 10px; background: var(--glass); border: 1px solid var(--line); }
+.ws-vid { width: 100%; border-radius: 12px; background: #000; }
+.ws-img.scan::after { content: ""; position: absolute; left: 0; right: 0; height: 30%; background: linear-gradient(transparent, rgba(var(--dot), .35), transparent); animation: scan 1.6s linear infinite; }
+@keyframes scan { from { top: -30%; } to { top: 100%; } }
+
+/* v3.1: New update label above the version */
+.verbadge { flex-direction: column; align-items: flex-start; gap: 3px; border-radius: 12px; padding: 6px 9px; }
+.verbadge .newup { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; background: linear-gradient(135deg, #22c55e, #10b981); color: #fff; box-shadow: 0 0 14px rgba(34,197,94,.5); animation: glowup 1.6s ease-in-out infinite; }
+.verbadge .newup i { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: beat 1s infinite; }
+@keyframes glowup { 50% { box-shadow: 0 0 22px rgba(34,197,94,.85); } }
+.verbadge .vline { display: flex; gap: 6px; align-items: center; }

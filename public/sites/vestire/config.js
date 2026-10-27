@@ -5,28 +5,33 @@ window.VESTIRE = {
   whatsapp: "",
   city: "Gujrat, Punjab",
   currency: "Rs",
-  deliveryCOD: 250,        // Cash on Delivery charge
+  deliveryCOD: 250,          // Cash on Delivery charge
   freeShippingAdvance: true, // advance payment par free delivery
   deliveryDays: "3-5 working days",
+  saleEnds: "2026-11-30T23:59:00+05:00", // countdown banner ki aakhri tareekh
+  storeTiming: "Har din 11 AM se 11 PM",
 };
 
-// ===== Products (demo). Asli photos aane par img aur price badal dein =====
-// filter = demo rang (CSS hue). Asli product par filter hata dein.
+// Brands jo "Shop by brand" mein dikhte hain (naya brand yahan add karein)
+window.BRANDS = ["Nike", "Adidas", "Puma", "Louis Vuitton", "Gucci", "Zara", "Polo Ralph Lauren", "The North Face", "Levi's", "H&M"];
+
+// ===== Products (demo). Asli photos aane par img, naam aur price badal dein =====
+// Note: brand ka naam sirf asli / authorized imported maal par likhein.
 window.PRODUCTS = [
   // ---- MEN ----
-  { id: "m1", cat: "men", name: "Royal Ivory Waistcoat Suit", type: "Festive", price: 8990, old: 10990, img: "img/men-hero.jpg", fit: "cover-top", tag: "New", sizes: ["S","M","L","XL","XXL"], colors: ["Ivory/Black"] },
-  { id: "m2", cat: "men", name: "Navy Wash & Wear Kameez Shalwar", type: "Wash & Wear", price: 3490, img: "img/men-product.jpg", tag: "Best Seller", sizes: ["S","M","L","XL","XXL"], colors: ["Navy"] },
-  { id: "m3", cat: "men", name: "Maroon Kurta, White Shalwar", type: "Festive", price: 4290, old: 4990, img: "img/men-p2.jpg", tag: "Sale", sizes: ["M","L","XL","XXL"], colors: ["Maroon/White"] },
-  { id: "m4", cat: "men", name: "Olive Everyday Kameez Shalwar", type: "Cotton", price: 3290, img: "img/men-p3.jpg", sizes: ["S","M","L","XL"], colors: ["Olive"] },
-  { id: "m5", cat: "men", name: "Charcoal Classic Kameez Shalwar", type: "Wash & Wear", price: 3490, img: "img/men-product.jpg", filter: "grayscale(1) brightness(.8)", sizes: ["M","L","XL"], colors: ["Charcoal"] },
+  { id: "m1", cat: "men", brand: "The North Face", name: "Double-Side Puffer Jacket", type: "Jackets", price: 7499, old: 10999, img: "img/p-puffer.jpg", tag: "New", sizes: ["M","L","XL","2XL"], colors: ["Black"] },
+  { id: "m2", cat: "men", brand: "Adidas", name: "Classic 3-Stripe Tracksuit", type: "Tracksuits", price: 4999, old: 6999, img: "img/p-tracksuit.jpg", tag: "Sale", sizes: ["M","L","XL","2XL"], colors: ["Navy/White"] },
+  { id: "m3", cat: "men", brand: "Nike", name: "Oversized Fleece Hoodie", type: "Hoodies", price: 3999, old: 5499, img: "img/p-hoodie.jpg", tag: "Best Seller", sizes: ["S","M","L","XL"], colors: ["Heather Grey"] },
+  { id: "m4", cat: "men", brand: "Nike", name: "Air Runner Chunky Sneakers", type: "Sneakers", price: 8999, old: 11999, img: "img/p-sneakers.jpg", tag: "New", sizes: ["40","41","42","43","44"], colors: ["White/Grey"] },
+  { id: "m5", cat: "men", brand: "Polo Ralph Lauren", name: "Slim Polo + Denim Combo", type: "Polos", price: 4499, img: "img/p-polo.jpg", sizes: ["S","M","L","XL"], colors: ["White/Blue"] },
+  { id: "m6", cat: "men", brand: "Levi's", name: "Winter Street Look Set", type: "Jackets", price: 9999, old: 13999, img: "img/panel-men.jpg", fit: "cover-top", tag: "Sale", sizes: ["M","L","XL"], colors: ["Black"] },
   // ---- WOMEN ----
-  { id: "w1", cat: "women", name: "Emerald Embroidered 3-Piece", type: "Luxury Pret", price: 12490, old: 14990, img: "img/women-hero.jpg", fit: "cover-top", tag: "New", sizes: ["XS","S","M","L","XL"], colors: ["Emerald"] },
-  { id: "w2", cat: "women", name: "Peach Printed Lawn 3-Piece", type: "Lawn", price: 4590, img: "img/women-product.jpg", tag: "Best Seller", sizes: ["XS","S","M","L","XL"], colors: ["Peach"] },
-  { id: "w3", cat: "women", name: "Lilac Chiffon 3-Piece", type: "Pret", price: 5290, old: 5990, img: "img/women-p2.jpg", tag: "Sale", sizes: ["XS","S","M","L"], colors: ["Lilac"] },
-  { id: "w4", cat: "women", name: "Mint Printed Lawn Suit", type: "Lawn", price: 4390, img: "img/women-p3.jpg", sizes: ["S","M","L","XL"], colors: ["Mint"] },
+  { id: "w1", cat: "women", brand: "Louis Vuitton", name: "Leather Tote Handbag", type: "Bags", price: 14999, old: 18999, img: "img/p-bag.jpg", tag: "New", sizes: ["One Size"], colors: ["Tan"] },
+  { id: "w2", cat: "women", brand: "Zara", name: "Cropped Biker Jacket", type: "Jackets", price: 6499, old: 8999, img: "img/p-wjacket.jpg", tag: "Sale", sizes: ["XS","S","M","L"], colors: ["Black"] },
+  { id: "w3", cat: "women", brand: "Gucci", name: "Camel Wool Long Coat", type: "Coats", price: 12999, old: 16999, img: "img/panel-women.jpg", fit: "cover-top", tag: "Best Seller", sizes: ["S","M","L"], colors: ["Camel"] },
+  { id: "w4", cat: "women", brand: "Adidas", name: "Women Oversized Hoodie", type: "Hoodies", price: 3799, img: "img/p-hoodie.jpg", sizes: ["XS","S","M","L"], colors: ["Grey"] },
   // ---- KIDS ----
-  { id: "k1", cat: "kids", name: "Eid Sibling Set (Boy + Girl)", type: "Festive", price: 6990, old: 7990, img: "img/kids-hero.jpg", fit: "cover-center", tag: "New", sizes: ["2-3Y","4-5Y","6-7Y","8-9Y"], colors: ["Maroon/Pink"] },
-  { id: "k2", cat: "kids", name: "Sky Blue Boys Kurta Shalwar", type: "Cotton", price: 2190, img: "img/kids-product.jpg", tag: "Best Seller", sizes: ["2-3Y","4-5Y","6-7Y","8-9Y","10-11Y"], colors: ["Sky Blue"] },
-  { id: "k3", cat: "kids", name: "Girls Embroidered Frock Set", type: "Festive", price: 3290, old: 3690, img: "img/kids-p2.jpg", tag: "Sale", sizes: ["2-3Y","4-5Y","6-7Y","8-9Y"], colors: ["Yellow/Pink"] },
-  { id: "k4", cat: "kids", name: "Boys Kurta with Mustard Waistcoat", type: "Festive", price: 3490, img: "img/kids-p3.jpg", sizes: ["4-5Y","6-7Y","8-9Y","10-11Y"], colors: ["White/Mustard"] },
+  { id: "k1", cat: "kids", brand: "Puma", name: "Striped Hoodie + Jogger Set", type: "Tracksuits", price: 2999, old: 3999, img: "img/p-kids.jpg", tag: "New", sizes: ["2-3Y","4-5Y","6-7Y","8-9Y","10-12Y"], colors: ["Red/Grey"] },
+  { id: "k2", cat: "kids", brand: "Nike", name: "Colour-Block Tracksuit", type: "Tracksuits", price: 3499, old: 4499, img: "img/panel-kids.jpg", fit: "cover-center", tag: "Sale", sizes: ["4-5Y","6-7Y","8-9Y","10-12Y"], colors: ["Blue/Yellow"] },
+  { id: "k3", cat: "kids", brand: "Adidas", name: "Kids Running Sneakers", type: "Sneakers", price: 4499, img: "img/p-sneakers.jpg", tag: "Best Seller", sizes: ["28","30","32","34"], colors: ["White"] },
 ];

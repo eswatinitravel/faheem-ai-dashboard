@@ -13,6 +13,7 @@ try {
   $src = Get-ChildItem -Path $tmp -Directory | Select-Object -First 1
 
   Write-Host "Purana server band ho raha hai..."
+  Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like "*tray.ps1*" } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
   Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
   Start-Sleep -Seconds 2
 

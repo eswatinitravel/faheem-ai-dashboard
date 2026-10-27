@@ -13,9 +13,9 @@ export async function GET() {
 // What should the live workspace show while the agents work?
 function detectTask(text) {
   const t = text.toLowerCase();
+  if (/(website|web site|landing|html|page bana|homepage|online store|store bana|store ka|web app|navbar|hero section|portfolio site)/.test(t)) return "web";
   if (/(video|vedio|vidio|reel|clip|animation)/.test(t)) return "video";
   if (/(picture|pic\b|image|photo|tasveer|tasweer|tasvir|logo|poster|banner|wallpaper|drawing|draw)/.test(t)) return "image";
-  if (/(website|web site|landing|html|page bana|homepage|store bana|section|navbar|hero)/.test(t)) return "web";
   if (/(code|script|function|python|javascript|react|api|bug|error)/.test(t)) return "code";
   return "text";
 }
@@ -32,6 +32,24 @@ function attachText(m) {
     else parts.push(`\n[File attached: ${a.name} (${a.type || "file"}, ${Math.round((a.size || 0) / 1024)} KB)]`);
   }
   return parts.join("");
+}
+
+// Tester ke tez checks (bina AI ke).
+function staticCheck(code, ask) {
+  const out = [];
+  if (!code || code.length < 300) return ["No complete ```html code block was returned."];
+  if (!/<\/html>/i.test(code)) out.push("The page is cut off: it must end with </html>.");
+  if (/via\.placeholder|placehold\.(co|it)|placekitten|dummyimage|example\.com\/.*\.(jpg|png)/i.test(code)) out.push("Placeholder image URLs are used; replace every image with a pollinations.ai image URL.");
+  if (/\.\.\.\s*(rest|more|other)|<!--\s*(add|more|repeat)/i.test(code)) out.push("Code contains unfinished parts (\"...\" or 'add more'); write everything out.");
+  const called = [...code.matchAll(/on\w+\s*=\s*"\s*([A-Za-z_$][\w$]*)\s*\(/g)].map((m) => m[1]);
+  for (const f of new Set(called)) {
+    if (!new RegExp(`function\\s+${f}\\b|${f}\\s*=\\s*(async\\s*)?(function|\\()`).test(code) && !["alert", "confirm", "event", "this", "window", "document", "history", "location"].includes(f)) out.push(`Function ${f}() is called but never defined.`);
+  }
+  const opens = (code.match(/<script\b/gi) || []).length, closes = (code.match(/<\/script>/gi) || []).length;
+  if (opens !== closes) out.push("A <script> tag is not closed.");
+  if (/cart/i.test(ask) && !/cart/i.test(code)) out.push("The cart requested by the user is missing.");
+  if (/form|contact/i.test(ask) && !/<form/i.test(code)) out.push("The contact form requested by the user is missing.");
+  return out;
 }
 
 function imageUrl(prompt, seed, w = 768, h = 768) {
@@ -105,6 +123,84 @@ export async function POST(req) {
       }
 
       const skipped = [];
+      // Ek brain se jawab: providers ki line mein jo pehle chale.
+      const ask = async (msgs, label) => {
+        for (const p of providers) {
+          if (isCooling(p.id)) continue;
+          try {
+            let r;
+            try { r = await callProvider(p, msgs, 120000); }
+            catch (e) {
+              const w = +(String(e.message).match(/retry in (\d+)s/) || [])[1];
+              if (!(w >= 0 && w <= 12)) throw e;
+              await new Promise((ok) => setTimeout(ok, (w + 2) * 1000));
+              r = await callProvider(p, msgs, 120000);
+            }
+            if (!r || !String(r).trim()) throw new Error("empty reply");
+            return { reply: r, p };
+          } catch (err) {
+            skipped.push(`${p.name}: ${err.message}`);
+            step("Brain", `⏭ ${label}: ${p.name} — ${err.message.slice(0, 60)}`);
+          }
+        }
+        throw new Error("Koi brain jawab nahi de saka.");
+      };
+
+      // ---- Website / code: Plan → Build → Test → Fix ----
+      if (task === "web" || (task === "code" && /html|page|website|store|site|landing/i.test(rawText))) {
+        try {
+          const wantsBanner = /banner|logo|poster|picture|tasveer|image|photo/i.test(rawText);
+          if (wantsBanner) {
+            const seed = Math.floor(Math.random() * 1e6);
+            step("Image Agent", "🎨 Banner/picture bhi sath ban rahi hai…");
+            emit({ type: "image", urls: [imageUrl(`${rawText}, professional wide web banner`, seed, 1280, 512), imageUrl(`${rawText}, professional wide web banner`, seed + 1, 1280, 512)] });
+          }
+          step("🧠 Planner Agent", "Soch raha hoon: kaam ko hisson mein baant raha hoon…");
+          const plan = (await ask([
+            { role: "system", content: "You are a senior product planner. Write a short numbered build plan (max 8 lines) for the user's request: sections, exact features, interactions, data (realistic names and prices), colors. No code." },
+            { role: "user", content: rawText },
+          ], "Plan")).reply.trim();
+          step("🧠 Planner Agent", plan.split("\n").filter(Boolean).slice(0, 8).join(" · ").slice(0, 400));
+
+          const RULES = `Build rules (must follow all):
+- Return ONE complete self-contained \`\`\`html code block: <!DOCTYPE html> to </html>, inline CSS and JS, nothing missing, no "..." or "rest of code".
+- Every feature in the plan must actually work (buttons, cart count, forms with validation and a success message, menus on mobile).
+- Images: NEVER use placeholder sites. Use https://image.pollinations.ai/prompt/<url-encoded description>?width=600&height=400&nologo=true with a specific description per image.
+- Modern, responsive, polished design. Mobile-friendly.
+- After the code block, write 3-5 short lines saying what was built.`;
+          step(agent.name, "🔨 Plan ke mutabiq poora code likh raha hoon…");
+          let { reply, p } = await ask([...messages, { role: "system", content: `Plan:\n${plan}\n\n${RULES}` }], "Build");
+          let fixes = 0;
+          for (let round = 1; round <= 3; round++) {
+            const code = (reply.match(/```html\s*([\s\S]*?)```/i) || [])[1] || "";
+            const issues = staticCheck(code, rawText);
+            step("🧪 Tester Agent", `Test ${round}: code check kar raha hoon…`);
+            if (!issues.length) {
+              try {
+                const rv = (await ask([
+                  { role: "system", content: "You are a strict QA tester. Read the HTML and find real bugs: features from the plan that are missing or broken, JS errors, undefined functions, broken layout. Reply ONLY with JSON: {\"ok\":true} or {\"ok\":false,\"issues\":[\"...\"]} (max 5 issues)." },
+                  { role: "user", content: `Plan:\n${plan}\n\nHTML:\n${code.slice(0, 60000)}` },
+                ], "Test")).reply;
+                const j = JSON.parse((rv.match(/\{[\s\S]*\}/) || ["{}"])[0]);
+                if (j.ok === false && Array.isArray(j.issues)) issues.push(...j.issues.slice(0, 5));
+              } catch { step("🧪 Tester Agent", "AI tester abhi masroof — basic tests pass."); }
+            }
+            if (!issues.length) { step("🧪 Tester Agent", "✅ Sab test pass — koi galti nahi mili."); break; }
+            step("🧪 Tester Agent", `⚠ ${issues.length} masle: ${issues.join(" | ").slice(0, 300)}`);
+            if (round === 3) break;
+            step("🔧 Fixer Agent", "Masle theek kar raha hoon…");
+            ({ reply, p } = await ask([...messages, { role: "assistant", content: reply }, { role: "user", content: `Fix ALL these problems and return the COMPLETE corrected page again:\n- ${issues.join("\n- ")}\n\n${RULES}` }], "Fix"));
+            fixes++;
+          }
+          step(agent.name, `✓ Tayyar${fixes ? ` (${fixes} dafa theek kiya)` : ""}.`);
+          emit({ type: "done", reply: `**Plan**\n${plan}\n\n${reply}`, provider: p.name, model: p.model, agent: { id: agent.id, name: agent.name, icon: agent.icon }, skipped, task: "web" });
+          ctrl.close();
+          return;
+        } catch (err) {
+          step("Master Agent", `Pipeline ruk gayi (${err.message}) — seedha jawab le raha hoon.`);
+        }
+      }
+
       for (const p of providers) {
         if (isCooling(p.id)) { skipped.push(`${p.name}: cooling down`); step("Brain", `⏭ ${p.name} abhi aaraam par — agla.`); continue; }
         step("Brain", `⚡ ${p.name} se jawab maang raha hoon…`);

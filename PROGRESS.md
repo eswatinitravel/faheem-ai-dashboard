@@ -26,3 +26,8 @@
 - Baayen files + plan, beech mein agent ke qadam (har tool khol kar result dekhein), daayen Live Preview / Code. ↩ Undo = aakhri run wapas. ■ Roko.
 - Picture lagayein to pehle Gemini/Groq vision design parhta hai; key na ho to saaf batata hai.
 - Hifazat: project folder se bahar koi file nahi, khatarnak commands band, sirf isi laptop se chalta hai.
+
+## 28 Oct 2026 — v3.5.0
+- 🎨 Design rules (Hallmark se, MIT): Agent Mode, website pipeline aur Website Master ab "AI jaisa" design nahi banate — rang/font CSS variables mein, purple-blue gradient nahi, emoji icons nahi, nakli reviews/numbers nahi, focus style, reduced-motion.
+- Design jaanch bina AI ke: check tool aur finish se pehle (2 dafa tak theek karwata hai). Website pipeline mein design tips sirf pehle 2 rounds; aakhir mein "Tayyar · design tips" — asli ghalti nahi ginti.
+- Hermes: `HERMES-SKILLS.bat` chalayein → `faheem-design` aur `hallmark` skills Hermes mein. Istemal: `/faheem-design ...` ya `/hallmark ...`.

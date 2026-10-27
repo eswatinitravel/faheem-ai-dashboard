@@ -21,7 +21,15 @@ export default function Settings({ onClose }) {
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
+  const [err, setErr] = useState("");
+  const PREFIX = { GROQ_API_KEY: "gsk_", GEMINI_API_KEY: "AIza", OPENROUTER_API_KEY: "sk-or-" };
   async function save() {
+    // Browser kabhi kabhi apna saved password key ke khane mein bhar deta hai; ghalat shakal wali key save na karein.
+    for (const [k, pre] of Object.entries(PREFIX)) {
+      const v = (form[k] || "").trim();
+      if (v && !v.startsWith(pre)) { setErr(`${k.split("_")[0]} key "${pre}…" se shuru honi chahiye — yeh key save nahi ki.`); return; }
+    }
+    setErr("");
     await fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
     setSaved("Save ho gaya ✓");
     setTimeout(onClose, 700);
@@ -43,7 +51,7 @@ export default function Settings({ onClose }) {
               <a href={p.url} target="_blank" rel="noreferrer">Free key banayein ↗</a>
             </div>
             <small className="muted">{p.note} {cfg[p.key]?.set ? `Abhi lagi hui: ${cfg[p.key].preview}` : "Abhi koi key nahi."}</small>
-            <input type="password" placeholder={cfg[p.key]?.set ? "Nayi key (khali = purani rahe)" : "Key yahan paste karein"} onChange={set(p.key)} autoComplete="off" />
+            <input type="password" name={`fa-${p.key}`} autoComplete="new-password" data-lpignore="true" placeholder={cfg[p.key]?.set ? "Nayi key (khali = purani rahe)" : "Key yahan paste karein"} onChange={set(p.key)} />
             <input placeholder={`Model (default: ${p.def})`} value={form[p.model] || ""} onChange={set(p.model)} />
           </div>
         ))}
@@ -68,7 +76,8 @@ export default function Settings({ onClose }) {
           </div>
         )}
         <div className="modal-foot">
-          <span className="ok-text">{saved}</span>
+          <span className="ok-text">{saved}</span>{err && <span style={{ color: "#f87171" }}>{err}</span>}
+          {cfg?._file && <small className="muted">Keys yahan mehfooz: {cfg._file}</small>}
           <button onClick={save}>Save</button>
         </div>
       </div>

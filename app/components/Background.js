@@ -1,13 +1,27 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import Scene3D from "./Scene3D";
+import { loadPrefs, renderScale } from "../../lib/prefs";
 
 // Aura background with small glowing dots moving fast (colour follows the theme's --dot).
 export default function Background() {
   const ref = useRef(null);
+  const [disp, setDisp] = useState({ quality: "auto", fx3d: "off", uiScale: "100" });
+  useEffect(() => {
+    const apply = (p) => {
+      setDisp({ quality: p.quality || "auto", fx3d: p.fx3d || "off", uiScale: p.uiScale || "100" });
+      document.body.style.zoom = String(Number(p.uiScale || 100) / 100);
+      document.documentElement.dataset.quality = p.quality || "auto";
+    };
+    apply(loadPrefs());
+    const on = (e) => apply(e.detail || loadPrefs());
+    window.addEventListener("faheem-prefs", on);
+    return () => window.removeEventListener("faheem-prefs", on);
+  }, []);
   useEffect(() => {
     const c = ref.current, ctx = c.getContext("2d");
     let w, h, raf, dots = [];
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = renderScale(disp.quality);
     const resize = () => {
       w = c.width = innerWidth * dpr; h = c.height = innerHeight * dpr;
       c.style.width = innerWidth + "px"; c.style.height = innerHeight + "px";
@@ -37,11 +51,12 @@ export default function Background() {
     };
     draw();
     return () => { cancelAnimationFrame(raf); removeEventListener("resize", resize); };
-  }, []);
+  }, [disp.quality]);
   return (
     <>
       <div className="aura" aria-hidden="true" />
       <canvas ref={ref} className="dots" aria-hidden="true" />
+      {disp.fx3d !== "off" && <div className="fx3d"><Scene3D quality={disp.quality} detail={disp.fx3d} /></div>}
     </>
   );
 }

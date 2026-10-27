@@ -41,3 +41,6 @@
 ## v3.6.1
 - Groq gpt-oss "Tool choice is none" error fix: model ka tool call bacha kar action banta hai, warna llama-3.3-70b-versatile se dobara.
 - Ollama: llama3.2:3b na ho to laptop par mojood model khud istemal hota hai; warna saaf hidayat (ollama pull).
+
+## v3.6.2
+- HERMES-SKILLS.bat: hallmark Hermes index mein purana tha; ab seedha GitHub (Nutlope/hallmark) se %LOCALAPPDATA%\hermes\skills\hallmark mein copy hota hai.

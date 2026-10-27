@@ -17,7 +17,16 @@ export default function VersionBadge() {
     setBusy(true);
     setMsg("Update ho raha hai… ek window khulegi, khatam hote hi app khud dobara khulegi.");
     const r = await fetch("/api/update", { method: "POST" }).then((x) => x.json()).catch(() => ({ error: "Update start nahi hua" }));
-    if (r.error) { setMsg(r.error); setBusy(false); }
+    if (r.error) { setMsg(r.error + " — project folder mein UPDATE.bat double-click karein."); setBusy(false); return; }
+    // Server band ho kar naye version ke sath wapas aata hai: har 10 second dekhte rahein.
+    const from = u.current, started = Date.now();
+    const poll = setInterval(async () => {
+      const d = await fetch("/api/update", { cache: "no-store" }).then((x) => x.json()).catch(() => null);
+      if (d && d.current !== from) { clearInterval(poll); setMsg(`v${d.current} install ho gaya ✓`); setTimeout(() => location.reload(), 1500); return; }
+      const min = Math.round((Date.now() - started) / 60000);
+      if (min >= 8) { clearInterval(poll); setBusy(false); setMsg("Update window nahi chali lagti. App band karein aur project folder mein UPDATE.bat double-click karein (keys mehfooz rahengi)."); }
+      else if (d === null) setMsg(`Update chal raha hai (${min} min)… server dobara ban raha hai, 2–4 minute.`);
+    }, 10000);
   }
   return (
     <div className="verbadge">

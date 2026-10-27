@@ -309,8 +309,8 @@ export default function Home() {
         <div className="sites">
           <small>🌐 Meri websites</small>
           <a className="sitecard" href="/sites/vestire/index.html" target="_blank" rel="noreferrer">
-            <img src="/sites/vestire/img/men-hero.jpg" alt="" />
-            <div><b>Vestire Collection</b><span>Mard · Aurat · Bachay</span></div>
+            <img src="/sites/vestire/img/panel-men.jpg" alt="" />
+            <div><b>Vestire Collection</b><span>Men · Women · Juniors</span></div>
           </a>
         </div>
 

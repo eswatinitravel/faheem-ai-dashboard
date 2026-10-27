@@ -135,13 +135,13 @@ export async function POST(req) {
           try {
             let r;
             const withImg = (m) => (images.length && p.vision ? m.map((x, i) => (i === m.length - 1 && x.role === "user" && typeof x.content === "string") ? { role: "user", content: [{ type: "text", text: x.content }, ...images.map((a) => ({ type: "image_url", image_url: { url: a.dataUrl } }))] } : x) : m);
-            msgs = withImg(msgs);
-            try { r = await callProvider(p, msgs, 120000); }
+            const mm = withImg(msgs);
+            try { r = await callProvider(p, mm, 120000); }
             catch (e) {
               const w = +(String(e.message).match(/retry in (\d+)s/) || [])[1];
               if (!(w >= 0 && w <= 12)) throw e;
               await new Promise((ok) => setTimeout(ok, (w + 2) * 1000));
-              r = await callProvider(p, msgs, 120000);
+              r = await callProvider(p, mm, 120000);
             }
             if (!r || !String(r).trim()) throw new Error("empty reply");
             return { reply: r, p };

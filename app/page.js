@@ -8,6 +8,7 @@ import VersionBadge from "./components/VersionBadge";
 import SearchOverlay from "./components/SearchOverlay";
 import Workspace from "./components/Workspace";
 import { loadPrefs } from "../lib/prefs";
+import { prepareFiles, forServer, forStorage } from "../lib/attach";
 
 const STORE = "faheem-ai-chats-v2";
 
@@ -26,6 +27,11 @@ export default function Home() {
   const [wsOpen, setWsOpen] = useState(false);
   const [job, setJob] = useState(null);
   const [log, setLog] = useState([]);
+  const [files, setFiles] = useState([]);
+  const [drag, setDrag] = useState(false);
+  const fileRef = useRef(null);
+  const filesRef = useRef([]);
+  filesRef.current = files;
   const { speakReplies, voiceChoice } = prefs;
 
   const endRef = useRef(null);
@@ -47,7 +53,11 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(STORE, JSON.stringify(messages.slice(-100)));
+    // Pictures sirf aakhri 10 messages mein save hoti hain taake storage na bhare.
+    const keep = messages.slice(-100);
+    const pack = (n) => keep.map((m, i) => (m.attachments ? { ...m, attachments: m.attachments.map((a) => forStorage(a, i >= keep.length - n)) } : m));
+    try { localStorage.setItem(STORE, JSON.stringify(pack(10))); }
+    catch { try { localStorage.setItem(STORE, JSON.stringify(pack(0))); } catch {} }
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
@@ -86,21 +96,26 @@ export default function Home() {
   // ---------- Send: server streams agent steps live ----------
   const send = useCallback(
     async (textArg, opts = {}) => {
-      const text = (textArg ?? "").trim();
-      if (!text) return;
-      const next = [...messagesRef.current, { role: "user", content: text, voice: !!opts.voice }];
+      const attached = opts.voice ? [] : filesRef.current;
+      let text = (textArg ?? "").trim();
+      if (!text && !attached.length) return;
+      if (!text) text = attached.some((a) => a.kind === "image") ? "Is picture ke bare mein batao." : "Is file ko dekho.";
+      const userMsg = { role: "user", content: text, voice: !!opts.voice };
+      if (attached.length) userMsg.attachments = attached;
+      const next = [...messagesRef.current, userMsg];
+      setFiles([]);
       setMessages(next);
       setInput("");
       setMode("thinking");
       setWsOpen(true);
-      setJob({ busy: true });
+      setJob({ busy: true, attached });
       setLog([{ who: "Aap", text: text.length > 90 ? text.slice(0, 90) + "…" : text }]);
       let reply = "";
       try {
         const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: next, provider: prefs.provider, agent: prefs.agent, voice: !!opts.voice, voiceLang: voiceChoice === "english" ? "en" : "ur" }),
+          body: JSON.stringify({ messages: next.map((m, i) => (m.attachments ? { ...m, attachments: m.attachments.map(forServer).map((a) => (i === next.length - 1 || a.kind !== "image" ? a : { ...a, dataUrl: undefined })) } : m)), provider: prefs.provider, agent: prefs.agent, voice: !!opts.voice, voiceLang: voiceChoice === "english" ? "en" : "ur" }),
         });
         if (!res.ok || !res.body) throw new Error("Server se jawab nahi aaya (" + res.status + ")");
         const reader = res.body.getReader();
@@ -286,18 +301,37 @@ export default function Home() {
 
         {notice && <div className="notice" onClick={() => setNotice("")}>{notice}</div>}
 
-        <form className="composer" onSubmit={(e) => { e.preventDefault(); send(input); }}>
+        {files.length > 0 && (
+          <div className="pending">
+            {files.map((a, i) => (
+              <div key={i} className="pend">
+                {a.kind === "image" ? <img src={a.dataUrl} alt="" /> : a.kind === "video" ? <video src={a.url} muted /> : <span className="pend-ico">{a.kind === "text" ? "📄" : "📎"}</span>}
+                <small>{a.name}</small>
+                <button type="button" onClick={() => setFiles(files.filter((_, j) => j !== i))} title="Hatao">✕</button>
+              </div>
+            ))}
+          </div>
+        )}
+        <form className={"composer" + (drag ? " drag" : "")} onSubmit={(e) => { e.preventDefault(); send(input); }}
+          onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)}
+          onDrop={async (e) => { e.preventDefault(); setDrag(false); const add = await prepareFiles(e.dataTransfer.files); setFiles((f) => [...f, ...add].slice(0, 6)); }}>
+          <input ref={fileRef} type="file" hidden multiple accept="image/*,video/*,.txt,.md,.csv,.json,.html,.css,.js,.jsx,.ts,.tsx,.py,.xml,.yml,.yaml,.log,.sql,.pdf,.doc,.docx,.xls,.xlsx,.zip"
+            onChange={async (e) => { const add = await prepareFiles(e.target.files); setFiles((f) => [...f, ...add].slice(0, 6)); e.target.value = ""; }} />
+          <button type="button" className="attach" onClick={() => fileRef.current?.click()} title="Gallery se picture, video ya file">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
+          </button>
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
-            placeholder="Faheem AI se kuch bhi kahein…"
+            onPaste={async (e) => { const fl = Array.from(e.clipboardData?.files || []); if (fl.length) { e.preventDefault(); const add = await prepareFiles(fl); setFiles((f) => [...f, ...add].slice(0, 6)); } }}
+            placeholder="Faheem AI se kuch bhi kahein… (📎 se picture / video / file)"
             rows={1}
           />
           <button type="button" className={"mic " + (voiceOn || mode === "listening" ? "on" : "")} onClick={toggleVoice} title="Bol kar baat karein">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0 0 14 0M12 17v5M8 22h8" /></svg>
           </button>
-          <button type="submit" className="sendbtn" disabled={mode === "thinking" || !input.trim()} title="Send">➤</button>
+          <button type="submit" className="sendbtn" disabled={mode === "thinking" || (!input.trim() && !files.length)} title="Send">➤</button>
         </form>
       </section>
 

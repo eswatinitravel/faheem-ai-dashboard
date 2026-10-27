@@ -51,18 +51,25 @@ export async function GET() {
 export async function POST(req) {
   if (!isLocal(req)) return Response.json({ error: "Sirf isi laptop se." }, { status: 403 });
   if (process.platform !== "win32") return Response.json({ error: "Auto-update sirf Windows par. Docker par: git pull && docker compose up -d --build" }, { status: 400 });
-  const script = path.join(process.cwd(), "scripts", "update.ps1");
-  // v3.2.7: pehle "cmd /c start" ki quoting Windows par toot jati thi aur window khulti hi nahi thi.
-  // Ab PowerShell ka Start-Process hamesha nayi, dikhne wali window kholta hai.
-  const q = script.replace(/'/g, "''");
-  const cmd = `Start-Process -FilePath powershell.exe -WindowStyle Normal -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File "${q}"'`;
-  const child = spawn("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", cmd], {
-    cwd: process.cwd(),
-    detached: true,
-    stdio: "ignore",
-    windowsHide: true,
-  });
-  child.on("error", () => {});
-  child.unref();
+  // v3.6.3: ab UPDATE.bat ko explorer.exe kholta hai, bilkul double-click jaisa. Is tarah updater
+  // server ke process-tree se bahar, apni dikhne wali window mein chalta hai aur server band hone par nahi marta.
+  const bat = path.join(process.cwd(), "UPDATE.bat");
+  let launched = false;
+  if (fs.existsSync(bat)) {
+    try {
+      const c = spawn("explorer.exe", [bat], { cwd: process.cwd(), detached: true, stdio: "ignore" });
+      c.on("error", () => {});
+      c.unref();
+      launched = true;
+    } catch {}
+  }
+  if (!launched) {
+    const script = path.join(process.cwd(), "scripts", "update.ps1");
+    const q = script.replace(/'/g, "''");
+    const cmd = `Start-Process -FilePath powershell.exe -WindowStyle Normal -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File "${q}"'`;
+    const child = spawn("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", cmd], { cwd: process.cwd(), detached: true, stdio: "ignore", windowsHide: true });
+    child.on("error", () => {});
+    child.unref();
+  }
   return Response.json({ ok: true });
 }

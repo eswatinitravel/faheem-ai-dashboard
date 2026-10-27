@@ -35,13 +35,17 @@ export async function POST(req) {
   if (!isLocal(req)) return Response.json({ error: "Sirf isi laptop se." }, { status: 403 });
   if (process.platform !== "win32") return Response.json({ error: "Auto-update sirf Windows par. Docker par: git pull && docker compose up -d --build" }, { status: 400 });
   const script = path.join(process.cwd(), "scripts", "update.ps1");
-  // "start" se hamesha nayi dikhne wali window khulti hai, chahe server chhupa (hidden) chal raha ho.
-  const child = spawn("cmd.exe", ["/c", "start", "\"Faheem AI - Update\"", "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script], {
+  // v3.2.7: pehle "cmd /c start" ki quoting Windows par toot jati thi aur window khulti hi nahi thi.
+  // Ab PowerShell ka Start-Process hamesha nayi, dikhne wali window kholta hai.
+  const q = script.replace(/'/g, "''");
+  const cmd = `Start-Process -FilePath powershell.exe -WindowStyle Normal -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File "${q}"'`;
+  const child = spawn("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", cmd], {
     cwd: process.cwd(),
     detached: true,
     stdio: "ignore",
     windowsHide: true,
   });
+  child.on("error", () => {});
   child.unref();
   return Response.json({ ok: true });
 }

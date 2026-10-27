@@ -26,10 +26,10 @@
 </section>
 
 <!-- 3. Shop by brand -->
-<section class="brands"><h2 class="sec">Shop by <em>brand</em></h2><div id="brandwall"></div></section>
+<section class="brands reveal"><h2 class="sec">Shop by <em>brand</em></h2><div id="brandwall"></div></section>
 
 <!-- 4. Countdown sale -->
-<section class="countbar"><div><small>EXCLUSIVE CO-ORD SETS &amp; TRACKSUITS</small><h2>Sale khatam hone mein</h2></div><div id="countdown"></div><a class="btn primary" href="men.html">Shop now</a></section>
+<section class="countbar reveal"><div><small>EXCLUSIVE CO-ORD SETS &amp; TRACKSUITS</small><h2>Sale khatam hone mein</h2></div><div id="countdown"></div><a class="btn primary" href="men.html">Shop now</a></section>
 
 <!-- 5. New arrivals -->
 <main id="arrivals"><div class="head"><h2>Winter mode: <em>new arrivals</em></h2><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><div id="chips"></div>
@@ -37,10 +37,14 @@
 <div id="grid"></div></main>
 
 <!-- 6. Quote -->
-<section class="quote"><img src="img/hero-wide.jpg" alt=""><p>"You can have anything you want in life if you dress for it."</p></section>
+<section class="quote reveal"><img src="img/hero-wide.jpg" alt=""><p>"You can have anything you want in life if you dress for it."</p></section>
 
-<div class="strip"><div><b>Shipping all across Pakistan</b>Gujrat se har shehar</div><div><b>Cash on Delivery</b>Ghar par paise dein</div><div><b>Exclusive discounts</b>Har hafte naya sale</div><div><b>7 din exchange</b>Size badalna asaan</div></div>
+<div class="strip reveal"><div><b>Shipping all across Pakistan</b>Gujrat se har shehar</div><div><b>Cash on Delivery</b>Ghar par paise dein</div><div><b>Exclusive discounts</b>Har hafte naya sale</div><div><b>7 din exchange</b>Size badalna asaan</div></div>
 
+<section class="club reveal"><div><small>VESTIRE CLUB</small><h2>Naye stock aur sale sab se pehle</h2><p>Apna number dein — nayi arrivals aur exclusive discount codes WhatsApp par.</p></div>
+<form id="clubform" onsubmit="event.preventDefault();var n=this.querySelector('input').value.trim();if(n.length<10){alert('Sahi number likhein');return;}try{localStorage.setItem('vestire-club',n)}catch(e){}this.innerHTML='<b class=ok>Shukriya! Aap club mein shamil ho gaye ✓</b>'"><input type="tel" placeholder="03xx xxxxxxx" required><button class="btn primary">Join</button></form></section>
+
+<button id="totop" aria-label="Top" onclick="scrollTo({top:0,behavior:'smooth'})">↑</button>
 <footer class="foot big">
   <div><div class="brandname"></div><p>Imported branded clothing — Men, Women, Juniors.<br>Gujrat, Punjab · Pure Pakistan mein delivery</p><p><b>Store timing:</b> <span id="timing"></span></p></div>
   <div><b>Shop</b><a href="men.html">Men</a><a href="women.html">Women</a><a href="kids.html">Juniors</a><a href="#arrivals">Sale</a></div>
@@ -53,4 +57,9 @@
 <div id="modal" class="modal"></div>
 <button id="wafloat" title="WhatsApp">✆</button><div id="toast"></div>
 <script src="config.js"></script><script src="store.js"></script>
+<script>
+(function(){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(function(el){io.observe(el)});
+var t=document.getElementById('totop');addEventListener('scroll',function(){t.classList.toggle('show',scrollY>600);document.body.classList.toggle('scrolled',scrollY>10)},{passive:true});})();
+</script>
 </body></html>

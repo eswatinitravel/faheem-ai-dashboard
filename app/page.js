@@ -31,6 +31,8 @@ export default function Home() {
   const [last, setLast] = useState(null);
   const [voiceOn, setVoiceOn] = useState(false); // hands-free conversation
   const [speakReplies, setSpeakReplies] = useState(true);
+  const [voiceChoice, setVoiceChoice] = useState("urdu-female"); // urdu-female | urdu-male | english
+  const [voiceList, setVoiceList] = useState([]);
   const [showSettings, setShowSettings] = useState(false);
   const [notice, setNotice] = useState("");
 
@@ -49,7 +51,13 @@ export default function Home() {
   useEffect(() => {
     try { setMessages(JSON.parse(localStorage.getItem(STORE) || "[]")); } catch {}
     loadProviders();
-    window.speechSynthesis?.getVoices();
+    try { const v = localStorage.getItem("faheem-ai-voice"); if (v) setVoiceChoice(v); } catch {}
+    const synth = window.speechSynthesis;
+    if (synth) {
+      const load = () => setVoiceList(synth.getVoices());
+      load();
+      synth.onvoiceschanged = load;
+    }
     fetch("/api/update").then((r) => r.json()).then(setUpdate).catch(() => {});
   }, [loadProviders]);
 
@@ -66,20 +74,29 @@ export default function Home() {
       synth.cancel();
       const u = new SpeechSynthesisUtterance(speakable(text));
       const voices = synth.getVoices();
-      const urdu = /[\u0600-\u06FF]/.test(text);
-      const pick =
-        (urdu && voices.find((v) => v.lang.startsWith("ur"))) ||
+      const urduText = /[\u0600-\u06FF]/.test(text);
+      const ur = voices.filter((v) => v.lang.toLowerCase().startsWith("ur"));
+      const pk = ur.filter((v) => /PK/i.test(v.lang));
+      const female = (list) => list.find((v) => /Uzma|female|aurat/i.test(v.name));
+      const male = (list) => list.find((v) => /Asad|male/i.test(v.name) && !/female/i.test(v.name));
+      let pick = null;
+      if (voiceChoice !== "english" || urduText) {
+        pick = voiceChoice === "urdu-male"
+          ? male(pk) || male(ur) || pk[0] || ur[0]
+          : female(pk) || female(ur) || pk[0] || ur[0];
+      }
+      if (!pick) pick =
         voices.find((v) => /Natural/i.test(v.name) && v.lang.startsWith("en")) ||
         voices.find((v) => /Microsoft/i.test(v.name) && v.lang.startsWith("en")) ||
         voices.find((v) => v.lang.startsWith("en"));
-      if (pick) u.voice = pick;
-      u.rate = 1.02;
+      if (pick) { u.voice = pick; u.lang = pick.lang; }
+      u.rate = 1.0;
       u.onend = resolve;
       u.onerror = resolve;
       setMode("speaking");
       synth.speak(u);
     });
-  }, []);
+  }, [voiceChoice]);
 
   // ---------- Send a message ----------
   const send = useCallback(
@@ -95,7 +112,7 @@ export default function Home() {
         const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: next, provider, agent, voice: !!opts.voice }),
+          body: JSON.stringify({ messages: next, provider, agent, voice: !!opts.voice, voiceLang: voiceChoice === "english" ? "en" : "ur" }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error([data.error, ...(data.details || [])].join("\n"));
@@ -115,7 +132,7 @@ export default function Home() {
       if (opts.voice && voiceOnRef.current) setTimeout(() => startListening(), 300);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [provider, agent, speakReplies, speak, loadProviders]
+    [provider, agent, speakReplies, speak, loadProviders, voiceChoice]
   );
 
   // ---------- Voice input: record, detect silence, transcribe with Whisper ----------
@@ -265,6 +282,22 @@ export default function Home() {
           <input type="checkbox" checked={speakReplies} onChange={(e) => setSpeakReplies(e.target.checked)} />
           <span>Voice mode mein jawab bol kar sunao</span>
         </label>
+
+        <div className="voicepick">
+          <small>Awaz</small>
+          <select
+            value={voiceChoice}
+            onChange={(e) => { setVoiceChoice(e.target.value); localStorage.setItem("faheem-ai-voice", e.target.value); }}
+          >
+            <option value="urdu-female">🇵🇰 Urdu — Uzma (aurat)</option>
+            <option value="urdu-male">🇵🇰 Urdu — Asad (mard)</option>
+            <option value="english">English awaz</option>
+          </select>
+          {voiceChoice !== "english" && !voiceList.some((v) => v.lang.toLowerCase().startsWith("ur")) && voiceList.length > 0 && (
+            <small className="warnline">Urdu awaz nahi mili. Dashboard ko Microsoft Edge mein kholein (Desktop shortcut khud Edge mein kholta hai).</small>
+          )}
+          <button className="testvoice" onClick={() => speak(voiceChoice === "english" ? "Hello Faheem, this is your dashboard voice." : "السلام علیکم فہیم، میں آپ کا اے آئی ڈیش بورڈ ہوں۔").then(() => setMode("idle"))}>▶ Awaz test karein</button>
+        </div>
 
         {last && (
           <div className="last">

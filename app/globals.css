@@ -226,3 +226,46 @@ option { background: var(--bg); color: var(--text); }
 
 /* v3.2.9: update banner top par, saaf dikhe */
 .upbanner { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 50; cursor: pointer; padding: 8px 16px; border-radius: 999px; font-size: 13px; color: #fff; background: linear-gradient(135deg, #22c55e, #0ea5e9); box-shadow: 0 0 24px rgba(34,197,94,.6); animation: glowup 1.6s ease-in-out infinite; white-space: nowrap; }
+
+/* v3.4 Agent Mode (Cursor jaisa) */
+.agentpage { position: relative; height: 100vh; display: flex; flex-direction: column; }
+.agentpage .topbar { position: relative; z-index: 3; }
+.ag-grid { position: relative; z-index: 2; flex: 1; min-height: 0; display: grid; grid-template-columns: 220px minmax(340px, 1fr) minmax(380px, 1.25fr); gap: 10px; padding: 0 10px 44px; }
+.ag-grid .panel { background: var(--glass); border: 1px solid var(--line); border-radius: 16px; backdrop-filter: blur(14px); min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.ag-files { padding: 10px; overflow-y: auto !important; }
+.ag-h { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 6px; }
+.ag-file { display: block; width: 100%; text-align: left; background: none; border: 0; color: var(--text); font-size: 12px; padding: 4px 8px; border-radius: 8px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ag-file:hover, .ag-file.on { background: var(--field); }
+.ag-file.dir { color: var(--muted); cursor: default; }
+.ag-todo { font-size: 12px; padding: 2px 0; color: var(--text); }
+.ag-todo.done { color: var(--muted); text-decoration: line-through; }
+.ag-chat .ag-log { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.ag-user { align-self: flex-end; max-width: 90%; background: var(--user); color: #fff; padding: 8px 12px; border-radius: 14px; font-size: 13px; white-space: pre-wrap; }
+.ag-thought { font-size: 13px; line-height: 1.45; white-space: pre-wrap; }
+.ag-brain { font-size: 11px; color: var(--muted); }
+.ag-tool { font-size: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--field); }
+.ag-tool summary { cursor: pointer; padding: 5px 9px; list-style: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ag-tool summary span { color: var(--muted); font-family: ui-monospace, Consolas, monospace; }
+.ag-tool.ok { border-color: rgba(34,197,94,.35); }
+.ag-tool.bad { border-color: rgba(248,113,113,.5); }
+.ag-tool.run summary { animation: beat 1.2s infinite; }
+.ag-tool pre { margin: 0; padding: 8px 10px; font-size: 11px; max-height: 220px; overflow: auto; white-space: pre-wrap; border-top: 1px solid var(--line); }
+.ag-done { font-size: 13px; padding: 10px 12px; border-radius: 12px; background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.35); white-space: pre-wrap; }
+.ag-err { font-size: 13px; padding: 10px 12px; border-radius: 12px; background: rgba(248,113,113,.12); border: 1px solid rgba(248,113,113,.4); }
+.ag-input { display: flex; gap: 6px; align-items: flex-end; padding: 8px; border-top: 1px solid var(--line); }
+.ag-input textarea { flex: 1; resize: none; background: var(--field); color: var(--text); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; font: inherit; font-size: 13px; }
+.ag-input > button:last-child { padding: 8px 14px; border-radius: 12px; border: 0; background: var(--accent); color: var(--btntext, #fff); cursor: pointer; }
+.ag-input .stopbtn { background: #ef4444 !important; }
+.ag-imgs { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.ag-imgs img { width: 64px; height: 48px; object-fit: cover; border-radius: 8px; }
+.ag-imgs.pending { padding: 6px 8px 0; }
+.ag-imgs.pending span { position: relative; }
+.ag-imgs.pending button { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; border-radius: 50%; border: 0; font-size: 10px; background: #000; color: #fff; cursor: pointer; }
+.ag-view .ws-tabs { padding: 8px 10px; align-items: center; }
+.ag-open { text-decoration: none; padding: 4px 8px; }
+.ag-frame { flex: 1; width: 100%; border: 0; background: #fff; }
+.ag-code { flex: 1; margin: 0; overflow: auto; padding: 10px 12px; font-size: 12px; font-family: ui-monospace, Consolas, monospace; white-space: pre; }
+.ag-select { background: var(--field); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 5px 8px; font-size: 12px; max-width: 170px; }
+.hello.small h2 { font-size: 20px; margin-bottom: 6px; }
+@media (max-width: 1000px) { .ag-grid { grid-template-columns: 1fr; grid-auto-rows: minmax(260px, auto); overflow-y: auto; } .ag-files { max-height: 160px; } }
+.agentlink { width: auto !important; padding: 0 10px; font-size: 12px; gap: 4px; text-decoration: none; }

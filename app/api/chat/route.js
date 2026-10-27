@@ -1,6 +1,7 @@
 import vm from "vm";
 import { getProviders, callProvider, isCooling, visionProviders } from "../../../lib/providers";
 import { AGENTS, BASE, routeAgent } from "../../../lib/agents";
+import { DESIGN_RULES, designCheck } from "../../../lib/design";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -211,7 +212,9 @@ export async function POST(req) {
 - Stay on the user's exact request (their business, products, currency). Use only the business name the user gives (or the one in the reference picture); do NOT call it Vestire unless the user says Vestire. If a reference picture is attached, match its layout and look closely.
 - JavaScript must be valid: every template literal opened with a backtick is closed with a backtick.
 - If the user asks for "all pages" / complete store / multiple pages: build them all inside this ONE file as a single-page app with hash routing (#home, #shop, #product, #cart, #checkout, #about, #contact, #account): working header nav, category filters and sort, product detail with size/color, cart with quantity and totals saved in localStorage, checkout form with validation and order confirmation.
-- After the code block, write 3-5 short lines saying what was built.`;
+- After the code block, write 3-5 short lines saying what was built.
+
+${DESIGN_RULES}`;
           step(agent.name, "🔨 Plan ke mutabiq poora code likh raha hoon…");
           // Sirf naya request + plan: purani chat (jaise pichla store) naye kaam mein na mile.
           const fresh = [...system, { role: "system", content: `Plan:\n${plan}\n\n${RULES}` }, { role: "user", content: design ? `${lastUser}\n\nREFERENCE DESIGN (rebuild this closely):\n${design}` : lastUser }];
@@ -220,6 +223,9 @@ export async function POST(req) {
           for (let round = 1; round <= 3; round++) {
             const code = (reply.match(/```html\s*([\s\S]*?)```/i) || [])[1] || "";
             const issues = staticCheck(code, rawText);
+            const tips = code ? designCheck(code) : [];
+            // Design tips sirf pehle 2 rounds mein theek karwayein; asli ghaltiyan har round.
+            if (round < 3) issues.push(...tips);
             step("🧪 Tester Agent", `Test ${round}: code check kar raha hoon…`);
             if (!issues.length) {
               try {
@@ -239,7 +245,8 @@ export async function POST(req) {
             ({ reply, p } = await ask([...fresh, { role: "assistant", content: reply }, { role: "user", content: `Fix ALL these problems and return the COMPLETE corrected page again:\n- ${issues.join("\n- ")}\n\n${RULES}` }], "Fix"));
             fixes++;
           }
-          step(agent.name, left.length ? `⚠ Ban gaya, lekin ${left.length} masle baqi: ${left.join(" | ").slice(0, 200)}` : `✓ Tayyar${fixes ? ` (${fixes} dafa theek kiya)` : ""}.`);
+          const real = left.filter((x) => !x.startsWith("Design:"));
+          step(agent.name, real.length ? `⚠ Ban gaya, lekin ${real.length} masle baqi: ${real.join(" | ").slice(0, 200)}` : `✓ Tayyar${fixes ? ` (${fixes} dafa theek kiya)` : ""}${left.length ? ` · design tips: ${left.join(" | ").slice(0, 160)}` : ""}.`);
           emit({ type: "done", reply: `**Plan**\n${plan}\n\n${reply}`, provider: p.name, model: p.model, agent: { id: agent.id, name: agent.name, icon: agent.icon }, skipped, task: "web" });
           ctrl.close();
           return;

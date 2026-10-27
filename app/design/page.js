@@ -27,6 +27,16 @@ export default function Design() {
   const [dom, setDom] = useState("ux");
   const [res, setRes] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [code, setCode] = useState("");
+  const [audit, setAudit] = useState(null);
+  const [auditing, setAuditing] = useState(false);
+
+  async function runAudit(e) {
+    e?.preventDefault(); if (!code.trim()) return;
+    setAuditing(true); setAudit(null);
+    const d = await fetch("/api/design", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ html: code }) }).then((r) => r.json()).catch((e) => ({ error: e.message }));
+    setAuditing(false); setAudit(d);
+  }
 
   async function gen(text) {
     const v = (text ?? q).trim(); if (!v) return;
@@ -108,7 +118,29 @@ export default function Design() {
             ))}
           </div>
         </section>
-        <p className="muted small">Data: UI UX Pro Max (MIT) · nextlevelbuilder/ui-ux-pro-max-skill</p>
+        <section className="card panel">
+          <h3>Design Audit · Impeccable</h3>
+          <p className="muted">Apni website ka HTML (CSS ke sath) yahan paste karein. 62 Impeccable checks aur UX Pro checks bina AI aur bina key chalte hain.</p>
+          <form onSubmit={runAudit}>
+            <label htmlFor="auditcode" className="sr">HTML code</label>
+            <textarea id="auditcode" className="auditbox" rows={8} value={code} onChange={(e) => setCode(e.target.value)} placeholder="<!doctype html> ... yahan paste karein" />
+            <button type="submit" disabled={auditing || !code.trim()}>{auditing ? "Jaanch raha…" : "Audit karo"}</button>
+          </form>
+          {audit && (
+            <div className="auditres" data-audit>
+              {audit.error && <p className="warnline">{audit.error}</p>}
+              {audit.impeccable && !audit.impeccable.ok && <p className="warnline">Impeccable nahi chala: {audit.impeccable.reason}</p>}
+              {audit.impeccable?.ok && (
+                <p><b>Impeccable:</b> {audit.impeccable.findings.length === 0 ? "Koi masla nahi, shabaash." : `${audit.impeccable.counts.error} error, ${audit.impeccable.counts.warning} warning, ${audit.impeccable.counts.advisory} mashwara`}</p>
+              )}
+              {audit.impeccable?.findings?.slice(0, 25).map((f, i) => (
+                <div key={i} className={`tmsg sev-${f.severity}`}><b>{f.name}</b>{f.snippet ? ` · ${f.snippet}` : ""}<div className="muted small">{f.description}</div></div>
+              ))}
+              {audit.issues?.length > 0 && <p><b>UX Pro:</b> {audit.issues.join(" · ")}</p>}
+            </div>
+          )}
+        </section>
+        <p className="muted small">Data: UI UX Pro Max (MIT) · nextlevelbuilder/ui-ux-pro-max-skill · Checks: Impeccable (Apache-2.0) · pbakaus/impeccable</p>
       </div>
     </main>
   );

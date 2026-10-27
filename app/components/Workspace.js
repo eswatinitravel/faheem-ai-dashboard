@@ -14,16 +14,28 @@ function extractHtml(text) {
   return m ? m[1] : null;
 }
 
-function ImageCard({ url, i }) {
+// Free image server kabhi "busy" hota hai: pictures baari baari, aur fail ho to khud dobara.
+function ImageCard({ url, i, onOpen }) {
   const [ok, setOk] = useState(false);
-  const [err, setErr] = useState(false);
+  const [tries, setTries] = useState(0);
+  const [src, setSrc] = useState(null);
+  useEffect(() => { const t = setTimeout(() => setSrc(url), i * 4000); return () => clearTimeout(t); }, [url, i]);
+  function retry() {
+    if (tries >= 5) return;
+    setTimeout(() => { setTries((n) => n + 1); setSrc(url + "&r=" + Date.now()); }, 11000);
+  }
   return (
-    <a className={"ws-img" + (ok ? " ok" : "")} href={url} target="_blank" rel="noreferrer">
-      {!ok && !err && <div className="ws-shimmer"><span>Ban rahi hai… {i + 1}</span></div>}
-      {err && <div className="ws-shimmer"><span>Server busy — ⟳ dobara</span></div>}
-      <img src={url} alt="" onLoad={() => setOk(true)} onError={() => setErr(true)} />
-    </a>
+    <div className={"ws-img" + (ok ? " ok" : "")} onClick={() => ok && onOpen(src)} role="button">
+      {!ok && <div className="ws-shimmer"><span>{tries ? `Server busy — dobara try ${tries}/5…` : `Ban rahi hai… ${i + 1}`}</span></div>}
+      {src && <img src={src} alt="" onLoad={() => setOk(true)} onError={retry} />}
+    </div>
   );
+}
+
+// Preview ke andar bhi tooti pictures khud dobara load hon.
+const IMG_RETRY = `<script>(function(){function fix(img){var n=+(img.dataset.r||0);if(n>=5)return;img.dataset.r=n+1;setTimeout(function(){var u=img.src.split("&r=")[0];img.src=u+(u.indexOf("?")<0?"?":"&")+"r="+Date.now();},6000+n*5000);}document.addEventListener("error",function(e){if(e.target&&e.target.tagName==="IMG")fix(e.target);},true);var imgs=document.getElementsByTagName("img");for(var i=0;i<imgs.length;i++){(function(im,k){if(/pollinations/.test(im.getAttribute("src")||"")&&k>1){var s=im.getAttribute("src");im.removeAttribute("src");setTimeout(function(){im.src=s;},k*2500);}})(imgs[i],i);}})();<\/script>`;
+function withRetry(html) {
+  return /<\/body>/i.test(html) ? html.replace(/<\/body>/i, IMG_RETRY + "</body>") : html + IMG_RETRY;
 }
 
 function Storyboard({ urls }) {
@@ -57,7 +69,11 @@ export default function Workspace({ job, log, onClose }) {
 
   const html = extractHtml(job?.reply);
   const att = (job?.attached || []).filter((a) => (a.kind === "image" && a.dataUrl) || (a.kind === "video" && a.url));
-  const view = site ? "site" : job?.video ? "video" : job?.images ? "image" : html ? "html" : att.length && job?.busy ? "attached" : job?.reply ? "text" : "wait";
+  const [tab, setTab] = useState(null);
+  const [big, setBig] = useState(null);
+  useEffect(() => { setTab(null); }, [job?.task, job?.busy]);
+  const auto = site ? "site" : html ? "html" : job?.video ? "video" : job?.images ? "image" : att.length && job?.busy ? "attached" : job?.reply ? "text" : "wait";
+  const view = tab && ((tab === "html" && html) || (tab === "image" && job?.images)) ? tab : auto;
 
   return (
     <section className="ws panel">
@@ -71,6 +87,13 @@ export default function Workspace({ job, log, onClose }) {
         <button className="icon-btn" onClick={onClose} title="Band karein">✕</button>
       </div>
 
+      {html && job?.images && !site && (
+        <div className="ws-tabs">
+          <button className={view === "html" ? "on" : ""} onClick={() => setTab("html")}>🌐 Website</button>
+          <button className={view === "image" ? "on" : ""} onClick={() => setTab("image")}>🖼 Pictures</button>
+        </div>
+      )}
+      {big && <div className="ws-big" onClick={() => setBig(null)}><img src={big} alt="" /><small>Band karne ke liye click · <a href={big} download target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>Download</a></small></div>}
       <div className="ws-stage">
         {view === "wait" && <div className="ws-wait"><div className="ws-orb" /><span>Agents kaam shuru kar rahe hain…</span></div>}
         {view === "attached" && (
@@ -79,9 +102,9 @@ export default function Workspace({ job, log, onClose }) {
             <small className="muted">Agents aap ki file dekh rahe hain…</small>
           </div>
         )}
-        {view === "image" && <div className="ws-grid">{job.images.map((u, i) => <ImageCard key={u} url={u} i={i} />)}</div>}
+        {view === "image" && <div className="ws-grid">{job.images.map((u, i) => <ImageCard key={u} url={u} i={i} onOpen={setBig} />)}</div>}
         {view === "video" && <Storyboard urls={job.video} />}
-        {view === "html" && <iframe className="ws-frame" title="Live preview" srcDoc={html} sandbox="allow-scripts" />}
+        {view === "html" && <iframe className="ws-frame" title="Live preview" srcDoc={withRetry(html)} sandbox="allow-scripts allow-forms allow-modals" />}
         {view === "site" && <iframe className="ws-frame" title="Website" src={site} />}
         {view === "text" && <pre className="ws-typed">{typed}<span className="caret" /></pre>}
       </div>

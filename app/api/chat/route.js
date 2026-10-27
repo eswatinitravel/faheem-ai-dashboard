@@ -1,5 +1,5 @@
 import vm from "vm";
-import { getProviders, callProvider, isCooling } from "../../../lib/providers";
+import { getProviders, callProvider, isCooling, visionProviders } from "../../../lib/providers";
 import { AGENTS, BASE, routeAgent } from "../../../lib/agents";
 
 export const dynamic = "force-dynamic";
@@ -12,9 +12,11 @@ export async function GET() {
 }
 
 // What should the live workspace show while the agents work?
-function detectTask(text) {
+function detectTask(text, hasImage = false) {
   const t = text.toLowerCase();
-  if (/(website|web site|landing|html|page bana|homepage|online store|store bana|store ka|web app|navbar|hero section|portfolio site)/.test(t)) return "web";
+  if (/(website|web site|webpage|web page|\bsite\b|landing|html|pages?\s*(bana|banao|banado|design|build)|homepage|home page|online store|e-?commerce|store bana|store ka|shop bana|web app|navbar|hero section|portfolio site|all pages|sari pages|saray pages|tamam pages)/.test(t)) return "web";
+  // Picture ke sath "is jaisa bana do / same design / copy" = website ka reference.
+  if (hasImage && /(jais[aiey]|same|copy|clone|replica|is tarah|isi tarah|aisa hi|aisi hi|design|layout|bana|build|create|make|store|shop|page)/.test(t)) return "web";
   if (/(video|vedio|vidio|reel|clip|animation)/.test(t)) return "video";
   if (/(picture|pic\b|image|photo|tasveer|tasweer|tasvir|logo|poster|banner|wallpaper|drawing|draw)/.test(t)) return "image";
   if (/(code|script|function|python|javascript|react|api|bug|error)/.test(t)) return "code";
@@ -74,9 +76,10 @@ export async function POST(req) {
   const lastMsg = [...history].reverse().find((m) => m?.role === "user");
   const images = (lastMsg?.attachments || []).filter((a) => a.kind === "image" && typeof a.dataUrl === "string" && a.dataUrl.startsWith("data:image/")).slice(0, 4);
 
-  const agent = routeAgent(lastUser, body?.agent);
   const rawText = typeof lastMsg?.content === "string" ? lastMsg.content : lastUser;
-  const task = detectTask(rawText);
+  const task = detectTask(rawText, images.length > 0);
+  // Website ka kaam hamesha Website Master ko (warna "Vestire" jaisa lafz Business Master ko bhej deta tha).
+  const agent = task === "web" && (!body?.agent || body.agent === "auto") ? routeAgent("", "web") : routeAgent(lastUser, body?.agent);
 
   const system = [{ role: "system", content: `${BASE}\n\n${agent.prompt}` }];
   if (task === "web") system.push({ role: "system", content: "When you build a page or section, include ONE complete self-contained ```html code block (inline CSS/JS, no external build) so it can be previewed live." });
@@ -112,7 +115,7 @@ export async function POST(req) {
       step("Master Agent", `Yeh kaam ${agent.icon} ${agent.name} ko diya.`);
       emit({ type: "task", task, agent: { id: agent.id, name: agent.name, icon: agent.icon } });
 
-      if (images.length) step("Vision Agent", providers.some((p) => p.vision) ? `🖼 ${images.length} picture mili — Gemini dekh raha hai.` : `🖼 ${images.length} picture mili — dekhne ke liye Gemini key chahiye (Options > Keys).`);
+      if (images.length) step("Vision Agent", visionProviders(providers).length ? `🖼 ${images.length} picture mili — ${visionProviders(providers).map((v) => v.name).join(" / ")} dekhega.` : `🖼 ${images.length} picture mili — dekhne ke liye Gemini ya Groq key chahiye (Options > Keys).`);
       if (task === "image") {
         const seed = Math.floor(Math.random() * 1e6);
         step("Image Agent", "🎨 Tasveer ban rahi hai (free image model)…");
@@ -161,8 +164,8 @@ export async function POST(req) {
           // 👁 Vision Agent: pehle Gemini picture ko tafseel se parhta hai; yeh bayan phir har brain ko milta hai.
           let design = "", visionErr = "";
           if (images.length) {
-            const vp = providers.filter((x) => x.vision);
-            if (!vp.length) step("👁 Vision Agent", "⚠ Gemini key nahi mili — picture dekhi nahi ja sakti. Options > Keys mein AI Studio key daalein.");
+            const vp = visionProviders(providers).filter((x) => !isCooling(x.id));
+            if (!vp.length) step("👁 Vision Agent", "⚠ Gemini/Groq key nahi mili — picture dekhi nahi ja sakti. Options > Keys mein key daalein.");
             for (const v of vp) {
               step("👁 Vision Agent", `${v.name} picture ko tafseel se parh raha hai…`);
               try {
@@ -179,8 +182,8 @@ export async function POST(req) {
             }
             if (!design) {
               // Andaze se ghalat website banane ke bajaye saaf bata dein ke masla kya hai.
-              const why = vp.length ? (visionErr || "Gemini ne jawab nahi diya") : "Gemini key load nahi hui";
-              const msg = `⚠ **Picture dekhi nahi ja saki, is liye website nahi banayi** (andaze se ghalat banti).\n\n**Wajah:** ${why}\n\n**Hal:** ⋯ Options → Keys mein Gemini ke khane mein AI Studio key daal kar Save karein, phir tray icon → Restart. Agar key pehle se hai to yeh wajah wali line Hark ko bhej dein.`;
+              const why = vp.length ? (visionErr || "Vision brain ne jawab nahi diya") : "Gemini ya Groq key load nahi hui";
+              const msg = `⚠ **Picture dekhi nahi ja saki, is liye website nahi banayi** (andaze se ghalat banti).\n\n**Wajah:** ${why}\n\n**Hal:** ⋯ Options → Keys mein Groq (gsk_…) ya Gemini key daal kar Save karein, phir tray icon → Restart. Agar key pehle se hai to yeh wajah wali line Hark ko bhej dein.`;
               emit({ type: "done", reply: msg, provider: "Vision Agent", model: "-", agent: { id: agent.id, name: agent.name, icon: agent.icon }, skipped, task: "text" });
               ctrl.close();
               return;
@@ -207,12 +210,13 @@ export async function POST(req) {
 - Modern, responsive, polished design. Mobile-friendly.
 - Stay on the user's exact request (their business, products, currency). Use only the business name the user gives (or the one in the reference picture); do NOT call it Vestire unless the user says Vestire. If a reference picture is attached, match its layout and look closely.
 - JavaScript must be valid: every template literal opened with a backtick is closed with a backtick.
+- If the user asks for "all pages" / complete store / multiple pages: build them all inside this ONE file as a single-page app with hash routing (#home, #shop, #product, #cart, #checkout, #about, #contact, #account): working header nav, category filters and sort, product detail with size/color, cart with quantity and totals saved in localStorage, checkout form with validation and order confirmation.
 - After the code block, write 3-5 short lines saying what was built.`;
           step(agent.name, "🔨 Plan ke mutabiq poora code likh raha hoon…");
           // Sirf naya request + plan: purani chat (jaise pichla store) naye kaam mein na mile.
           const fresh = [...system, { role: "system", content: `Plan:\n${plan}\n\n${RULES}` }, { role: "user", content: design ? `${lastUser}\n\nREFERENCE DESIGN (rebuild this closely):\n${design}` : lastUser }];
           let { reply, p } = await ask(fresh, "Build");
-          let fixes = 0;
+          let fixes = 0, left = [];
           for (let round = 1; round <= 3; round++) {
             const code = (reply.match(/```html\s*([\s\S]*?)```/i) || [])[1] || "";
             const issues = staticCheck(code, rawText);
@@ -227,6 +231,7 @@ export async function POST(req) {
                 if (j.ok === false && Array.isArray(j.issues)) issues.push(...j.issues.slice(0, 5));
               } catch { step("🧪 Tester Agent", "AI tester abhi masroof — basic tests pass."); }
             }
+            left = issues;
             if (!issues.length) { step("🧪 Tester Agent", "✅ Sab test pass — koi galti nahi mili."); break; }
             step("🧪 Tester Agent", `⚠ ${issues.length} masle: ${issues.join(" | ").slice(0, 300)}`);
             if (round === 3) break;
@@ -234,7 +239,7 @@ export async function POST(req) {
             ({ reply, p } = await ask([...fresh, { role: "assistant", content: reply }, { role: "user", content: `Fix ALL these problems and return the COMPLETE corrected page again:\n- ${issues.join("\n- ")}\n\n${RULES}` }], "Fix"));
             fixes++;
           }
-          step(agent.name, `✓ Tayyar${fixes ? ` (${fixes} dafa theek kiya)` : ""}.`);
+          step(agent.name, left.length ? `⚠ Ban gaya, lekin ${left.length} masle baqi: ${left.join(" | ").slice(0, 200)}` : `✓ Tayyar${fixes ? ` (${fixes} dafa theek kiya)` : ""}.`);
           emit({ type: "done", reply: `**Plan**\n${plan}\n\n${reply}`, provider: p.name, model: p.model, agent: { id: agent.id, name: agent.name, icon: agent.icon }, skipped, task: "web" });
           ctrl.close();
           return;
@@ -247,7 +252,8 @@ export async function POST(req) {
         if (isCooling(p.id)) { skipped.push(`${p.name}: cooling down`); step("Brain", `⏭ ${p.name} abhi aaraam par — agla.`); continue; }
         step("Brain", `⚡ ${p.name} se jawab maang raha hoon…`);
         try {
-          const reply = await callProvider(p, images.length ? (p.vision ? visionMessages : blindMessages) : messages);
+          const vpp = images.length && !p.vision && p.visionModel ? { ...p, model: p.visionModel } : p;
+          const reply = await callProvider(vpp, images.length ? (vpp.vision || vpp.visionModel === vpp.model ? visionMessages : blindMessages) : messages);
           step(agent.name, "✓ Jawab tayyar.");
           emit({ type: "done", reply, provider: p.name, model: p.model, agent: { id: agent.id, name: agent.name, icon: agent.icon }, skipped, task });
           ctrl.close();

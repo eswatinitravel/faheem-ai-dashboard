@@ -13,18 +13,27 @@ Add-Type -AssemblyName System.Drawing
 
 function Test-Up { try { Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 2 | Out-Null; return $true } catch { return $false } }
 
+function Stop-Server {
+  Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
+}
+
 function Start-Server {
-  if (Test-Up) { return }
-  if (-not (Test-Path (Join-Path $root ".next\BUILD_ID"))) {
-    Start-Process -FilePath "cmd.exe" -ArgumentList "/c npm run build" -WorkingDirectory $root -WindowStyle Hidden -Wait
+  # Naya ZIP nikala ho to purana build na chale: version badle to dobara build.
+  $ver = (Get-Content (Join-Path $root "package.json") -Raw | ConvertFrom-Json).version
+  $stamp = Join-Path $root ".next\faheem-version.txt"
+  $built = if (Test-Path $stamp) { (Get-Content $stamp -Raw).Trim() } else { "" }
+  $needBuild = (-not (Test-Path (Join-Path $root ".next\BUILD_ID"))) -or ($built -ne $ver)
+  if (-not $needBuild -and (Test-Up)) { return }
+  if ($needBuild) {
+    Stop-Server
+    if (-not (Test-Path (Join-Path $root "node_modules"))) { Start-Process -FilePath "cmd.exe" -ArgumentList "/c npm install --no-audit --no-fund" -WorkingDirectory $root -WindowStyle Hidden -Wait }
+    Start-Process -FilePath "cmd.exe" -ArgumentList "/c npm install --no-audit --no-fund && npm run build" -WorkingDirectory $root -WindowStyle Hidden -Wait
+    if (Test-Path (Join-Path $root ".next\BUILD_ID")) { Set-Content -Path $stamp -Value $ver }
   }
   Start-Process -FilePath "cmd.exe" -ArgumentList "/c npm run start" -WorkingDirectory $root -WindowStyle Hidden
   for ($i = 0; $i -lt 80; $i++) { Start-Sleep -Milliseconds 700; if (Test-Up) { break } }
 }
 
-function Stop-Server {
-  Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
-}
 
 function Open-App {
   $edge = @("${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe", "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1

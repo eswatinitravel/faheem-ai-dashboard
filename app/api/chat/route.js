@@ -27,6 +27,7 @@ export async function POST(req) {
 
   const system = [{ role: "system", content: `${BASE}\n\n${agent.prompt}` }];
   if (body?.voice) system.push({ role: "system", content: "The user is talking by voice and your reply will be read aloud. Answer in 1-4 short spoken sentences, no markdown, no lists, no code unless asked." });
+  if (body?.voice && body?.voiceLang === "ur") system.push({ role: "system", content: "Write this spoken reply in proper Urdu script (اردو رسم الخط), not Roman Urdu and not English, so the Urdu voice pronounces it correctly. Keep technical words like npm or website in English letters only if needed." });
   const messages = [...system, ...clean];
 
   // Brain order: manual choice first, else the specialist's favourite free providers.

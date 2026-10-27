@@ -50,7 +50,7 @@ export default function Settings({ onClose }) {
         {cfg && (
           <div className="field">
             <div className="field-head"><b>Free pipeline (bina key) ✓</b></div>
-            <small className="muted">Pollinations + LLM7: koi key nahi chahiye. Key wale brains busy hon ya na hon to yeh khud jawab dete hain.</small>
+            <small className="muted">Pollinations + LLM7: koi key nahi chahiye. Key wale brains busy hon ya na hon to yeh khud jawab dete hain. Dyad ke liye custom provider: Base URL http://localhost:3000/api/v1 , key: free , model: faheem-free</small>
             <select value={form.FREE_ENABLED || "true"} onChange={set("FREE_ENABLED")}>
               <option value="true">On</option>
               <option value="false">Off</option>

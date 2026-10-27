@@ -7,10 +7,13 @@ export default function VersionBadge() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   useEffect(() => {
-    const check = () => fetch("/api/update").then((r) => r.json()).then(setU).catch(() => {});
+    // Har 3 minute, aur jab bhi window par wapas aayein, GitHub se naya version dekho.
+    const check = () => fetch(`/api/update?t=${Date.now()}`, { cache: "no-store" }).then((r) => r.json()).then(setU).catch(() => setU((o) => o || { current: "?", error: "server se rabta nahi" }));
     check();
-    const id = setInterval(check, 30 * 60 * 1000);
-    return () => clearInterval(id);
+    const id = setInterval(check, 3 * 60 * 1000);
+    const onFocus = () => check();
+    window.addEventListener("focus", onFocus);
+    return () => { clearInterval(id); window.removeEventListener("focus", onFocus); };
   }, []);
   if (!u) return null;
   async function run() {
@@ -29,14 +32,19 @@ export default function VersionBadge() {
     }, 10000);
   }
   return (
+    <>
+    {u.available && !busy && (
+      <div className="upbanner" onClick={run}>🎉 Naya version v{u.latest} aa gaya (aap v{u.current} par hain) — <b>abhi update karein</b></div>
+    )}
     <div className="verbadge">
       {u.available && (
         <button className="newup" disabled={busy} onClick={run} title={`v${u.latest} install karein`}>
           <i /> {busy ? "Updating…" : `New update · v${u.latest}`}
         </button>
       )}
-      <div className="vline"><span>v{u.current}</span>{!u.available && <small>latest ✓</small>}</div>
+      <div className="vline"><span>v{u.current}</span>{u.error ? <small title={u.error} style={{ color: "#f87171" }}>update check fail</small> : !u.available && <small>latest ✓</small>}</div>
       {msg && <small>{msg}</small>}
     </div>
+    </>
   );
 }

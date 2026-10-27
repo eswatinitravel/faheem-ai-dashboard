@@ -156,17 +156,19 @@ export async function POST(req) {
       // ---- Website / code: Plan → Build → Test → Fix ----
       if (task === "web" || (task === "code" && /html|page|website|store|site|landing/i.test(rawText))) {
         try {
-          const wantsBanner = /banner|logo|poster|picture|tasveer|image|photo/i.test(rawText);
-          if (wantsBanner) {
-            const seed = Math.floor(Math.random() * 1e6);
-            step("Image Agent", "🎨 Banner/picture bhi sath ban rahi hai…");
-            emit({ type: "image", urls: [imageUrl(`${rawText}, professional wide web banner`, seed, 1280, 512), imageUrl(`${rawText}, professional wide web banner`, seed + 1, 1280, 512)] });
-          }
+          // Banner sirf tab jab saaf manga ho (attached picture ka zikr banner nahi).
+          const wantsBanner = /\b(banner|logo|poster)\b/i.test(rawText);
           step("🧠 Planner Agent", "Soch raha hoon: kaam ko hisson mein baant raha hoon…");
           const plan = (await ask([
             { role: "system", content: "You are a senior product planner. Write a short numbered build plan (max 8 lines) for EXACTLY the user's request: keep their business name, products, currency (PKR if Pakistani) and language. Sections, exact features, interactions, realistic data, colors. If a design reference picture is attached, describe its layout and style and follow it. No code." },
             { role: "user", content: rawText + (images.length ? "\n(Design reference picture attached: copy its layout and style.)" : "") },
           ], "Plan")).reply.trim();
+          if (wantsBanner) {
+            const seed = Math.floor(Math.random() * 1e6);
+            const topic = plan.replace(/[*#`_]/g, "").split("\n").filter(Boolean).slice(0, 2).join(" ").slice(0, 220);
+            step("Image Agent", "🎨 Banner bhi sath ban raha hai…");
+            emit({ type: "image", urls: [imageUrl(`${topic}, professional wide website hero banner, no text`, seed, 1280, 512)] });
+          }
           step("🧠 Planner Agent", plan.split("\n").filter(Boolean).slice(0, 8).join(" · ").slice(0, 400));
 
           const RULES = `Build rules (must follow all):

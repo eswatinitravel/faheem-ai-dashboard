@@ -30,6 +30,8 @@ try {
   Write-Host "Build..."
   cmd /c "npm run build"
   if ($LASTEXITCODE -ne 0) { throw "build fail" }
+  $ver = (Get-Content (Join-Path $root "package.json") -Raw | ConvertFrom-Json).version
+  Set-Content -Path (Join-Path $root ".next\faheem-version.txt") -Value $ver
 
   try { & (Join-Path $root "scripts\make-shortcut.ps1") } catch {}
   Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue

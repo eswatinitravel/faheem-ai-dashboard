@@ -47,3 +47,7 @@
 
 ## v3.6.3
 - Update button: ab UPDATE.bat explorer.exe se khulta hai (double-click jaisa), app window band hoti hai, dikhne wali install window chalti hai, phir app khud dobara khulti hai. Ek waqt mein ek hi updater; log data/update.log.
+
+## v3.7.0
+- 2 naye free brains: Z.ai GLM (glm-4.7-flash, hamesha free) aur Mistral (mistral-small-latest, free Experiment plan). Settings mein key boxes; Agent, chat aur /v1 order mein Groq ke baad.
+- Cerebras nahi dala: ab sirf $5 trial, card zaroori, 30 din.

@@ -5,7 +5,7 @@ import Background from "../components/Background";
 import VersionBadge from "../components/VersionBadge";
 import { prepareFiles } from "../../lib/attach";
 
-const ICON = { list_files: "📂", read_file: "📖", write_file: "✍️", edit_file: "✏️", delete_file: "🗑", search: "🔍", run_command: "▶", check: "🧪", web_fetch: "🌐", image_url: "🎨" };
+const ICON = { list_files: "📂", read_file: "📖", write_file: "✍️", edit_file: "✏️", delete_file: "🗑", search: "🔍", run_command: "▶", check: "🧪", test: "🖱", web_fetch: "🌐", image_url: "🎨" };
 
 // 🤖 Agent Mode — Cursor jaisa: baayen files, beech mein agent ka kaam, daayen live preview / code.
 export default function AgentPage() {

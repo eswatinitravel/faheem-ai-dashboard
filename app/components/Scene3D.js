@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { renderScale } from "../../lib/prefs";
 
 // v2.6 3D core (Stitch-style): a liquid gradient orb with noise displacement + fresnel glow,
 // a soft halo, thin orbit lines and floating dust.
@@ -30,7 +31,7 @@ float snoise(vec3 v){
   return 42.0*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
 }`;
 
-export default function Scene3D({ mode = "idle", levelRef }) {
+export default function Scene3D({ mode = "idle", levelRef, quality = "auto", detail = "normal" }) {
   const mount = useRef(null);
   const modeRef = useRef(mode);
   modeRef.current = mode;
@@ -43,7 +44,7 @@ export default function Scene3D({ mode = "idle", levelRef }) {
     } catch {
       return; // no WebGL: CSS aurora still shows
     }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+    renderer.setPixelRatio(quality === "auto" ? Math.min(window.devicePixelRatio, 1.75) : renderScale(quality));
     renderer.setSize(el.clientWidth, el.clientHeight);
     el.appendChild(renderer.domElement);
 
@@ -89,7 +90,7 @@ export default function Scene3D({ mode = "idle", levelRef }) {
           gl_FragColor = vec4(col, 0.92);
         }`,
     });
-    const orb = new THREE.Mesh(new THREE.IcosahedronGeometry(1.35, 64), orbMat);
+    const orb = new THREE.Mesh(new THREE.IcosahedronGeometry(1.35, detail === "ultra" ? 128 : quality === "hd" ? 32 : 64), orbMat);
     group.add(orb);
 
     // soft halo sprite
@@ -117,7 +118,7 @@ export default function Scene3D({ mode = "idle", levelRef }) {
       return m;
     });
 
-    const count = 900;
+    const count = detail === "ultra" ? 2600 : 900;
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
       pos[i * 3] = (Math.random() - 0.5) * 30;
@@ -188,7 +189,7 @@ export default function Scene3D({ mode = "idle", levelRef }) {
       renderer.dispose();
       if (renderer.domElement.parentNode === el) el.removeChild(renderer.domElement);
     };
-  }, [levelRef]);
+  }, [levelRef, quality, detail]);
 
   return <div ref={mount} className="scene" aria-hidden="true" />;
 }

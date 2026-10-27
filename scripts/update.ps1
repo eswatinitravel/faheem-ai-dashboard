@@ -2,6 +2,20 @@
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 $Host.UI.RawUI.WindowTitle = "Faheem AI - Update"
+# Sirf ek updater chale (do dafa click ho jaye to bhi).
+$created = $false
+$mx = New-Object System.Threading.Mutex($true, "Global\FaheemAIUpdate", [ref]$created)
+if (-not $created) { Write-Host "Update pehle se chal raha hai."; Start-Sleep -Seconds 3; exit }
+$logDir = Join-Path $root "data"; if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir | Out-Null }
+try { Start-Transcript -Path (Join-Path $logDir "update.log") -Force | Out-Null } catch {}
+Write-Host ""
+Write-Host "  ==============================="
+Write-Host "   Faheem AI - naya version install"
+Write-Host "  ==============================="
+Write-Host ""
+# Doosre software ki tarah: pehle app ki window band.
+Write-Host "App band ho rahi hai..."
+Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { ($_.Name -eq "msedge.exe" -or $_.Name -eq "chrome.exe") -and $_.CommandLine -like "*--app=http://localhost:3000*" } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
 try {
   $repo = (Get-Content (Join-Path $root "package.json") -Raw | ConvertFrom-Json).updateRepo
   Write-Host "Naya version download ho raha hai ($repo)..."
@@ -35,7 +49,7 @@ try {
 
   try { & (Join-Path $root "scripts\make-shortcut.ps1") } catch {}
   Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
-  Write-Host "Update mukammal! App dobara khul rahi hai..."
+  Write-Host "Update mukammal (v$ver)! App dobara khul rahi hai..." -ForegroundColor Green
   & (Join-Path $root "scripts\start.ps1")
   Start-Sleep -Seconds 3
 } catch {

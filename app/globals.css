@@ -308,6 +308,10 @@ a, button, select, [role="button"] { cursor: pointer; }
 .preview h2 { margin: 0 0 6px; font-size: 26px; }
 .pbtn { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 10px; font-weight: 600; margin-top: 8px; }
 .csscode { background: var(--field); padding: 10px; border-radius: 10px; font-size: 12px; overflow-x: auto; white-space: pre; }
+.auditbox { width: 100%; min-height: 160px; background: var(--field); color: inherit; border: 1px solid var(--border, #8884); border-radius: 10px; padding: 10px; font: 12px/1.5 ui-monospace, Consolas, monospace; margin: 8px 0; resize: vertical; }
+.auditres { margin-top: 10px; display: grid; gap: 6px; }
+.auditres .sev-error { border-left: 0; outline: 1px solid #e5484d88; }
+.auditres .sev-warning { outline: 1px solid #f5a52455; }
 .dsrules { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; font-size: 13px; }
 .small { font-size: 11px; margin-top: 18px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }

@@ -51,3 +51,9 @@
 ## v3.7.0
 - 2 naye free brains: Z.ai GLM (glm-4.7-flash, hamesha free) aur Mistral (mistral-small-latest, free Experiment plan). Settings mein key boxes; Agent, chat aur /v1 order mein Groq ke baad.
 - Cerebras nahi dala: ab sirf $5 trial, card zaroori, 30 din.
+
+## v3.8.0
+- Naya Tools page (/tools): har brain ka apna chat board, "Sab 1 by 1 test karo" button.
+- Display: HD / 4K / 8K render quality, 3D orb (On / Ultra), UI size 90-200% (Options).
+- Fix: bina-key server agar apni had ka message "jawab" bana kar bheje to ab error mana jata hai aur agla brain chalta hai.
+- Full test suite: npm run test:full (116 checks).

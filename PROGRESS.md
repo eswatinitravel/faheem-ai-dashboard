@@ -7,6 +7,7 @@
 - v2.6: Live screen (website dashboard ke andar live, desktop/tablet/mobile), Google Stitch jaisa naya theme, naya liquid 3D orb, app icon (Desktop, Start Menu, app window), Vestire mein Club signup, scroll animations, back-to-top.
 
 - v2.7: Free AI pipeline — chat ab bina kisi key ke chalti hai (Pollinations + LLM7, dono free aur bina key). Keys lagi hon to pehle woh, phir free pipeline, phir Ollama. Settings mein On/Off.
+- v2.8: Dyad bridge — Dyad ab Faheem AI ki free pipeline se chalta hai, koi key nahi. Dyad > Settings > AI Providers > Add custom provider: Name = Faheem AI, API Base URL = http://localhost:3000/api/v1, API key = free; phir model add karein: faheem-free. Dashboard (START.bat) chalta hona chahiye.
 
 ## Baaki kaam (agli dafa)
 1. Hermes ko Telegram se jorna (bot token sirf terminal mein, chat mein nahi) aur behtar free model (Groq) lagana.

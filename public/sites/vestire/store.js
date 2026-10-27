@@ -1,6 +1,6 @@
 (() => {
   const C = window.VESTIRE, ALL = window.PRODUCTS;
-  const page = document.body.dataset.cat; // men | women | kids
+  const page = document.body.dataset.cat; // home | men | women | kids
   const rs = (n) => `${C.currency} ${n.toLocaleString("en-PK")}`;
   const $ = (s, r = document) => r.querySelector(s);
   const CART_KEY = "vestire-cart";
@@ -8,15 +8,25 @@
   const save = () => { localStorage.setItem(CART_KEY, JSON.stringify(cart)); drawCart(); };
 
   // ---------- Header / nav ----------
-  const nav = [["men", "Mard", "index.html"], ["women", "Aurat", "women.html"], ["kids", "Bachay", "kids.html"]];
+  const nav = [["men", "Men", "men.html"], ["women", "Women", "women.html"], ["kids", "Juniors", "kids.html"], ["sale", "Sale", "index.html#arrivals"]];
   $("#nav").innerHTML = nav.map(([k, t, h]) => `<a href="${h}" class="${k === page ? "on" : ""}">${t}</a>`).join("");
   document.querySelectorAll(".brandname").forEach((e) => (e.textContent = C.brand));
-  $("#announce").textContent = `Pure Pakistan mein delivery · Cash on Delivery ${rs(C.deliveryCOD)} · Advance payment par FREE delivery`;
+  const ann = `🚚 Pure Pakistan mein delivery  ·  💵 Cash on Delivery ${rs(C.deliveryCOD)}  ·  💳 Advance payment par FREE delivery  ·  ✨ Imported branded collection  ·  `;
+  $("#announce").innerHTML = `<div class="marq"><span>${ann.repeat(3)}</span><span>${ann.repeat(3)}</span></div>`;
 
   // ---------- Products ----------
-  const list = ALL.filter((p) => p.cat === page);
+  const qs = new URLSearchParams(location.search);
+  let brand = qs.get("brand") || "Sab";
+  const list = page === "home" ? ALL : ALL.filter((p) => p.cat === page);
   const types = ["Sab", ...new Set(list.map((p) => p.type))];
   let filter = "Sab", sort = "new";
+  const bsel = $("#brandsel");
+  if (bsel) {
+    const bl = ["Sab", ...new Set(list.map((p) => p.brand))];
+    if (!bl.includes(brand)) brand = "Sab";
+    bsel.innerHTML = `<select id="brand">${bl.map((b) => `<option ${b === brand ? "selected" : ""} value="${b}">${b === "Sab" ? "Sab brands" : b}</option>`).join("")}</select>`;
+    $("#brand").onchange = (e) => { brand = e.target.value; drawGrid(); };
+  }
   const chips = $("#chips");
   const drawChips = () => (chips.innerHTML = types.map((t) => `<button class="chip ${t === filter ? "on" : ""}" data-t="${t}">${t}</button>`).join(""));
   chips.onclick = (e) => { const t = e.target.dataset.t; if (t) { filter = t; drawChips(); drawGrid(); } };
@@ -26,14 +36,14 @@
     `<img class="${cls} ${p.fit || ""}" src="${p.img}" alt="${p.name}" loading="lazy" style="${p.filter ? `filter:${p.filter}` : ""}">`;
 
   function drawGrid() {
-    let items = list.filter((p) => filter === "Sab" || p.type === filter);
+    let items = list.filter((p) => (filter === "Sab" || p.type === filter) && (brand === "Sab" || p.brand === brand));
     if (sort === "low") items = [...items].sort((a, b) => a.price - b.price);
     if (sort === "high") items = [...items].sort((a, b) => b.price - a.price);
     $("#grid").innerHTML = items.map((p) => `
       <article class="card" data-id="${p.id}">
-        <div class="ph">${imgTag(p)}${p.tag ? `<span class="tag ${p.tag === "Sale" ? "sale" : ""}">${p.tag}</span>` : ""}
+        <div class="ph">${imgTag(p)}${p.tag ? `<span class="tag ${p.tag === "Sale" ? "sale" : ""}">${p.tag}</span>` : ""}${p.old ? `<span class="off">-${Math.round((1 - p.price / p.old) * 100)}%</span>` : ""}
           <button class="quick" data-open="${p.id}">Jaldi dekhein</button></div>
-        <div class="info"><small>${p.type}</small><h3>${p.name}</h3>
+        <div class="info"><small>${p.brand || ""} · ${p.type}</small><h3>${p.name}</h3>
           <div class="price">${rs(p.price)} ${p.old ? `<s>${rs(p.old)}</s>` : ""}</div></div>
       </article>`).join("");
     tilt();
@@ -55,11 +65,11 @@
   // ---------- Product modal ----------
   const modal = $("#modal");
   function openProduct(id) {
-    const p = ALL.find((x) => x.id === id); let size = null, qty = 1;
+    const p = ALL.find((x) => x.id === id); let size = null, qty = 1; modal.dataset.pid = id;
     modal.innerHTML = `<div class="sheet pd">
       <button class="x" data-close>✕</button>
       <div class="pdimg">${imgTag(p)}</div>
-      <div class="pdinfo"><small>${p.type} · ${p.colors.join(", ")}</small><h2>${p.name}</h2>
+      <div class="pdinfo"><small>${p.brand || ""} · ${p.type} · ${p.colors.join(", ")}</small><h2>${p.name}</h2>
         <div class="price big">${rs(p.price)} ${p.old ? `<s>${rs(p.old)}</s>` : ""}</div>
         <div class="row"><b>Size</b><button class="link" id="sizechart">Size chart</button></div>
         <div class="sizes">${p.sizes.map((s) => `<button class="sz" data-s="${s}">${s}</button>`).join("")}</div>
@@ -86,16 +96,17 @@
   const close = () => modal.classList.remove("open");
 
   function sizeChart() {
-    const kids = page === "kids";
+    const kids = (ALL.find((x) => x.id === modal.dataset.pid) || {}).cat === "kids";
+    const pc = (ALL.find((x) => x.id === modal.dataset.pid) || {}).cat;
     const rows = kids
       ? [["2-3Y", 20, 16], ["4-5Y", 22, 19], ["6-7Y", 24, 22], ["8-9Y", 26, 25], ["10-11Y", 28, 28]]
-      : page === "women"
+      : pc === "women"
       ? [["XS", 17, 38], ["S", 18, 39], ["M", 19, 40], ["L", 20, 41], ["XL", 21.5, 42]]
       : [["S", 20, 40], ["M", 21, 41], ["L", 22.5, 42], ["XL", 24, 43], ["XXL", 25.5, 44]];
     const box = document.createElement("div");
     box.className = "modal open"; box.style.zIndex = 60;
     box.innerHTML = `<div class="sheet small"><button class="x">✕</button><h3>Size chart (inch)</h3>
-      <table><tr><th>Size</th><th>${kids ? "Seena (½)" : "Seena (½)"}</th><th>${kids ? "Lambai" : "Kameez lambai"}</th></tr>
+      <table><tr><th>Size</th><th>${kids ? "Seena (½)" : "Seena (½)"}</th><th>Lambai</th></tr>
       ${rows.map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("")}</table>
       <p class="note">Andaza hai. Shak ho to WhatsApp par poochein.</p></div>`;
     box.onclick = (e) => { if (e.target === box || e.target.classList.contains("x")) box.remove(); };
@@ -178,11 +189,12 @@
 
   // ---------- 3D hero parallax + particles ----------
   const hero = $(".hero");
-  hero.onmousemove = (e) => {
+  if (hero) { hero.onmousemove = (e) => {
     const x = e.clientX / innerWidth - 0.5, y = e.clientY / innerHeight - 0.5;
     hero.style.setProperty("--rx", `${-y * 6}deg`); hero.style.setProperty("--ry", `${x * 8}deg`);
   };
-  const cv = $("#fx"), g = cv.getContext("2d"); let pts = [];
+  }
+  const cv = $("#fx"); if (cv) { const g = cv.getContext("2d"); let pts = [];
   const rsz = () => { cv.width = cv.offsetWidth * devicePixelRatio; cv.height = cv.offsetHeight * devicePixelRatio;
     pts = Array.from({ length: 70 }, () => ({ x: Math.random() * cv.width, y: Math.random() * cv.height, z: Math.random() * 1 + 0.3, v: Math.random() * 0.4 + 0.1 })); };
   rsz(); addEventListener("resize", rsz);
@@ -191,7 +203,34 @@
     for (const p of pts) { p.y -= p.v * p.z * devicePixelRatio; if (p.y < 0) p.y = cv.height;
       g.fillStyle = `rgba(232,196,120,${0.25 * p.z})`; g.beginPath(); g.arc(p.x, p.y, 1.6 * p.z * devicePixelRatio, 0, 7); g.fill(); }
     requestAnimationFrame(loop);
-  })();
+  })(); }
+
+  // ---------- Home: slider, brands, countdown ----------
+  const slides = document.querySelectorAll(".slide");
+  if (slides.length) {
+    let si = 0; const dots = $("#dots");
+    dots.innerHTML = [...slides].map((_, i) => `<button data-i="${i}"></button>`).join("");
+    const show = (i) => { si = (i + slides.length) % slides.length; slides.forEach((s, k) => s.classList.toggle("on", k === si)); dots.querySelectorAll("button").forEach((d, k) => d.classList.toggle("on", k === si)); };
+    dots.onclick = (e) => { if (e.target.dataset.i) show(+e.target.dataset.i); };
+    show(0); setInterval(() => show(si + 1), 5500);
+    const sl = $(".slider");
+    sl.onmousemove = (e) => { const x = e.clientX / innerWidth - 0.5, y = e.clientY / innerHeight - 0.5;
+      sl.style.setProperty("--rx", `${-y * 5}deg`); sl.style.setProperty("--ry", `${x * 7}deg`); };
+  }
+  const bw = $("#brandwall");
+  if (bw) bw.innerHTML = (window.BRANDS || []).map((b) => { const c = (ALL.find((p) => p.brand === b) || { cat: "men" }).cat;
+    return `<a href="${c}.html?brand=${encodeURIComponent(b)}" class="bw">${b}</a>`; }).join("");
+  document.querySelectorAll(".panel3").forEach((p) => {
+    p.onmousemove = (e) => { const r = p.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+      p.style.transform = `perspective(1000px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg)`; };
+    p.onmouseleave = () => (p.style.transform = "");
+  });
+  const cd = $("#countdown");
+  if (cd) { const end = new Date(C.saleEnds).getTime();
+    const tick = () => { let t = Math.max(0, end - Date.now()) / 1000; const d = Math.floor(t / 86400), h = Math.floor(t % 86400 / 3600), m = Math.floor(t % 3600 / 60), s = Math.floor(t % 60);
+      cd.innerHTML = [[d, "Din"], [h, "Ghante"], [m, "Minute"], [s, "Second"]].map(([v, l]) => `<div><b>${String(v).padStart(2, "0")}</b><small>${l}</small></div>`).join(""); };
+    tick(); setInterval(tick, 1000); }
+  const tm = $("#timing"); if (tm) tm.textContent = C.storeTiming;
 
   $("#year").textContent = new Date().getFullYear();
   drawChips(); drawGrid(); drawCart();

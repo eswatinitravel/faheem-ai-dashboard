@@ -158,10 +158,31 @@ export async function POST(req) {
         try {
           // Banner sirf tab jab saaf manga ho (attached picture ka zikr banner nahi).
           const wantsBanner = /\b(banner|logo|poster)\b/i.test(rawText);
+          // 👁 Vision Agent: pehle Gemini picture ko tafseel se parhta hai; yeh bayan phir har brain ko milta hai.
+          let design = "";
+          if (images.length) {
+            const vp = providers.filter((x) => x.vision);
+            if (!vp.length) step("👁 Vision Agent", "⚠ Gemini key nahi mili — picture dekhi nahi ja sakti. Options > Keys mein AI Studio key daalein.");
+            for (const v of vp) {
+              step("👁 Vision Agent", `${v.name} picture ko tafseel se parh raha hai…`);
+              try {
+                design = (await callProvider(v, [
+                  { role: "system", content: "You are a senior UI designer. Describe this website screenshot so a developer can rebuild it exactly: overall layout, header/nav items, search bar, hero/banner, every section in order, category list names, product card structure (image, name, price, rating, badges), grid columns, colors (hex), fonts, spacing, buttons, footer. Be specific and complete, max 350 words." },
+                  { role: "user", content: [{ type: "text", text: "Describe this design." }, ...images.map((im) => ({ type: "image_url", image_url: { url: im.dataUrl } }))] },
+                ], 90000)).trim();
+                step("👁 Vision Agent", "✓ Picture parh li: " + design.replace(/\s+/g, " ").slice(0, 220) + "…");
+                break;
+              } catch (e) {
+                step("👁 Vision Agent", `⚠ ${v.name} picture nahi parh saka: ${e.message.slice(0, 120)}`);
+              }
+            }
+            if (!design) step("👁 Vision Agent", "Picture ke bagair andaze se bana raha hoon — Gemini key check karein.");
+          }
+          const request = design ? `${rawText}\n\nREFERENCE DESIGN (rebuild this closely):\n${design}` : rawText;
           step("🧠 Planner Agent", "Soch raha hoon: kaam ko hisson mein baant raha hoon…");
           const plan = (await ask([
             { role: "system", content: "You are a senior product planner. Write a short numbered build plan (max 8 lines) for EXACTLY the user's request: keep their business name, products, currency (PKR if Pakistani) and language. Sections, exact features, interactions, realistic data, colors. If a design reference picture is attached, describe its layout and style and follow it. No code." },
-            { role: "user", content: rawText + (images.length ? "\n(Design reference picture attached: copy its layout and style.)" : "") },
+            { role: "user", content: request },
           ], "Plan")).reply.trim();
           if (wantsBanner) {
             const seed = Math.floor(Math.random() * 1e6);
@@ -176,12 +197,12 @@ export async function POST(req) {
 - Every feature in the plan must actually work (buttons, cart count, forms with validation and a success message, menus on mobile).
 - Images: NEVER use placeholder sites. Use https://image.pollinations.ai/prompt/<url-encoded description>?width=600&height=400&nologo=true with a specific description per image.
 - Modern, responsive, polished design. Mobile-friendly.
-- Stay on the user's exact request (their business, products, currency). If a reference picture is attached, match its layout and look closely.
+- Stay on the user's exact request (their business, products, currency). Use only the business name the user gives (or the one in the reference picture); do NOT call it Vestire unless the user says Vestire. If a reference picture is attached, match its layout and look closely.
 - JavaScript must be valid: every template literal opened with a backtick is closed with a backtick.
 - After the code block, write 3-5 short lines saying what was built.`;
           step(agent.name, "🔨 Plan ke mutabiq poora code likh raha hoon…");
           // Sirf naya request + plan: purani chat (jaise pichla store) naye kaam mein na mile.
-          const fresh = [...system, { role: "system", content: `Plan:\n${plan}\n\n${RULES}` }, { role: "user", content: lastUser }];
+          const fresh = [...system, { role: "system", content: `Plan:\n${plan}\n\n${RULES}` }, { role: "user", content: design ? `${lastUser}\n\nREFERENCE DESIGN (rebuild this closely):\n${design}` : lastUser }];
           let { reply, p } = await ask(fresh, "Build");
           let fixes = 0;
           for (let round = 1; round <= 3; round++) {

@@ -35,11 +35,12 @@ export async function POST(req) {
   if (!isLocal(req)) return Response.json({ error: "Sirf isi laptop se." }, { status: 403 });
   if (process.platform !== "win32") return Response.json({ error: "Auto-update sirf Windows par. Docker par: git pull && docker compose up -d --build" }, { status: 400 });
   const script = path.join(process.cwd(), "scripts", "update.ps1");
-  const child = spawn("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script], {
+  // "start" se hamesha nayi dikhne wali window khulti hai, chahe server chhupa (hidden) chal raha ho.
+  const child = spawn("cmd.exe", ["/c", "start", "\"Faheem AI - Update\"", "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script], {
     cwd: process.cwd(),
     detached: true,
     stdio: "ignore",
-    windowsHide: false,
+    windowsHide: true,
   });
   child.unref();
   return Response.json({ ok: true });

@@ -31,3 +31,9 @@
 - 🎨 Design rules (Hallmark se, MIT): Agent Mode, website pipeline aur Website Master ab "AI jaisa" design nahi banate — rang/font CSS variables mein, purple-blue gradient nahi, emoji icons nahi, nakli reviews/numbers nahi, focus style, reduced-motion.
 - Design jaanch bina AI ke: check tool aur finish se pehle (2 dafa tak theek karwata hai). Website pipeline mein design tips sirf pehle 2 rounds; aakhir mein "Tayyar · design tips" — asli ghalti nahi ginti.
 - Hermes: `HERMES-SKILLS.bat` chalayein → `faheem-design` aur `hallmark` skills Hermes mein. Istemal: `/faheem-design ...` ya `/hallmark ...`.
+
+## 28 Oct 2026 — v3.6.0
+- 🖱 Browser Tester (jsdom, free): page ko chhupe browser mein chalata hai, har button/link/form dabata hai, asli JavaScript ghaltiyan + ghaib files pakarta hai. Ghalat code (infinite loop) 20 second baad khud band — dashboard nahi rukta.
+- Agent Mode: naya `test` tool; finish se pehle har HTML page (max 3) ka browser test — ghalti ho to agent ko wapas theek karne bhejta hai (2 dafa tak).
+- Website pipeline: tez checks ke baad Browser Tester, phir AI tester, phir Fixer (3 rounds).
+- Purana koi function badla ya hataya nahi; sirf naye checks jore.

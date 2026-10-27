@@ -18,15 +18,32 @@ function isLocal(req) {
 }
 
 // Check GitHub for a newer version.
+// v3.2.9: pehle raw.githubusercontent 5 minute purana copy deta tha. Ab GitHub API (taaza) pehle, raw (cache-buster) baad mein.
+async function latestVersion(repo) {
+  const tries = [
+    async () => {
+      const r = await fetch(`https://api.github.com/repos/${repo}/contents/package.json?ref=main&t=${Date.now()}`, { cache: "no-store", headers: { Accept: "application/vnd.github.raw+json", "User-Agent": "faheem-ai" } });
+      if (!r.ok) throw new Error(`GitHub API ${r.status}`);
+      return JSON.parse(await r.text()).version;
+    },
+    async () => {
+      const r = await fetch(`https://raw.githubusercontent.com/${repo}/main/package.json?t=${Date.now()}`, { cache: "no-store" });
+      if (!r.ok) throw new Error(`GitHub ${r.status}`);
+      return (await r.json()).version;
+    },
+  ];
+  let last;
+  for (const t of tries) { try { const v = await t(); if (v) return v; } catch (e) { last = e; } }
+  throw last || new Error("version nahi mila");
+}
+
 export async function GET() {
   const { version, updateRepo } = pkg();
   try {
-    const res = await fetch(`https://raw.githubusercontent.com/${updateRepo}/main/package.json`, { cache: "no-store" });
-    if (!res.ok) throw new Error(`GitHub ${res.status}`);
-    const latest = (await res.json()).version;
-    return Response.json({ current: version, latest, available: newer(latest, version) });
+    const latest = await latestVersion(updateRepo);
+    return Response.json({ current: version, latest, available: newer(latest, version), checkedAt: Date.now() }, { headers: { "Cache-Control": "no-store" } });
   } catch (err) {
-    return Response.json({ current: version, latest: null, available: false, error: err.message });
+    return Response.json({ current: version, latest: null, available: false, error: err.message }, { headers: { "Cache-Control": "no-store" } });
   }
 }
 

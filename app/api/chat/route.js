@@ -2,6 +2,7 @@ import vm from "vm";
 import { getProviders, callProvider, isCooling, visionProviders } from "../../../lib/providers";
 import { AGENTS, BASE, routeAgent } from "../../../lib/agents";
 import { DESIGN_RULES, designCheck } from "../../../lib/design";
+import { runtimeTest } from "../../../lib/runtime";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -227,6 +228,14 @@ ${DESIGN_RULES}`;
             // Design tips sirf pehle 2 rounds mein theek karwayein; asli ghaltiyan har round.
             if (round < 3) issues.push(...tips);
             step("🧪 Tester Agent", `Test ${round}: code check kar raha hoon…`);
+            if (!issues.length && code) {
+              // Browser Tester: page ko chhupe browser mein chala kar har button dabata hai.
+              step("🧪 Browser Tester", "Page chala kar har button daba raha hoon…");
+              const rt = await runtimeTest({ html: code });
+              if (rt.skipped) step("🧪 Browser Tester", "Browser test is dafa nahi chala — baaki tests jari.");
+              else if (rt.ok) step("🧪 Browser Tester", `✅ ${rt.clicked} buttons/links dabaye — koi JavaScript ghalti nahi.`);
+              else issues.push(...rt.errors.map((e) => `Runtime error when the page runs: ${e}`));
+            }
             if (!issues.length) {
               try {
                 const rv = (await ask([

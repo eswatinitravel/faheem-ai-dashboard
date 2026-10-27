@@ -1,3 +1,4 @@
+import vm from "vm";
 import { getProviders, callProvider, isCooling } from "../../../lib/providers";
 import { AGENTS, BASE, routeAgent } from "../../../lib/agents";
 
@@ -44,6 +45,10 @@ function staticCheck(code, ask) {
   const called = [...code.matchAll(/on\w+\s*=\s*"\s*([A-Za-z_$][\w$]*)\s*\(/g)].map((m) => m[1]);
   for (const f of new Set(called)) {
     if (!new RegExp(`function\\s+${f}\\b|${f}\\s*=\\s*(async\\s*)?(function|\\()`).test(code) && !["alert", "confirm", "event", "this", "window", "document", "history", "location"].includes(f)) out.push(`Function ${f}() is called but never defined.`);
+  }
+  // Asli test: har <script> ko JavaScript engine se compile karke dekhein.
+  for (const m of code.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)) {
+    try { new vm.Script(m[1]); } catch (e) { out.push(`JavaScript syntax error: ${e.message}. Fix it.`); }
   }
   const opens = (code.match(/<script\b/gi) || []).length, closes = (code.match(/<\/script>/gi) || []).length;
   if (opens !== closes) out.push("A <script> tag is not closed.");
@@ -129,6 +134,8 @@ export async function POST(req) {
           if (isCooling(p.id)) continue;
           try {
             let r;
+            const withImg = (m) => (images.length && p.vision ? m.map((x, i) => (i === m.length - 1 && x.role === "user" && typeof x.content === "string") ? { role: "user", content: [{ type: "text", text: x.content }, ...images.map((a) => ({ type: "image_url", image_url: { url: a.dataUrl } }))] } : x) : m);
+            msgs = withImg(msgs);
             try { r = await callProvider(p, msgs, 120000); }
             catch (e) {
               const w = +(String(e.message).match(/retry in (\d+)s/) || [])[1];
@@ -157,8 +164,8 @@ export async function POST(req) {
           }
           step("🧠 Planner Agent", "Soch raha hoon: kaam ko hisson mein baant raha hoon…");
           const plan = (await ask([
-            { role: "system", content: "You are a senior product planner. Write a short numbered build plan (max 8 lines) for the user's request: sections, exact features, interactions, data (realistic names and prices), colors. No code." },
-            { role: "user", content: rawText },
+            { role: "system", content: "You are a senior product planner. Write a short numbered build plan (max 8 lines) for EXACTLY the user's request: keep their business name, products, currency (PKR if Pakistani) and language. Sections, exact features, interactions, realistic data, colors. If a design reference picture is attached, describe its layout and style and follow it. No code." },
+            { role: "user", content: rawText + (images.length ? "\n(Design reference picture attached: copy its layout and style.)" : "") },
           ], "Plan")).reply.trim();
           step("🧠 Planner Agent", plan.split("\n").filter(Boolean).slice(0, 8).join(" · ").slice(0, 400));
 
@@ -167,6 +174,8 @@ export async function POST(req) {
 - Every feature in the plan must actually work (buttons, cart count, forms with validation and a success message, menus on mobile).
 - Images: NEVER use placeholder sites. Use https://image.pollinations.ai/prompt/<url-encoded description>?width=600&height=400&nologo=true with a specific description per image.
 - Modern, responsive, polished design. Mobile-friendly.
+- Stay on the user's exact request (their business, products, currency). If a reference picture is attached, match its layout and look closely.
+- JavaScript must be valid: every template literal opened with a backtick is closed with a backtick.
 - After the code block, write 3-5 short lines saying what was built.`;
           step(agent.name, "🔨 Plan ke mutabiq poora code likh raha hoon…");
           let { reply, p } = await ask([...messages, { role: "system", content: `Plan:\n${plan}\n\n${RULES}` }], "Build");

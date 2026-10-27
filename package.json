@@ -1,11 +1,12 @@
 {
   "name": "faheem-ai-dashboard",
-  "version": "3.7.0",
+  "version": "3.8.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test:full": "node scripts/full-test.mjs"
   },
   "dependencies": {
     "jsdom": "^26.1.0",

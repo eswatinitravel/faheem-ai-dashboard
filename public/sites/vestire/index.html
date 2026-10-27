@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ur-PK"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mard — Vestire Collection</title>
+<meta name="description" content="Vestire Collection — Men's Collection. Cash on Delivery pure Pakistan mein.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-cat="men">
+<div id="announce"></div>
+<header><a href="index.html" class="brandname"></a><nav id="nav"></nav><button id="cartbtn">🛍 Cart <span id="count">0</span></button></header>
+<section class="hero"><div class="bg" style="background-image:url(img/men-hero.jpg)"></div><canvas id="fx"></canvas>
+  <div class="txt"><small>Men's Collection</small><h1>Shaan se <em>pehnein</em></h1><p>Wash & wear, cotton aur festive kameez shalwar — Gujrat se pure Pakistan tak.</p>
+  <a href="#shop" class="btn primary">Abhi shopping karein</a><button class="btn ghost" onclick="document.getElementById('wafloat').click()">WhatsApp</button></div></section>
+<div class="strip"><div><b>Cash on Delivery</b>Ghar par paise dein</div><div><b>Free delivery</b>Advance payment par</div><div><b>Size exchange</b>7 din ke andar</div><div><b>WhatsApp support</b>Seedhi baat</div></div>
+<main id="shop"><div class="head"><h2>Mard ka collection</h2><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><div id="chips"></div>
+<select id="sort"><option value="new">Naye pehle</option><option value="low">Sasta pehle</option><option value="high">Mehnga pehle</option></select></div></div>
+<div id="grid"></div></main>
+<footer class="foot"><div><div class="brandname"></div>Gujrat, Punjab · Pure Pakistan mein delivery</div><div>© <span id="year"></span> Vestire Collection</div></footer>
+<div id="cart"><aside><header><h3>Aap ki cart</h3><button class="x" style="position:static" data-closecart>✕</button></header><div id="cartbody"></div>
+<footer><div><span>Subtotal</span><b id="subtotal"></b></div><button class="btn primary" id="checkout">Checkout</button></footer></aside></div>
+<div id="modal" class="modal"></div>
+<button id="wafloat" title="WhatsApp">✆</button><div id="toast"></div>
+<script src="config.js"></script><script src="store.js"></script>
+</body></html>

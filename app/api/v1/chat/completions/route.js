@@ -6,7 +6,7 @@ import { getProviders, callProvider, isCooling } from "../../../../../lib/provid
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-const ORDER = ["groq", "gemini", "openrouter", "pollinations", "llm7", "ollama"];
+const ORDER = ["groq", "gemini", "zai", "mistral", "openrouter", "pollinations", "llm7", "ollama"];
 
 function toText(c) {
   if (typeof c === "string") return c;

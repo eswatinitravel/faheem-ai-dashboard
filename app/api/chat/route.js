@@ -33,10 +33,16 @@ export async function POST(req) {
   // Brain order: manual choice first, else the specialist's favourite free providers.
   let providers = getProviders();
   const order = body?.provider && body.provider !== "auto" ? [body.provider, ...agent.prefer] : agent.prefer;
-  providers.sort((a, b) => {
-    const ia = order.indexOf(a.id), ib = order.indexOf(b.id);
-    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
-  });
+  // Order: aapki keys wale brains -> bina key free brains -> laptop Ollama.
+  const rank = (id) => {
+    if (body?.provider && body.provider !== "auto" && id === body.provider) return -1;
+    if (id === "pollinations") return 50;
+    if (id === "llm7") return 51;
+    if (id === "ollama") return 60;
+    const i = order.indexOf(id);
+    return i < 0 ? 40 : i;
+  };
+  providers.sort((a, b) => rank(a.id) - rank(b.id));
 
   const errors = [];
   for (const p of providers) {

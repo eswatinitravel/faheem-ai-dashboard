@@ -1,4 +1,4 @@
-# Faheem AI self-update: downloads the latest version from GitHub, keeps your keys and chats, rebuilds, restarts.
+# Faheem AI self-update: downloads the latest version from GitHub, keeps your chats (keys live in ~/.faheem-ai), rebuilds, restarts.
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 $Host.UI.RawUI.WindowTitle = "Faheem AI - Update"

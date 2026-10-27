@@ -276,6 +276,7 @@ export default function Home() {
           <button className="icon-btn" title="Live workspace" onClick={() => setWsOpen(!wsOpen)}>◧</button>
           <ThemeBalls />
           <Link className="icon-btn agentlink" href="/agent" title="Agent Mode (Cursor jaisa coding agent)">🤖 Agent</Link>
+          <Link className="icon-btn agentlink" href="/tools" title="Har brain ka apna chat board">🧪 Tools</Link>
           <Link className="icon-btn" href="/options" title="Options">⋯</Link>
         </div>
       </header>

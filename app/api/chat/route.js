@@ -180,7 +180,7 @@ export async function POST(req) {
             if (!design) {
               // Andaze se ghalat website banane ke bajaye saaf bata dein ke masla kya hai.
               const why = vp.length ? (visionErr || "Gemini ne jawab nahi diya") : "Gemini key load nahi hui";
-              const msg = `⚠ **Picture dekhi nahi ja saki, is liye website nahi banayi** (andaze se ghalat banti).\n\n**Wajah:** ${why}\n\n**Hal:** ⋯ Options → Keys mein Gemini ke khane mein AI Studio key (AIza… se shuru) daal kar Save karein, phir tray icon → Restart. Agar key pehle se hai to yeh wajah wali line Hark ko bhej dein.`;
+              const msg = `⚠ **Picture dekhi nahi ja saki, is liye website nahi banayi** (andaze se ghalat banti).\n\n**Wajah:** ${why}\n\n**Hal:** ⋯ Options → Keys mein Gemini ke khane mein AI Studio key daal kar Save karein, phir tray icon → Restart. Agar key pehle se hai to yeh wajah wali line Hark ko bhej dein.`;
               emit({ type: "done", reply: msg, provider: "Vision Agent", model: "-", agent: { id: agent.id, name: agent.name, icon: agent.icon }, skipped, task: "text" });
               ctrl.close();
               return;

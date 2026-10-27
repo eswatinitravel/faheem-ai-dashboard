@@ -1,6 +1,6 @@
 {
   "name": "faheem-ai-dashboard",
-  "version": "3.9.0",
+  "version": "3.10.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,6 +9,7 @@
     "test:full": "node scripts/full-test.mjs"
   },
   "dependencies": {
+    "impeccable": "4.8.0",
     "jsdom": "^26.1.0",
     "next": "16.4.3",
     "react": "19.3.1",

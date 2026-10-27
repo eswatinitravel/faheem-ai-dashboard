@@ -1,4 +1,4 @@
-import { FIELDS, getConfig, writeSaved } from "../../../lib/config";
+import { FIELDS, getConfig, writeSaved, KEYS_FILE } from "../../../lib/config";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +14,7 @@ export async function GET(req) {
   const c = getConfig();
   const out = {};
   for (const k of FIELDS) out[k] = k.endsWith("_KEY") ? { set: !!c[k], preview: mask(c[k] || "") } : c[k] || "";
+  out._file = KEYS_FILE;
   return Response.json(out);
 }
 

@@ -19,3 +19,10 @@
 3. Vestire: asli product photos, final qeematein, WhatsApp business number `config.js` mein.
 4. Brand ke naam sirf asli/authorized maal par — warna "imported" likhein.
 5. Vestire ko free hosting par live karna aur vestirecollection.com jorna (Hostinger account wapas milne ke baad).
+
+## 28 Oct 2026 — v3.4.0
+- 🤖 Agent Mode (oopar "🤖 Agent" button, ya localhost:3000/agent) — Cursor jaisa coding agent: khud plan (todo), files parhta/likhta/edit karta, search, node/npm/python commands, web page parhna, free AI pictures, har file likhne ke baad khud check, ghalti ho to finish nahi karne deta, 40 steps tak loop.
+- Projects: `C:\Users\<naam>\.faheem-ai\projects\<naam>` — update se nahi mitte. Har project ki pichli baatein yaad (follow-up: "cart ka rang badlo").
+- Baayen files + plan, beech mein agent ke qadam (har tool khol kar result dekhein), daayen Live Preview / Code. ↩ Undo = aakhri run wapas. ■ Roko.
+- Picture lagayein to pehle Gemini/Groq vision design parhta hai; key na ho to saaf batata hai.
+- Hifazat: project folder se bahar koi file nahi, khatarnak commands band, sirf isi laptop se chalta hai.

@@ -37,3 +37,7 @@
 - Agent Mode: naya `test` tool; finish se pehle har HTML page (max 3) ka browser test — ghalti ho to agent ko wapas theek karne bhejta hai (2 dafa tak).
 - Website pipeline: tez checks ke baad Browser Tester, phir AI tester, phir Fixer (3 rounds).
 - Purana koi function badla ya hataya nahi; sirf naye checks jore.
+
+## v3.6.1
+- Groq gpt-oss "Tool choice is none" error fix: model ka tool call bacha kar action banta hai, warna llama-3.3-70b-versatile se dobara.
+- Ollama: llama3.2:3b na ho to laptop par mojood model khud istemal hota hai; warna saaf hidayat (ollama pull).

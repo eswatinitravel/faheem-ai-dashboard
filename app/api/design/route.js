@@ -1,4 +1,5 @@
 import { designSystem, search, DOMAINS, uxCheck } from "../../../lib/uupm/index.js";
+import { detectHtml, RULES, available } from "../../../lib/impeccable/index.js";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +9,7 @@ export async function GET(req) {
   const u = new URL(req.url);
   const q = (u.searchParams.get("q") || "").slice(0, 200).trim();
   const domain = u.searchParams.get("domain") || "";
+  if (u.searchParams.get("rules") === "impeccable") return Response.json({ ok: true, available: available(), count: RULES.length, rules: RULES });
   if (!q) return Response.json({ ok: false, error: "q (sawal) khali hai", domains: Object.keys(DOMAINS) }, { status: 400 });
   try {
     if (!domain || domain === "system") {
@@ -22,8 +24,11 @@ export async function GET(req) {
   }
 }
 
-// HTML/CSS bhejein: UX Pro checks wapas.
+// HTML/CSS bhejein: UX Pro checks + Impeccable (62 checks) wapas.
 export async function POST(req) {
   const b = await req.json().catch(() => ({}));
-  return Response.json(uxCheck(String(b.html || ""), String(b.css || "")));
+  const html = String(b.html || "").slice(0, 2_000_000), css = String(b.css || "").slice(0, 1_000_000);
+  const ux = uxCheck(html, css);
+  const impeccable = b.impeccable === false ? null : await detectHtml(html, css).catch((e) => ({ ok: false, reason: e.message, findings: [] }));
+  return Response.json({ ...ux, impeccable });
 }

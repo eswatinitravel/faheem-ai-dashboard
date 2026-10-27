@@ -159,7 +159,7 @@ export async function POST(req) {
           // Banner sirf tab jab saaf manga ho (attached picture ka zikr banner nahi).
           const wantsBanner = /\b(banner|logo|poster)\b/i.test(rawText);
           // 👁 Vision Agent: pehle Gemini picture ko tafseel se parhta hai; yeh bayan phir har brain ko milta hai.
-          let design = "";
+          let design = "", visionErr = "";
           if (images.length) {
             const vp = providers.filter((x) => x.vision);
             if (!vp.length) step("👁 Vision Agent", "⚠ Gemini key nahi mili — picture dekhi nahi ja sakti. Options > Keys mein AI Studio key daalein.");
@@ -173,10 +173,18 @@ export async function POST(req) {
                 step("👁 Vision Agent", "✓ Picture parh li: " + design.replace(/\s+/g, " ").slice(0, 220) + "…");
                 break;
               } catch (e) {
+                visionErr = `${v.name}: ${e.message.slice(0, 300)}`;
                 step("👁 Vision Agent", `⚠ ${v.name} picture nahi parh saka: ${e.message.slice(0, 120)}`);
               }
             }
-            if (!design) step("👁 Vision Agent", "Picture ke bagair andaze se bana raha hoon — Gemini key check karein.");
+            if (!design) {
+              // Andaze se ghalat website banane ke bajaye saaf bata dein ke masla kya hai.
+              const why = vp.length ? (visionErr || "Gemini ne jawab nahi diya") : "Gemini key load nahi hui";
+              const msg = `⚠ **Picture dekhi nahi ja saki, is liye website nahi banayi** (andaze se ghalat banti).\n\n**Wajah:** ${why}\n\n**Hal:** ⋯ Options → Keys mein Gemini ke khane mein AI Studio key (AIza… se shuru) daal kar Save karein, phir tray icon → Restart. Agar key pehle se hai to yeh wajah wali line Hark ko bhej dein.`;
+              emit({ type: "done", reply: msg, provider: "Vision Agent", model: "-", agent: { id: agent.id, name: agent.name, icon: agent.icon }, skipped, task: "text" });
+              ctrl.close();
+              return;
+            }
           }
           const request = design ? `${rawText}\n\nREFERENCE DESIGN (rebuild this closely):\n${design}` : rawText;
           step("🧠 Planner Agent", "Soch raha hoon: kaam ko hisson mein baant raha hoon…");

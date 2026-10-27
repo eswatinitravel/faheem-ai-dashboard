@@ -1,22 +1,53 @@
 <!doctype html>
-<html lang="ur-PK"><head>
+<html lang="en-PK"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Mard — Vestire Collection</title>
-<meta name="description" content="Vestire Collection — Men's Collection. Cash on Delivery pure Pakistan mein.">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+<title>Vestire Collection — Imported Branded Clothing Pakistan</title>
+<meta name="description" content="Vestire Collection: Nike, Adidas, Puma, Louis Vuitton, Gucci aur mazeed imported brands. Men, Women, Juniors. Cash on Delivery pure Pakistan mein.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Bebas+Neue&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
-<body data-cat="men">
+<body data-cat="home" class="home">
 <div id="announce"></div>
 <header><a href="index.html" class="brandname"></a><nav id="nav"></nav><button id="cartbtn">🛍 Cart <span id="count">0</span></button></header>
-<section class="hero"><div class="bg" style="background-image:url(img/men-hero.jpg)"></div><canvas id="fx"></canvas>
-  <div class="txt"><small>Men's Collection</small><h1>Shaan se <em>pehnein</em></h1><p>Wash & wear, cotton aur festive kameez shalwar — Gujrat se pure Pakistan tak.</p>
-  <a href="#shop" class="btn primary">Abhi shopping karein</a><button class="btn ghost" onclick="document.getElementById('wafloat').click()">WhatsApp</button></div></section>
-<div class="strip"><div><b>Cash on Delivery</b>Ghar par paise dein</div><div><b>Free delivery</b>Advance payment par</div><div><b>Size exchange</b>7 din ke andar</div><div><b>WhatsApp support</b>Seedhi baat</div></div>
-<main id="shop"><div class="head"><h2>Mard ka collection</h2><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><div id="chips"></div>
+
+<!-- 1. Cougar-style: teen bare panels -->
+<section class="panels">
+  <a href="men.html" class="panel3"><img src="img/panel-men.jpg" alt="Men"><div class="pl"><h2>MEN</h2><span>Shop now →</span></div></a>
+  <a href="women.html" class="panel3"><img src="img/panel-women.jpg" alt="Women"><div class="pl"><h2>WOMEN</h2><span>Shop now →</span></div></a>
+  <a href="kids.html" class="panel3"><img src="img/panel-kids.jpg" alt="Juniors"><div class="pl"><h2>JUNIORS</h2><span>Shop now →</span></div></a>
+</section>
+
+<!-- 2. Turbo-style banner slider -->
+<section class="slider">
+  <div class="slide"><img src="img/hero-wide.jpg" alt=""><div class="st"><small>WINTER DRIVE '26</small><h1>Beat the chill in <em>brand</em> style</h1><p>Imported puffer jackets, hoodies aur tracksuits — sale par.</p><a class="btn primary" href="men.html">Shop now</a></div></div>
+  <div class="slide"><img src="img/panel-women.jpg" alt="" style="object-position:center 25%"><div class="st"><small>LUXURY FOR HER</small><h1>Louis Vuitton, Gucci, <em>Zara</em></h1><p>Coats, jackets aur handbags — naya stock aa gaya.</p><a class="btn primary" href="women.html">Shop women</a></div></div>
+  <div class="slide"><img src="img/p-sneakers.jpg" alt="" style="object-position:center"><div class="st"><small>SNEAKER DROP</small><h1>Nike &amp; Adidas <em>sneakers</em></h1><p>Size 40 se 44 — limited stock.</p><a class="btn primary" href="men.html?brand=Nike">Shop sneakers</a></div></div>
+  <div id="dots"></div>
+</section>
+
+<!-- 3. Shop by brand -->
+<section class="brands"><h2 class="sec">Shop by <em>brand</em></h2><div id="brandwall"></div></section>
+
+<!-- 4. Countdown sale -->
+<section class="countbar"><div><small>EXCLUSIVE CO-ORD SETS &amp; TRACKSUITS</small><h2>Sale khatam hone mein</h2></div><div id="countdown"></div><a class="btn primary" href="men.html">Shop now</a></section>
+
+<!-- 5. New arrivals -->
+<main id="arrivals"><div class="head"><h2>Winter mode: <em>new arrivals</em></h2><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><div id="chips"></div>
 <select id="sort"><option value="new">Naye pehle</option><option value="low">Sasta pehle</option><option value="high">Mehnga pehle</option></select></div></div>
 <div id="grid"></div></main>
-<footer class="foot"><div><div class="brandname"></div>Gujrat, Punjab · Pure Pakistan mein delivery</div><div>© <span id="year"></span> Vestire Collection</div></footer>
+
+<!-- 6. Quote -->
+<section class="quote"><img src="img/hero-wide.jpg" alt=""><p>"You can have anything you want in life if you dress for it."</p></section>
+
+<div class="strip"><div><b>Shipping all across Pakistan</b>Gujrat se har shehar</div><div><b>Cash on Delivery</b>Ghar par paise dein</div><div><b>Exclusive discounts</b>Har hafte naya sale</div><div><b>7 din exchange</b>Size badalna asaan</div></div>
+
+<footer class="foot big">
+  <div><div class="brandname"></div><p>Imported branded clothing — Men, Women, Juniors.<br>Gujrat, Punjab · Pure Pakistan mein delivery</p><p><b>Store timing:</b> <span id="timing"></span></p></div>
+  <div><b>Shop</b><a href="men.html">Men</a><a href="women.html">Women</a><a href="kids.html">Juniors</a><a href="#arrivals">Sale</a></div>
+  <div><b>Help</b><a href="#" onclick="document.getElementById('wafloat').click();return false">WhatsApp</a><span>Exchange &amp; return: 7 din</span><span>COD Rs 250 · Advance free</span></div>
+  <div class="copy">© <span id="year"></span> Vestire Collection</div>
+</footer>
+
 <div id="cart"><aside><header><h3>Aap ki cart</h3><button class="x" style="position:static" data-closecart>✕</button></header><div id="cartbody"></div>
 <footer><div><span>Subtotal</span><b id="subtotal"></b></div><button class="btn primary" id="checkout">Checkout</button></footer></aside></div>
 <div id="modal" class="modal"></div>

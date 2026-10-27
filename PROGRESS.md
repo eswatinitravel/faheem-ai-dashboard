@@ -66,3 +66,11 @@
 - Dashboard mein SVG icons, phone par 44px buttons, focus ring, reduced-motion.
 - HERMES-SKILLS.bat ab ui-ux-pro-max bhi daalta hai.
 - Test suite: 175 checks.
+
+## v3.10.0
+- Impeccable (Paul Bakaus, Apache-2.0) andar: 62 design checks (31 AI-slop + 31 quality), native engine, bina AI aur bina key, telemetry band.
+- Design Studio mein "Design Audit": HTML paste karein, Impeccable + UX Pro nateeje.
+- Website Master aur Agent Mode har bani website ko Impeccable se bhi jaanchte hain; naya agent tool design_audit.
+- Design rules prompt mein Impeccable ki sab se aam AI-slop nishaniyan.
+- /api/design?rules=impeccable aur POST /api/design ab Impeccable findings bhi deta hai.
+- HERMES-SKILLS.bat ab 4 skills: impeccable bhi (hermes install, official installer, GitHub ZIP fallback).

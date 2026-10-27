@@ -5,6 +5,8 @@ const PROVIDERS = [
   { key: "GROQ_API_KEY", model: "GROQ_MODEL", def: "openai/gpt-oss-120b", name: "Groq", note: "Chat + voice. Free, bina card.", url: "https://console.groq.com/keys" },
   { key: "GEMINI_API_KEY", model: "GEMINI_MODEL", def: "gemini-flash-latest", name: "Google Gemini", note: "Extra free limit.", url: "https://aistudio.google.com/apikey" },
   { key: "OPENROUTER_API_KEY", model: "OPENROUTER_MODEL", def: "google/gemma-4-26b-a4b-it:free", name: "OpenRouter", note: "Sirf :free models.", url: "https://openrouter.ai/keys" },
+  { key: "ZAI_API_KEY", model: "ZAI_MODEL", def: "glm-4.7-flash", name: "Z.ai GLM", note: "GLM Flash hamesha free. Sirf email, card nahi.", url: "https://z.ai/manage-apikey/apikey-list" },
+  { key: "MISTRAL_API_KEY", model: "MISTRAL_MODEL", def: "mistral-small-latest", name: "Mistral", note: "Free 'Experiment' plan. Phone verify, card nahi.", url: "https://console.mistral.ai/api-keys" },
 ];
 
 export default function Settings({ onClose }) {
@@ -15,7 +17,7 @@ export default function Settings({ onClose }) {
   useEffect(() => {
     fetch("/api/settings").then((r) => r.json()).then((d) => {
       setCfg(d);
-      setForm({ GROQ_MODEL: d.GROQ_MODEL, GEMINI_MODEL: d.GEMINI_MODEL, OPENROUTER_MODEL: d.OPENROUTER_MODEL, OLLAMA_MODEL: d.OLLAMA_MODEL, OLLAMA_ENABLED: d.OLLAMA_ENABLED || "true", FREE_ENABLED: d.FREE_ENABLED || "true" });
+      setForm({ GROQ_MODEL: d.GROQ_MODEL, GEMINI_MODEL: d.GEMINI_MODEL, OPENROUTER_MODEL: d.OPENROUTER_MODEL, ZAI_MODEL: d.ZAI_MODEL, MISTRAL_MODEL: d.MISTRAL_MODEL, OLLAMA_MODEL: d.OLLAMA_MODEL, OLLAMA_ENABLED: d.OLLAMA_ENABLED || "true", FREE_ENABLED: d.FREE_ENABLED || "true" });
     });
   }, []);
 
@@ -23,7 +25,7 @@ export default function Settings({ onClose }) {
 
   const [err, setErr] = useState("");
   // Prefix check nahi (Google ne nayi keys "AQ." kar di). Sirf saaf ghalti pakarein: space, bohat chhoti, ya email.
-  const PREFIX = { GROQ_API_KEY: 1, GEMINI_API_KEY: 1, OPENROUTER_API_KEY: 1 };
+  const PREFIX = { GROQ_API_KEY: 1, GEMINI_API_KEY: 1, OPENROUTER_API_KEY: 1, ZAI_API_KEY: 1, MISTRAL_API_KEY: 1 };
   async function save() {
     // Browser kabhi kabhi apna saved password key ke khane mein bhar deta hai; ghalat shakal wali key save na karein.
     for (const [k, pre] of Object.entries(PREFIX)) {

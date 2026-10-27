@@ -1,44 +1,32 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import dynamic from "next/dynamic";
-import Settings from "./components/Settings";
+import Link from "next/link";
 import Message from "./components/Message";
-import LiveScreen from "./components/LiveScreen";
-
-const Scene3D = dynamic(() => import("./components/Scene3D"), { ssr: false });
+import Background from "./components/Background";
+import ThemeBalls from "./components/ThemeBalls";
+import VersionBadge from "./components/VersionBadge";
+import SearchOverlay from "./components/SearchOverlay";
+import Workspace from "./components/Workspace";
+import { loadPrefs } from "../lib/prefs";
 
 const STORE = "faheem-ai-chats-v2";
 
-// Clean text before reading it aloud.
 function speakable(text) {
-  return text
-    .replace(/```[\s\S]*?```/g, " code block ")
-    .replace(/[*_#>`|]/g, "")
-    .replace(/\[(.*?)\]\(.*?\)/g, "$1")
-    .replace(/\s+/g, " ")
-    .trim();
+  return text.replace(/```[\s\S]*?```/g, " code block ").replace(/[*_#>`|]/g, "").replace(/\[(.*?)\]\(.*?\)/g, "$1").replace(/\s+/g, " ").trim();
 }
 
 export default function Home() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [mode, setMode] = useState("idle"); // idle | listening | thinking | speaking
-  const [providers, setProviders] = useState([]);
-  const [agents, setAgents] = useState([]);
-  const [agent, setAgent] = useState("auto");
-  const [update, setUpdate] = useState(null);
-  const [updating, setUpdating] = useState(false);
-  const [provider, setProvider] = useState("auto");
-  const [last, setLast] = useState(null);
-  const [voiceOn, setVoiceOn] = useState(false); // hands-free conversation
-  const [speakReplies, setSpeakReplies] = useState(true);
-  const [voiceChoice, setVoiceChoice] = useState("urdu-female"); // urdu-female | urdu-male | english
-  const [voiceList, setVoiceList] = useState([]);
-  const [showSettings, setShowSettings] = useState(false);
+  const [mode, setMode] = useState("idle");
+  const [prefs, setPrefs] = useState({ agent: "auto", provider: "auto", speakReplies: true, voiceChoice: "urdu-female" });
+  const [voiceOn, setVoiceOn] = useState(false);
   const [notice, setNotice] = useState("");
-  const [showLive, setShowLive] = useState(false);
-  useEffect(() => { setShowLive(localStorage.getItem("faheem-ai-live") === "1"); }, []);
-  const toggleLive = (v) => { setShowLive(v); localStorage.setItem("faheem-ai-live", v ? "1" : "0"); };
+  const [showSearch, setShowSearch] = useState(false);
+  const [wsOpen, setWsOpen] = useState(false);
+  const [job, setJob] = useState(null);
+  const [log, setLog] = useState([]);
+  const { speakReplies, voiceChoice } = prefs;
 
   const endRef = useRef(null);
   const levelRef = useRef(0);
@@ -48,22 +36,15 @@ export default function Home() {
   voiceOnRef.current = voiceOn;
   messagesRef.current = messages;
 
-  const loadProviders = useCallback(() => {
-    fetch("/api/chat").then((r) => r.json()).then((d) => { setProviders(d.providers || []); setAgents(d.agents || []); }).catch(() => {});
-  }, []);
-
   useEffect(() => {
     try { setMessages(JSON.parse(localStorage.getItem(STORE) || "[]")); } catch {}
-    loadProviders();
-    try { const v = localStorage.getItem("faheem-ai-voice"); if (v) setVoiceChoice(v); } catch {}
-    const synth = window.speechSynthesis;
-    if (synth) {
-      const load = () => setVoiceList(synth.getVoices());
-      load();
-      synth.onvoiceschanged = load;
-    }
-    fetch("/api/update").then((r) => r.json()).then(setUpdate).catch(() => {});
-  }, [loadProviders]);
+    setPrefs(loadPrefs());
+    const p = new URLSearchParams(location.search);
+    if (p.get("live")) { setWsOpen(true); }
+    const k = (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setShowSearch(true); } };
+    addEventListener("keydown", k);
+    return () => removeEventListener("keydown", k);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(STORE, JSON.stringify(messages.slice(-100)));
@@ -102,7 +83,7 @@ export default function Home() {
     });
   }, [voiceChoice]);
 
-  // ---------- Send a message ----------
+  // ---------- Send: server streams agent steps live ----------
   const send = useCallback(
     async (textArg, opts = {}) => {
       const text = (textArg ?? "").trim();
@@ -111,32 +92,54 @@ export default function Home() {
       setMessages(next);
       setInput("");
       setMode("thinking");
+      setWsOpen(true);
+      setJob({ busy: true });
+      setLog([{ who: "Aap", text: text.length > 90 ? text.slice(0, 90) + "…" : text }]);
       let reply = "";
       try {
         const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: next, provider, agent, voice: !!opts.voice, voiceLang: voiceChoice === "english" ? "en" : "ur" }),
+          body: JSON.stringify({ messages: next, provider: prefs.provider, agent: prefs.agent, voice: !!opts.voice, voiceLang: voiceChoice === "english" ? "en" : "ur" }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error([data.error, ...(data.details || [])].join("\n"));
-        reply = data.reply;
-        setLast({ provider: data.provider, model: data.model, skipped: data.skipped, agent: data.agent });
-        setMessages([...next, { role: "assistant", content: reply, meta: `${data.agent?.icon || ""} ${data.agent?.name || ""} · ${data.provider}` }]);
-        loadProviders();
+        if (!res.ok || !res.body) throw new Error("Server se jawab nahi aaya (" + res.status + ")");
+        const reader = res.body.getReader();
+        const dec = new TextDecoder();
+        let buf = "", done = null;
+        for (;;) {
+          const { value, done: end } = await reader.read();
+          if (end) break;
+          buf += dec.decode(value, { stream: true });
+          let nl;
+          while ((nl = buf.indexOf("\n")) >= 0) {
+            const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
+            if (!line) continue;
+            const ev = JSON.parse(line);
+            if (ev.type === "step") setLog((l) => [...l, ev]);
+            else if (ev.type === "task") setJob((j) => ({ ...j, agent: ev.agent, task: ev.task }));
+            else if (ev.type === "image") setJob((j) => ({ ...j, images: ev.urls }));
+            else if (ev.type === "video") setJob((j) => ({ ...j, video: ev.urls }));
+            else if (ev.type === "done") done = ev;
+            else if (ev.type === "error") throw new Error([ev.error, ...(ev.details || [])].join("\n"));
+          }
+        }
+        if (!done) throw new Error("Jawab adhoora reh gaya, dobara bhejein.");
+        reply = done.reply;
+        setJob((j) => ({ ...j, busy: false, reply, agent: done.agent }));
+        setMessages([...next, { role: "assistant", content: reply, meta: `${done.agent?.icon || ""} ${done.agent?.name || ""} · ${done.provider}` }]);
       } catch (err) {
+        setJob((j) => ({ ...j, busy: false }));
+        setLog((l) => [...l, { who: "Error", text: err.message.split("\n")[0] }]);
         setMessages([...next, { role: "assistant", content: "⚠️ " + err.message, meta: "error" }]);
         setMode("idle");
         return;
       }
-      if (reply && opts.voice && speakReplies) {
-        await speak(reply);
-      }
+      if (reply && opts.voice && speakReplies) await speak(reply);
       setMode("idle");
       if (opts.voice && voiceOnRef.current) setTimeout(() => startListening(), 300);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [provider, agent, speakReplies, speak, loadProviders, voiceChoice]
+    [prefs, speakReplies, speak, voiceChoice]
   );
 
   // ---------- Voice input: record, detect silence, transcribe with Whisper ----------
@@ -235,109 +238,42 @@ export default function Home() {
     startListening();
   }
 
-  const status = { idle: voiceOn ? "Ready" : "Online", listening: "Sun raha hoon…", thinking: "Soch raha hoon…", speaking: "Bol raha hoon…" }[mode];
+  function newChat() {
+    if (messages.length) {
+      try {
+        const a = JSON.parse(localStorage.getItem("faheem-ai-archive") || "[]");
+        a.unshift({ date: new Date().toLocaleString(), messages });
+        localStorage.setItem("faheem-ai-archive", JSON.stringify(a.slice(0, 50)));
+      } catch {}
+    }
+    setMessages([]); setJob(null); setLog([]);
+  }
 
   return (
-    <main className={"shell" + (showLive ? " with-live" : "")}>
-      <div className="aurora" aria-hidden="true" />
-      <Scene3D mode={mode} levelRef={levelRef} />
+    <main className={"front" + (wsOpen ? " ws-on" : "")}>
+      <Background />
 
-      <aside className="panel side">
-        <div className="brand"><img src="/icon.png" alt="" className="logo" /> Faheem AI</div>
-        <div className={"status " + mode}><span className="pulse" />{status}</div>
-
-        {update?.available && (
-          <div className="update">
-            <b>Naya version {update.latest}</b>
-            <small>Aap ke paas {update.current}</small>
-            <button disabled={updating} onClick={async () => { setUpdating(true); await fetch("/api/update", { method: "POST" }); setNotice("Update chal raha hai. Ek window khulegi; khatam hone par app khud dobara khulegi."); }}>
-              {updating ? "Update ho raha hai…" : "⬆ Abhi update karein"}
-            </button>
-          </div>
-        )}
-
-        <label className="label">Master Agent</label>
-        <select value={agent} onChange={(e) => setAgent(e.target.value)}>
-          <option value="auto">🧠 Auto: Master khud chune</option>
-          {agents.map((a) => <option key={a.id} value={a.id}>{a.icon} {a.name}</option>)}
-        </select>
-        <div className="agents">
-          {agents.filter((a) => a.id !== "general").map((a) => (
-            <span key={a.id} className={"agent-chip " + (last?.agent?.id === a.id ? "active" : "")} title={a.name}>{a.icon} {a.name.replace(" Master", "")}</span>
-          ))}
+      <header className="topbar">
+        <div className="brand"><img src="/icon.png" alt="" className="logo" /> Faheem AI <span className={"stat " + mode} /></div>
+        <div className="top-actions">
+          <button className="icon-btn" title="Search (Ctrl+K)" onClick={() => setShowSearch(true)}>⌕</button>
+          <button className="icon-btn" title="Naya chat" onClick={newChat}>＋</button>
+          <button className="icon-btn" title="Live workspace" onClick={() => setWsOpen(!wsOpen)}>◧</button>
+          <ThemeBalls />
+          <Link className="icon-btn" href="/options" title="Options">⋯</Link>
         </div>
+      </header>
 
-        <label className="label">Brain</label>
-        <select value={provider} onChange={(e) => setProvider(e.target.value)}>
-          <option value="auto">Auto (best available)</option>
-          {providers.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
+      {wsOpen && <Workspace job={job} log={log} onClose={() => setWsOpen(false)} />}
 
-        <div className="plist">
-          {providers.map((p) => (
-            <div key={p.id} className="pitem">
-              <span className={"led " + (p.cooling ? "warn" : "ok")} />
-              <div><b>{p.name}</b><small>{p.model}</small></div>
-            </div>
-          ))}
-        </div>
-
-        <label className="toggle">
-          <input type="checkbox" checked={speakReplies} onChange={(e) => setSpeakReplies(e.target.checked)} />
-          <span>Voice mode mein jawab bol kar sunao</span>
-        </label>
-
-        <div className="voicepick">
-          <small>Awaz</small>
-          <select
-            value={voiceChoice}
-            onChange={(e) => { setVoiceChoice(e.target.value); localStorage.setItem("faheem-ai-voice", e.target.value); }}
-          >
-            <option value="urdu-female">🇵🇰 Urdu — Uzma (aurat)</option>
-            <option value="urdu-male">🇵🇰 Urdu — Asad (mard)</option>
-            <option value="english">English awaz</option>
-          </select>
-          {voiceChoice !== "english" && !voiceList.some((v) => v.lang.toLowerCase().startsWith("ur")) && voiceList.length > 0 && (
-            <small className="warnline">Urdu awaz nahi mili. Dashboard ko Microsoft Edge mein kholein (Desktop shortcut khud Edge mein kholta hai).</small>
-          )}
-          <button className="testvoice" onClick={() => speak(voiceChoice === "english" ? "Hello Faheem, this is your dashboard voice." : "السلام علیکم فہیم، میں آپ کا اے آئی ڈیش بورڈ ہوں۔").then(() => setMode("idle"))}>▶ Awaz test karein</button>
-        </div>
-
-        {last && (
-          <div className="last">
-            Last reply: <b>{last.agent?.icon} {last.agent?.name}</b> via <b>{last.provider}</b>
-            {last.skipped?.length > 0 && <small>Skipped: {last.skipped.join(" · ")}</small>}
-          </div>
-        )}
-
-        <div className="sites">
-          <small>🌐 Meri websites</small>
-          <a className="sitecard" href="/sites/vestire/index.html" onClick={(e) => { e.preventDefault(); toggleLive(true); }}>
-            <img src="/sites/vestire/img/panel-men.jpg" alt="" />
-            <div><b>Vestire Collection</b><span>Men · Women · Juniors</span></div>
-          </a>
-        </div>
-
-        <div className="side-actions">
-          <button className="ghost" onClick={() => { setMessages([]); setLast(null); }}>＋ New chat</button>
-          <button className="ghost" onClick={() => toggleLive(!showLive)}>{showLive ? "◧ Live screen band" : "◨ Live screen kholein"}</button>
-          <button className="ghost" onClick={() => setShowSettings(true)}>⚙ Settings / Keys</button>
-          <button className="ghost hark" onClick={() => { const q = [...messages].reverse().find((m) => m.role === "user")?.content; if (q) navigator.clipboard.writeText(q).catch(() => {}); window.open("https://hark.com", "_blank"); }}>
-            ✦ Bada kaam? Hark se karwao
-          </button>
-          <small className="ver">v{update?.current || ""}</small>
-        </div>
-      </aside>
-
-      <section className="panel chat">
+      <section className="chatboard">
         <div className="msgs">
           {messages.length === 0 && (
             <div className="hello">
               <h1>Assalam o Alaikum, Faheem</h1>
-              <p>Likh kar poochein, ya 🎙 dabayein aur bol kar baat karein.</p>
-              <button className="talk" onClick={toggleVoice}>🎙 Bol kar baat karein</button>
+              <p>Kya banayein aaj? Likhein ya bol kar batayein.</p>
               <div className="chips">
-                {["Vestire ke liye 5 product descriptions likho", "Eswatini se Lahore ka sasta rasta batao", "Mera aaj ka kaam plan karo"].map((c) => (
+                {["Vestire ke liye leather jacket ki picture banao", "Vestire ka hero section website bana do", "Mera aaj ka kaam plan karo"].map((c) => (
                   <button key={c} className="chip" onClick={() => send(c)}>{c}</button>
                 ))}
               </div>
@@ -351,29 +287,22 @@ export default function Home() {
         {notice && <div className="notice" onClick={() => setNotice("")}>{notice}</div>}
 
         <form className="composer" onSubmit={(e) => { e.preventDefault(); send(input); }}>
-          <button
-            type="button"
-            className={"mic " + (voiceOn || mode === "listening" ? "on" : "")}
-            onClick={toggleVoice}
-            title={voiceOn ? "Voice band karein" : "Bol kar baat karein"}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0 0 14 0M12 17v5M8 22h8" /></svg>
-            <span>{mode === "speaking" ? "Stop" : voiceOn || mode === "listening" ? "Sun raha" : "Voice"}</span>
-          </button>
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
-            placeholder="Yahan likhein… (Enter = send)"
+            placeholder="Faheem AI se kuch bhi kahein…"
             rows={1}
           />
-          <button type="submit" disabled={mode === "thinking" || !input.trim()}>Send ➤</button>
+          <button type="button" className={"mic " + (voiceOn || mode === "listening" ? "on" : "")} onClick={toggleVoice} title="Bol kar baat karein">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0 0 14 0M12 17v5M8 22h8" /></svg>
+          </button>
+          <button type="submit" className="sendbtn" disabled={mode === "thinking" || !input.trim()} title="Send">➤</button>
         </form>
       </section>
 
-      {showLive && <LiveScreen onClose={() => toggleLive(false)} />}
-
-      {showSettings && <Settings onClose={() => { setShowSettings(false); loadProviders(); }} />}
+      <VersionBadge />
+      {showSearch && <SearchOverlay messages={messages} onClose={() => setShowSearch(false)} onAsk={(q) => send(q)} />}
     </main>
   );
 }

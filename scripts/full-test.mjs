@@ -1,4 +1,4 @@
-// Faheem AI full test suite (v3.9: UI UX Pro Max included)
+// Faheem AI full test suite (v3.10: UI UX Pro Max + Impeccable included)
 import fs from "fs"; import path from "path"; import os from "os"; import { execSync, spawn } from "child_process";
 const ROOT = process.env.FAHEEM_ROOT || process.cwd();
 const R = []; let cur = "";
@@ -211,7 +211,7 @@ await t("Reduced-motion poore app mein", () => must(/prefers-reduced-motion: red
 await t("Design Studio: labels (sr) + 8 domains", () => { const s = rd("app/design/page.js"); return must((s.match(/htmlFor=/g) || []).length >= 3 && ((s.split("\n").find((l) => l.startsWith("const DOMS")) || "").match(/\["\w+", "[^"]+"\]/g) || []).length === 8); });
 
 sec("15. Hermes: ui-ux-pro-max");
-await t("bat: 3 skills (3/3 ui-ux-pro-max)", () => must(/--- 3\/3 ui-ux-pro-max ---/.test(bat) || /--- 3\/3 ui-ux-pro-max ---/.test(fs.readFileSync(path.join(ROOT, "HERMES-SKILLS.bat"), "latin1"))));
+await t("bat: 4 skills (3/4 ui-ux-pro-max)", () => must(/--- 3\/4 ui-ux-pro-max ---/.test(fs.readFileSync(path.join(ROOT, "HERMES-SKILLS.bat"), "latin1"))));
 const bat2 = fs.readFileSync(path.join(ROOT, "HERMES-SKILLS.bat"), "latin1");
 await t("bat: UUPM codeload URL", () => must(/codeload\.github\.com\/nextlevelbuilder\/ui-ux-pro-max-skill\/zip\/refs\/heads\/main/.test(bat2)));
 await t("bat: CRLF + saare labels", () => { const g = [...bat2.matchAll(/goto (\w+)/g)].map((m) => m[1]); return must(bat2.includes("\r\n") && g.every((l) => new RegExp("^:" + l + "\\s*$", "m").test(bat2.replace(/\r/g, ""))), g.join()); });
@@ -219,6 +219,51 @@ await t("UUPM ZIP download + .claude/skills/ui-ux-pro-max/SKILL.md (bat ka path)
 await t("UUPM skill: name ui-ux-pro-max", () => must(/^name: ui-ux-pro-max$/m.test(fs.readFileSync(path.join(tmp, "ui-ux-pro-max-skill-main/.claude/skills/ui-ux-pro-max/SKILL.md"), "utf8"))));
 await t("UUPM skill folder mein data + scripts (symlink nahi)", () => { const d = path.join(tmp, "ui-ux-pro-max-skill-main/.claude/skills/ui-ux-pro-max"); return must(fs.statSync(path.join(d, "data/products.csv")).isFile() && fs.existsSync(path.join(d, "scripts/search.py"))); });
 await t("Installed skill ki Python search chalti hai (Hermes jaisa)", () => { const o = execSync(`python3 scripts/search.py "fashion ecommerce" --design-system -f markdown`, { cwd: path.join(tmp, "ui-ux-pro-max-skill-main/.claude/skills/ui-ux-pro-max"), encoding: "utf8", timeout: 60000 }); return must(/## Design System/.test(o) && /Typography/.test(o)); });
+
+sec("16. Impeccable (62 checks)");
+const IM = await import(path.join(ROOT, "lib/impeccable/index.js"));
+const SLOP = '<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>body{font-family:Inter;background:#fff;color:#999}.h{background:linear-gradient(90deg,#6366f1,#a855f7)}.c{border-left:4px solid #6366f1;border-radius:12px;padding:2px}</style></head><body><div class="h"><h1>Welcome to our store</h1></div><div class="c">Card text here for testing the detector</div></body></html>';
+const CLEAN = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Vestire</title><style>:root{--bg:#faf9f7;--text:#1c1917}body{margin:0;font:18px/1.6 Georgia,serif;background:var(--bg);color:var(--text)}main{max-width:1100px;margin:0 auto;padding:48px 24px}h1{font-size:56px;line-height:1.1;margin:0 0 16px}</style></head><body><main><h1>Vestire Collection</h1><p>Hand-finished silk and wool, made in small batches.</p></main></body></html>';
+await t("Apache-2.0 LICENSE + NOTICE saath", () => must(/Apache License/.test(rd("lib/impeccable/LICENSE")) && /Paul Bakaus/.test(rd("lib/impeccable/NOTICE.md"))));
+await t("package.json: impeccable 4.8.0 pinned", () => must(JSON.parse(rd("package.json")).dependencies.impeccable === "4.8.0"));
+await t("package-lock: Windows x64 engine shamil", () => must(/"node_modules\/@impeccable\/cli-windows-x64"/.test(rd("package-lock.json"))));
+await t("rules.json: 62 rules", () => must(IM.RULE_COUNT === 62, String(IM.RULE_COUNT)) && "62 rules");
+await t("rules: 31 slop + 31 quality", () => { const s = IM.RULES.filter((r) => r.category === "slop").length; return must(s === 31 && IM.RULES.length - s === 31, String(s)); });
+await t("Engine mojood (available)", () => must(IM.available()));
+await t("Telemetry band (NO_TELEMETRY + DO_NOT_TRACK)", () => { const c = rd("lib/impeccable/index.js"); return must(/IMPECCABLE_NO_TELEMETRY: "1"/.test(c) && /DO_NOT_TRACK: "1"/.test(c)); });
+let SR;
+await t("Slop page: findings milti hain", async () => { SR = await IM.detectHtml(SLOP); return must(SR.ok && SR.findings.length >= 4, JSON.stringify(SR).slice(0, 120)) && `${SR.findings.length} findings`; });
+for (const id of ["side-tab", "low-contrast", "overused-font", "ai-color-palette"]) await t(`Slop page: "${id}" pakra`, () => must(SR.findings.some((f) => f.id === id), SR.findings.map((f) => f.id).join()));
+await t("Saaf page: 0 warning/error", async () => { const r = await IM.detectHtml(CLEAN); const bad = r.findings.filter((f) => f.severity !== "advisory"); return must(r.ok && bad.length === 0, bad.map((f) => f.id).join()) && `${r.findings.length} total (advisory only)`; });
+await t("Alag CSS bhi jaanchta hai", async () => { const r = await IM.detectHtml("<html><body><div class='c'>Card body text that is long enough</div></body></html>", ".c{border-left:5px solid #7c3aed;border-radius:10px}"); return must(r.ok && r.findings.some((f) => f.id === "side-tab"), r.findings.map((f) => f.id).join()); });
+await t("Duplicate findings hat jaati hain", () => { const k = SR.findings.map((f) => f.id + f.snippet); return must(new Set(k).size === k.length); });
+await t("Error pehle, advisory aakhir mein (sort)", () => { const o = { error: 0, warning: 1, advisory: 2 }; return must(SR.findings.every((f, i, a) => !i || o[a[i - 1].severity] <= o[f.severity])); });
+await t("Project folder scan (linked CSS)", async () => { const d = fs.mkdtempSync(path.join(os.tmpdir(), "impd-")); fs.writeFileSync(path.join(d, "index.html"), '<html><head><link rel="stylesheet" href="s.css"></head><body><p>Hello there friends</p></body></html>'); fs.writeFileSync(path.join(d, "s.css"), "body{font-family:Roboto}"); const r = await IM.detectDir(d); return must(r.ok && r.findings.some((f) => f.id === "overused-font"), r.findings.map((f) => f.id).join()); });
+await t("Khali HTML: saaf jawab (crash nahi)", async () => { const r = await IM.detectHtml(""); return must(r.ok === false && r.reason); });
+await t("Ghalat folder: saaf jawab", async () => { const r = await IM.detectDir("/nahi/hai/xyz"); return must(r.ok === false); });
+await t("toNotes: advisory nahi, max limit", () => { const n = IM.toNotes(SR, 3); return must(n.length <= 3 && n.every((x) => x.startsWith("Impeccable: "))); });
+await t("Engine tez hai (< 3s)", async () => { const t0 = Date.now(); await IM.detectHtml(SLOP); const ms = Date.now() - t0; return must(ms < 3000, ms + "ms") && ms + "ms"; });
+await t("Bara page (300KB) bhi chalta hai", async () => { const big = SLOP.replace("</body>", "<p>Lorem ipsum dolor sit amet text</p>".repeat(8000) + "</body>"); const r = await IM.detectHtml(big); return must(r.ok && big.length > 280000) && `${(big.length / 1024) | 0}KB`; });
+await t("Design rules prompt mein Impeccable line", () => must(/13\. \$\{IMPECCABLE_RULES_BRIEF\}/.test(rd("lib/design.js")) && /side-tab accent border/.test(IM.IMPECCABLE_RULES_BRIEF)));
+await t("Website Master: designCheckFull (await)", () => must(/await designCheckFull\(code\)/.test(rd("app/api/chat/route.js"))));
+await t("Agent: design_audit tool + async projectDesignCheck", () => { const c = rd("lib/agent/tools.js"); return must(/case "design_audit"/.test(c) && /design_audit \{"path"/.test(c) && /export async function projectDesignCheck/.test(c) && /await projectDesignCheck\(dir\)/.test(rd("lib/agent/loop.js"))); });
+await t("designCheckFull: Hallmark + Impeccable dono", async () => { const D = await import(path.join(ROOT, "lib/design.js")); const n = await D.designCheckFull(SLOP + "<style>.x{transition:all .3s}</style>"); return must(n.some((x) => /transition: all/.test(x)) && n.some((x) => x.startsWith("Impeccable:")), n.join(" | ").slice(0, 150)) && `${n.length} notes`; });
+await t("Agent tool design_audit asli project par", async () => { const T = await import(path.join(ROOT, "lib/agent/tools.js")); const d = fs.mkdtempSync(path.join(os.tmpdir(), "impa-")); fs.writeFileSync(path.join(d, "index.html"), SLOP); const o = await T.runTool(d, "t", "design_audit", { path: "index.html" }); return must(/Impeccable \(62 checks\)/.test(o) && /Side-tab/.test(o), o.slice(0, 120)); });
+await t("Agent check tool mein Impeccable jaanch", async () => { const T = await import(path.join(ROOT, "lib/agent/tools.js")); const d = fs.mkdtempSync(path.join(os.tmpdir(), "impc-")); fs.writeFileSync(path.join(d, "index.html"), SLOP); const o = await T.runTool(d, "t", "check", {}); return must(/Hallmark \+ UI UX Pro Max \+ Impeccable/.test(o) && /Impeccable: /.test(o), o.slice(0, 160)); });
+await t("Design page: Audit box + label", () => { const s = rd("app/design/page.js"); return must(/htmlFor="auditcode"/.test(s) && /Design Audit · Impeccable/.test(s)); });
+
+sec("17. Hermes: impeccable");
+const bat3 = fs.readFileSync(path.join(ROOT, "HERMES-SKILLS.bat"), "latin1");
+await t("bat: 4/4 impeccable step", () => must(/--- 4\/4 impeccable ---/.test(bat3) && /4 design skills/.test(bat3)));
+await t("bat: pehle hermes skills install impeccable", () => must(/hermes skills install impeccable/.test(bat3)));
+await t("bat: phir official npx installer (telemetry band)", () => must(/IMPECCABLE_NO_TELEMETRY=1/.test(bat3) && /npx -y impeccable@latest install --providers=hermes --scope=global -y/.test(bat3)));
+await t("bat: aakhri fallback GitHub ZIP", () => must(/codeload\.github\.com\/DevvGwardo\/impeccable\/zip\/refs\/heads\/main/.test(bat3)));
+await t("bat: CRLF + saare goto labels (4 skills)", () => { const g = [...bat3.matchAll(/goto (\w+)/g)].map((m) => m[1]); return must(bat3.includes("\r\n") && !/[^\r]\n/.test(bat3) && g.includes("imp_ok") && g.every((l) => new RegExp("^:" + l + "\\s*$", "m").test(bat3.replace(/\r/g, ""))), g.join()); });
+await t("bat: if/else bracket balance (echo text alag)", () => { const b = bat3.split(/\r?\n/).filter((l) => !/^\s*echo\b/i.test(l)).join("\n").replace(/"[^"\r\n]*"/g, ""); return must((b.match(/\(/g) || []).length === (b.match(/\)/g) || []).length); });
+await t("Impeccable Hermes ZIP download + SKILL.md (bat ka path)", () => { execSync(`cd ${tmp} && curl -sL -o i.zip https://codeload.github.com/DevvGwardo/impeccable/zip/refs/heads/main && unzip -qo i.zip`, { timeout: 90000 }); return must(fs.existsSync(path.join(tmp, "impeccable-main/SKILL.md"))); });
+await t("Hermes skill: name impeccable + Apache", () => { const sk = fs.readFileSync(path.join(tmp, "impeccable-main/SKILL.md"), "utf8"); return must(/^name: impeccable$/m.test(sk) && /Apache/.test(sk)); });
+await t("Hermes skill: reference (40+ files) + Windows launcher", () => { const d = path.join(tmp, "impeccable-main"); const n = fs.readdirSync(path.join(d, "reference")).length; return must(n >= 40 && fs.existsSync(path.join(d, "scripts/impeccable.cmd")), String(n)) && `${n} reference files`; });
+await t("Official npm package impeccable 4.8.0 registry par", async () => { const r = await realFetch("https://registry.npmjs.org/impeccable/4.8.0"); const d = await r.json(); return must(r.ok && d.license === "Apache-2.0" && d.optionalDependencies["@impeccable/cli-windows-x64"]); });
 
 // ---------- live server ----------
 sec("10. Live server (next start)");
@@ -248,6 +293,12 @@ await t("/api/design: ghalat domain = 400", async () => { const r = await get("/
 await t("/api/design: khali q = 400", async () => { const r = await get("/api/design"); return must(r.status === 400); });
 await t("/api/design: bekaar sawal = 404", async () => { const r = await get("/api/design?q=qqqzzz%20xxyyw"); return must(r.status === 404); });
 await t("/api/design POST: UX check", async () => { const d = await (await realFetch(base + "/api/design", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ html: "<html><body><img src=a.png></body></html>" }) })).json(); return must(!d.ok && d.issues.length >= 2) && d.issues.length + " issues"; });
+await t("/api/design?rules=impeccable: 62 rules", async () => { const d = await (await get("/api/design?rules=impeccable")).json(); return must(d.ok && d.count === 62 && d.available); });
+await t("/api/design POST: Impeccable findings (live server)", async () => { const d = await (await realFetch(base + "/api/design", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ html: SLOP }) })).json(); return must(d.impeccable?.ok && d.impeccable.findings.some((f) => f.id === "side-tab"), JSON.stringify(d).slice(0, 150)) && `${d.impeccable.findings.length} findings`; });
+await t("/api/design POST: saaf page = 0 warnings", async () => { const d = await (await realFetch(base + "/api/design", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ html: CLEAN }) })).json(); return must(d.impeccable?.ok && d.impeccable.counts.warning === 0 && d.impeccable.counts.error === 0, JSON.stringify(d.impeccable?.counts)); });
+await t("/api/design POST: impeccable:false = sirf UX", async () => { const d = await (await realFetch(base + "/api/design", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ html: SLOP, impeccable: false }) })).json(); return must(d.impeccable === null && Array.isArray(d.issues)); });
+await t("/api/design POST: ghalat JSON se crash nahi", async () => { const r = await realFetch(base + "/api/design", { method: "POST", headers: { "content-type": "application/json" }, body: "{bad" }); return must(r.status === 200); });
+await t("Dashboard ke apne pages par Impeccable (/, /design, /tools)", async () => { let tot = 0; const out = []; for (const pg of ["/", "/design", "/tools"]) { const h = await (await get(pg)).text(); const r = await IM.detectHtml(h); must(r.ok, r.reason); const bad = r.findings.filter((f) => f.severity === "error"); tot += bad.length; out.push(`${pg}:${r.findings.length}`); } return must(tot === 0, "errors " + tot) && out.join(" "); });
 try { process.kill(-srv.pid); } catch {}
 
 sec("11. Build + Browser Tester");

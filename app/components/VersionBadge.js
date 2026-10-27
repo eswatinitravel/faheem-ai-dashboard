@@ -18,7 +18,7 @@ export default function VersionBadge() {
   if (!u) return null;
   async function run() {
     setBusy(true);
-    setMsg("Update ho raha hai… ek window khulegi, khatam hote hi app khud dobara khulegi.");
+    setMsg("Update window khul rahi hai… yeh app band ho jayegi aur install ke baad khud dobara khulegi (2–4 minute).");
     const r = await fetch("/api/update", { method: "POST" }).then((x) => x.json()).catch(() => ({ error: "Update start nahi hua" }));
     if (r.error) { setMsg(r.error + " — project folder mein UPDATE.bat double-click karein."); setBusy(false); return; }
     // Server band ho kar naye version ke sath wapas aata hai: har 10 second dekhte rahein.

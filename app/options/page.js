@@ -73,6 +73,28 @@ export default function Options() {
           </section>
 
           <section className="card panel">
+            <h3>🖥 Display: 4K / 8K / 3D</h3>
+            <label className="muted">Render quality</label>
+            <select value={prefs.quality} onChange={(e) => set("quality", e.target.value)}>
+              <option value="auto">Auto (screen ke mutabiq)</option>
+              <option value="hd">HD (sab se halka, purane laptop ke liye)</option>
+              <option value="4k">4K Ultra (3840px saaf render)</option>
+              <option value="8k">8K Extreme (7680px, sirf taqatwar GPU)</option>
+            </select>
+            <label className="muted">3D orb (Three.js)</label>
+            <select value={prefs.fx3d} onChange={(e) => set("fx3d", e.target.value)}>
+              <option value="off">Band</option>
+              <option value="normal">3D On</option>
+              <option value="ultra">3D Ultra (zyada detail + dust)</option>
+            </select>
+            <label className="muted">UI size (bari 4K/8K screen ke liye)</label>
+            <select value={prefs.uiScale} onChange={(e) => set("uiScale", e.target.value)}>
+              {["90", "100", "125", "150", "175", "200"].map((z) => <option key={z} value={z}>{z}%</option>)}
+            </select>
+            {(prefs.quality === "8k" || prefs.fx3d === "ultra") && <p className="warnline">8GB laptop par 8K / 3D Ultra garam aur dheema ho sakta hai. Masla ho to HD ya Auto chunein.</p>}
+          </section>
+
+          <section className="card panel">
             <h3>🎙 Awaz</h3>
             <label className="toggle"><input type="checkbox" checked={prefs.speakReplies} onChange={(e) => set("speakReplies", e.target.checked)} /><span>Voice mode mein jawab bol kar sunao</span></label>
             <select value={prefs.voiceChoice} onChange={(e) => set("voiceChoice", e.target.value)}>

@@ -56,7 +56,8 @@ export default function Workspace({ job, log, onClose }) {
   }, [job?.reply]);
 
   const html = extractHtml(job?.reply);
-  const view = site ? "site" : job?.video ? "video" : job?.images ? "image" : html ? "html" : job?.reply ? "text" : "wait";
+  const att = (job?.attached || []).filter((a) => (a.kind === "image" && a.dataUrl) || (a.kind === "video" && a.url));
+  const view = site ? "site" : job?.video ? "video" : job?.images ? "image" : html ? "html" : att.length && job?.busy ? "attached" : job?.reply ? "text" : "wait";
 
   return (
     <section className="ws panel">
@@ -72,6 +73,12 @@ export default function Workspace({ job, log, onClose }) {
 
       <div className="ws-stage">
         {view === "wait" && <div className="ws-wait"><div className="ws-orb" /><span>Agents kaam shuru kar rahe hain…</span></div>}
+        {view === "attached" && (
+          <div className="ws-grid">
+            {att.map((a, i) => a.kind === "image" ? <div key={i} className="ws-img ok scan"><img src={a.dataUrl} alt="" /></div> : <video key={i} className="ws-vid" src={a.url} controls autoPlay muted loop />)}
+            <small className="muted">Agents aap ki file dekh rahe hain…</small>
+          </div>
+        )}
         {view === "image" && <div className="ws-grid">{job.images.map((u, i) => <ImageCard key={u} url={u} i={i} />)}</div>}
         {view === "video" && <Storyboard urls={job.video} />}
         {view === "html" && <iframe className="ws-frame" title="Live preview" srcDoc={html} sandbox="allow-scripts" />}

@@ -2,6 +2,7 @@ import vm from "vm";
 import { getProviders, callProvider, isCooling, visionProviders } from "../../../lib/providers";
 import { AGENTS, BASE, routeAgent } from "../../../lib/agents";
 import { DESIGN_RULES, designCheck } from "../../../lib/design";
+import { designBrief } from "../../../lib/uupm/index.js";
 import { runtimeTest } from "../../../lib/runtime";
 
 export const dynamic = "force-dynamic";
@@ -215,7 +216,8 @@ export async function POST(req) {
 - If the user asks for "all pages" / complete store / multiple pages: build them all inside this ONE file as a single-page app with hash routing (#home, #shop, #product, #cart, #checkout, #about, #contact, #account): working header nav, category filters and sort, product detail with size/color, cart with quantity and totals saved in localStorage, checkout form with validation and order confirmation.
 - After the code block, write 3-5 short lines saying what was built.
 
-${DESIGN_RULES}`;
+${DESIGN_RULES}
+${designBrief(String(rawText || ""))}`;
           step(agent.name, "🔨 Plan ke mutabiq poora code likh raha hoon…");
           // Sirf naya request + plan: purani chat (jaise pichla store) naye kaam mein na mile.
           const fresh = [...system, { role: "system", content: `Plan:\n${plan}\n\n${RULES}` }, { role: "user", content: design ? `${lastUser}\n\nREFERENCE DESIGN (rebuild this closely):\n${design}` : lastUser }];

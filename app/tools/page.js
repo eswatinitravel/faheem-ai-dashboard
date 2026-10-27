@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Icon from "../components/Icon";
 import Background from "../components/Background";
 import ThemeBalls from "../components/ThemeBalls";
 
@@ -39,7 +40,7 @@ function ToolCard({ p, register }) {
       </div>
       <form onSubmit={(e) => { e.preventDefault(); send(); }}>
         <input value={text} onChange={(e) => setText(e.target.value)} placeholder={`${p.name} se poochein…`} />
-        <button type="submit" disabled={stat.c === "run"}>➤</button>
+        <button type="submit" aria-label="Bhejein" disabled={stat.c === "run"}><Icon name="send" size={16} /></button>
       </form>
     </section>
   );
@@ -71,14 +72,14 @@ export default function Tools() {
     <main className="optpage">
       <Background />
       <header className="topbar">
-        <Link href="/" className="icon-btn" title="Wapas chat">←</Link>
+        <Link href="/" className="icon-btn" title="Wapas chat" aria-label="Wapas chat"><Icon name="back" /></Link>
         <div className="brand"><img src="/icon.png" alt="" className="logo" /> Tools · har brain ka chat board</div>
-        <div className="top-actions"><Link href="/options" className="icon-btn" title="Keys">⚙</Link><ThemeBalls /></div>
+        <div className="top-actions"><Link href="/options" className="icon-btn" title="Keys" aria-label="Keys"><Icon name="settings" /></Link><ThemeBalls /></div>
       </header>
       <div className="toolspage">
         <div className="toolsbar">
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Sab brains se ek hi sawal" />
-          <button onClick={testAll} disabled={running || !providers?.length}>{running ? "Chal raha hai…" : "▶ Sab 1 by 1 test karo"}</button>
+          <button onClick={testAll} disabled={running || !providers?.length}>{running ? "Chal raha hai…" : <><Icon name="play" size={14} /> Sab 1 by 1 test karo</>}</button>
           <span className="muted">{summary}</span>
         </div>
         {providers === null && <p className="muted">Brains load ho rahe hain…</p>}

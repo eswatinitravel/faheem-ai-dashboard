@@ -1,4 +1,4 @@
-// Faheem AI v3.8.0 full test suite (100 checks)
+// Faheem AI full test suite (v3.9: UI UX Pro Max included)
 import fs from "fs"; import path from "path"; import os from "os"; import { execSync, spawn } from "child_process";
 const ROOT = process.env.FAHEEM_ROOT || process.cwd();
 const R = []; let cur = "";
@@ -157,6 +157,69 @@ await t("Agent order mein zai + mistral", () => must(/"groq", "zai", "mistral"/.
 await t("Chat agents order mein zai + mistral", () => must((rd("lib/agents.js").match(/"zai", "mistral"/g) || []).length === 7));
 await t("/v1 API order mein zai + mistral", () => must(/"zai", "mistral"/.test(rd("app/api/v1/chat/completions/route.js"))));
 
+
+sec("12. UI UX Pro Max (data + search)");
+const U = await import(path.join(ROOT, "lib/uupm/index.js"));
+const cnt = { product: 192, style: 88, color: 192, typography: 74, ux: 119, landing: 34 };
+for (const [d, n] of Object.entries(cnt)) await t(`Data ${d}: ${n} rows`, () => must(U.rows(d).length === n, String(U.rows(d).length)));
+await t("LICENSE MIT saath hai", () => must(/MIT License/.test(rd("lib/uupm/LICENSE"))));
+await t("CSV parser: quotes, comma, nayi line", () => { const r = U.parseCSV('a,b\n"x, y","line1\nline2 ""q"""\n'); return must(r[0].a === "x, y" && r[0].b === 'line1\nline2 "q"'); });
+const pyExpect = { "luxury fashion ecommerce": "E-commerce Luxury", "restaurant food delivery": "Restaurant/Food Service", "fintech banking app": "Fintech/Crypto", "travel agency booking": "Travel/Tourism Agency", "beauty spa salon": "Beauty/Spa/Wellness Service", "saas dashboard analytics": "Analytics Dashboard", "online course education": "Online Course/E-learning", "real estate property listing": "Real Estate/Property", "healthcare clinic appointment": "Healthcare App", "gaming esports": "Gaming", "crypto wallet": "Fintech/Crypto", "news magazine blog": "Magazine/Blog", "fitness gym tracker": "Fitness/Gym App", "hotel booking": "Hotel/Hospitality", "pet store": "Pet Tech App" };
+await t("Search asli Python skill jaisa (15 sawal)", () => { const bad = Object.entries(pyExpect).filter(([q, e]) => U.search(q, "product", 1)[0]?.["Product Type"] !== e); return must(!bad.length, bad.map((b) => b[0]).join(", ")) && "15/15 same as Python search.py"; });
+const DS = U.designSystem("luxury fashion ecommerce");
+await t("Design system: product E-commerce Luxury", () => must(DS.product === "E-commerce Luxury"));
+await t("Design system: rang Python jaise (#1C1917 / gold #A16207)", () => must(DS.colors.primary === "#1C1917" && DS.colors.accent === "#A16207" && DS.colors.background === "#FAFAF9"));
+await t("Design system: font Cormorant + Montserrat", () => must(DS.typography.heading === "Cormorant" && DS.typography.body === "Montserrat"));
+await t("Design system: style Liquid Glass", () => must(DS.style.name === "Liquid Glass"));
+await t("Design system: page Feature-Rich Showcase", () => must(DS.landing.name === "Feature-Rich Showcase" && DS.landing.sections.length > 20));
+await t("Design system: Google Fonts link", () => must(/^https:\/\/fonts\.googleapis\.com\/css2\?family=Cormorant/.test(DS.typography.url)));
+await t("Har product ka design system banta hai (192/192)", () => { const bad = U.rows("product").filter((p) => { const d = U.designSystem(p["Product Type"] + " " + p.Keywords.split(",")[0]); return !d || !d.colors.primary || !d.typography.heading || !d.landing.name; }); return must(!bad.length, bad.length + " fail: " + bad.slice(0, 3).map((b) => b["Product Type"]).join(", ")); });
+await t("Bekaar sawal: null (ghalat design nahi)", () => must(U.designSystem("qqqzzz xxyyw") === null));
+await t("Brief: rang + font + checklist, 3000 se chhota", () => { const b = U.designBrief("restaurant food delivery"); return must(/--primary #/.test(b) && /Fonts:/.test(b) && /PRE-DELIVERY CHECKLIST/.test(b) && b.length < 3000, String(b.length)) && b.length + " chars"; });
+await t("UX search: 'touch target' -> Touch qaida", () => must(U.search("touch target size", "ux", 3).some((r) => /touch/i.test(r.Issue + r.Category))));
+await t("Font search: 'luxury elegant'", () => must(U.search("luxury elegant", "typography", 1).length === 1));
+await t("Next.js stack search", () => must(U.search("image optimization", "nextjs", 1).length === 1));
+await t("Contrast: kala/safed = 21:1", () => must(U.contrast("#000", "#ffffff") === 21));
+await t("Contrast: #777 par #888 = fail (<4.5)", () => must(U.contrast("#777777", "#888888") < 4.5));
+await t("Contrast: ghalat rang = null", () => must(U.contrast("red", "#fff") === null));
+
+sec("13. UX Pro checks (bina AI)");
+const goodHtml = '<html><head><meta name="viewport" content="width=device-width"></head><body><label for="e">Email</label><input id="e"><img src="a.webp" alt="Silk saree"><button aria-label="Cart"><svg></svg></button></body></html>';
+await t("Achha page: koi masla nahi", () => { const r = U.uxCheck(goodHtml, "button{min-height:44px;color:#fff;background:#111}"); return must(r.ok, r.issues.join("; ")); });
+await t("Viewport na ho: pakra", () => must(U.uxCheck("<html><body><p>x</p></body></html>").issues.some((i) => /Viewport/.test(i))));
+await t("Image bina alt: pakra", () => must(U.uxCheck(goodHtml.replace(' alt="Silk saree"', "")).issues.some((i) => /alt/.test(i))));
+await t("Emoji icon button: pakra", () => must(U.uxCheck(goodHtml.replace("<svg></svg>", "🛒")).issues.some((i) => /emoji/.test(i))));
+await t("Kam contrast CSS: pakra", () => must(U.uxCheck(goodHtml, ".x{color:#aaaaaa;background:#ffffff}").issues.some((i) => /contrast/i.test(i))));
+await t("Chhota button (30px): pakra", () => must(U.uxCheck(goodHtml, ".btn{height:30px}").issues.some((i) => /44px/.test(i))));
+await t("Input bina label: pakra", () => must(U.uxCheck('<html><head><meta name="viewport"></head><body><input placeholder="Email"></body></html>').issues.some((i) => /label/.test(i))));
+await t("Animation bina reduced-motion: pakra", () => must(U.uxCheck(goodHtml, ".a{transition:opacity .2s}").issues.some((i) => /reduced-motion/.test(i))));
+await t("designCheck mein 'UX Pro:' qawaid jurte hain", () => must(/UX Pro: .*emoji/.test(rd("lib/design.js")) || /"UX Pro: " \+ i/.test(rd("lib/design.js"))));
+await t("Agent Mode prompt mein design brief", () => must(/designBrief\(task\)/.test(rd("lib/agent/loop.js"))));
+await t("Agent tools: design_system + design_search", () => { const s = rd("lib/agent/tools.js"); return must(/case "design_system"/.test(s) && /case "design_search"/.test(s) && /design_system \{"query"/.test(s)); });
+await t("Website Master prompt mein design brief", () => must(/designBrief\(String\(rawText/.test(rd("app/api/chat/route.js"))));
+
+sec("14. SVG icons + touch (dashboard khud)");
+const ic = rd("app/components/Icon.js");
+const used = [...["app/page.js", "app/tools/page.js", "app/options/page.js", "app/agent/page.js", "app/design/page.js"].map(rd).join("\n").matchAll(/<Icon name="(\w+)"/g)].map((m) => m[1]);
+await t("Har istemal hua icon mojood", () => { const miss = [...new Set(used)].filter((n) => !new RegExp(`\\b${n}: <`).test(ic)); return must(!miss.length, miss.join()) && `${new Set(used).size} icons`; });
+await t("Home topbar: koi emoji icon nahi", () => { const top = rd("app/page.js").split("\n").filter((l) => /icon-btn/.test(l)).join("\n"); return must(!/[\u{1F300}-\u{1FAFF}\u2190-\u21FF\u2295-\u22FF\uFF0B\u25A0-\u25FF\u22EF\u2315]/u.test(top), top.match(/[\u{1F300}-\u{1FAFF}]/u)?.[0]); });
+await t("Agent topbar: koi emoji icon nahi", () => { const top = rd("app/agent/page.js").split("\n").filter((l) => /icon-btn/.test(l)).join("\n"); return must(!/[\u{1F300}-\u{1FAFF}\u21A9\uFF0B\u22EF]/u.test(top)); });
+await t("Icon-only buttons par aria-label", () => { const lines = ["app/page.js", "app/agent/page.js", "app/tools/page.js"].map(rd).join("\n").split("\n").filter((l) => /className="icon-btn"/.test(l) && /<Icon/.test(l)); return must(lines.length && lines.every((l) => /aria-label=/.test(l)), lines.find((l) => !/aria-label=/.test(l))) && `${lines.length} buttons`; });
+await t("Phone par buttons 44px (pointer: coarse)", () => must(/@media \(pointer: coarse\) \{ \.icon-btn \{ width: 44px; height: 44px;/.test(rd("app/globals.css"))));
+await t("Focus ring (keyboard) har control par", () => must(/button:focus-visible, a:focus-visible/.test(rd("app/globals.css"))));
+await t("Reduced-motion poore app mein", () => must(/prefers-reduced-motion: reduce\) \{ \*, \*::before/.test(rd("app/globals.css"))));
+await t("Design Studio: labels (sr) + 8 domains", () => { const s = rd("app/design/page.js"); return must((s.match(/htmlFor=/g) || []).length >= 3 && ((s.split("\n").find((l) => l.startsWith("const DOMS")) || "").match(/\["\w+", "[^"]+"\]/g) || []).length === 8); });
+
+sec("15. Hermes: ui-ux-pro-max");
+await t("bat: 3 skills (3/3 ui-ux-pro-max)", () => must(/--- 3\/3 ui-ux-pro-max ---/.test(bat) || /--- 3\/3 ui-ux-pro-max ---/.test(fs.readFileSync(path.join(ROOT, "HERMES-SKILLS.bat"), "latin1"))));
+const bat2 = fs.readFileSync(path.join(ROOT, "HERMES-SKILLS.bat"), "latin1");
+await t("bat: UUPM codeload URL", () => must(/codeload\.github\.com\/nextlevelbuilder\/ui-ux-pro-max-skill\/zip\/refs\/heads\/main/.test(bat2)));
+await t("bat: CRLF + saare labels", () => { const g = [...bat2.matchAll(/goto (\w+)/g)].map((m) => m[1]); return must(bat2.includes("\r\n") && g.every((l) => new RegExp("^:" + l + "\\s*$", "m").test(bat2.replace(/\r/g, ""))), g.join()); });
+await t("UUPM ZIP download + .claude/skills/ui-ux-pro-max/SKILL.md (bat ka path)", () => { execSync(`cd ${tmp} && curl -sL -o u.zip https://codeload.github.com/nextlevelbuilder/ui-ux-pro-max-skill/zip/refs/heads/main && unzip -qo u.zip`, { timeout: 90000 }); return must(fs.existsSync(path.join(tmp, "ui-ux-pro-max-skill-main/.claude/skills/ui-ux-pro-max/SKILL.md"))); });
+await t("UUPM skill: name ui-ux-pro-max", () => must(/^name: ui-ux-pro-max$/m.test(fs.readFileSync(path.join(tmp, "ui-ux-pro-max-skill-main/.claude/skills/ui-ux-pro-max/SKILL.md"), "utf8"))));
+await t("UUPM skill folder mein data + scripts (symlink nahi)", () => { const d = path.join(tmp, "ui-ux-pro-max-skill-main/.claude/skills/ui-ux-pro-max"); return must(fs.statSync(path.join(d, "data/products.csv")).isFile() && fs.existsSync(path.join(d, "scripts/search.py"))); });
+await t("Installed skill ki Python search chalti hai (Hermes jaisa)", () => { const o = execSync(`python3 scripts/search.py "fashion ecommerce" --design-system -f markdown`, { cwd: path.join(tmp, "ui-ux-pro-max-skill-main/.claude/skills/ui-ux-pro-max"), encoding: "utf8", timeout: 60000 }); return must(/## Design System/.test(o) && /Typography/.test(o)); });
+
 // ---------- live server ----------
 sec("10. Live server (next start)");
 const PORT = 3177; const env = { ...process.env, PORT: String(PORT), HOME: tmp, NODE_ENV: "production" };
@@ -165,7 +228,7 @@ const base = `http://localhost:${PORT}`;
 for (let i = 0; i < 60; i++) { try { await realFetch(base + "/api/tools"); break; } catch { await new Promise((r) => setTimeout(r, 1000)); } }
 const get = (u) => realFetch(base + u, { cache: "no-store" });
 for (const pg of ["/", "/tools", "/options", "/agent"]) await t(`Page ${pg} khulta hai (200)`, async () => { const r = await get(pg); return must(r.status === 200, String(r.status)); });
-await t("Home par 🧪 Tools button", async () => { const h = await (await get("/")).text(); return must(/href="\/tools"/.test(h)); });
+await t("Home par Tools button", async () => { const h = await (await get("/")).text(); return must(/href="\/tools"/.test(h)); });
 await t("/tools page: 'har brain ka chat board'", async () => { const h = await (await get("/tools")).text(); return must(/har brain ka chat board/.test(h)); });
 await t("/api/tools: brains ki list", async () => { const d = await (await get("/api/tools")).json(); return must(d.providers.length >= 3) && `${d.providers.length} brains: ${d.providers.map((p) => p.id).join(", ")}`; });
 await t("/api/tools POST: ghalat brain = 404", async () => { const r = await realFetch(base + "/api/tools", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ provider: "nahi-hai", messages: [{ role: "user", content: "hi" }] }) }); return must(r.status === 404); });
@@ -175,8 +238,16 @@ await t("Tools chat board: Pollinations se asli baat (1 by 1)", async () => { co
 await t("Tools chat board: Ollama band ho to saaf error (crash nahi)", async () => { const d = await (await realFetch(base + "/api/tools", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ provider: "ollama", messages: [{ role: "user", content: "hi" }] }) })).json(); return must(d.ok === false && d.error) && d.error.slice(0, 60); });
 await t("/api/chat GET: agents + brains", async () => { const d = await (await get("/api/chat")).json(); return must(d.agents.length === 7 && d.providers.length >= 3); });
 await t("/api/settings GET (localhost)", async () => { const d = await (await get("/api/settings")).json(); return must("ZAI_API_KEY" in d && "MISTRAL_API_KEY" in d); });
-await t("/api/update GET: version 3.8.0", async () => { const d = await (await get("/api/update")).json(); return must(d.current === "3.8.0", JSON.stringify(d)); });
+await t("/api/update GET: version = package.json", async () => { const d = await (await get("/api/update")).json(); return must(d.current === JSON.parse(rd("package.json")).version, JSON.stringify(d)) && "v" + d.current; });
 await t("/v1/models (OpenAI jaisa API)", async () => { const r = await get("/api/v1/models"); return must(r.ok); });
+await t("Page /design khulta hai (200)", async () => { const r = await get("/design"); return must(r.status === 200); });
+await t("Home par Design Studio link", async () => { const h = await (await get("/")).text(); return must(/href="\/design"/.test(h)); });
+await t("/api/design: luxury fashion -> poora system", async () => { const d = await (await get("/api/design?q=" + encodeURIComponent("luxury fashion ecommerce"))).json(); return must(d.ok && d.system.colors.primary === "#1C1917" && d.system.typography.heading === "Cormorant") && d.system.product; });
+await t("/api/design: ux domain search", async () => { const d = await (await get("/api/design?q=form%20error&domain=ux&n=3")).json(); return must(d.ok && d.results.length === 3); });
+await t("/api/design: ghalat domain = 400", async () => { const r = await get("/api/design?q=x&domain=nahi"); return must(r.status === 400); });
+await t("/api/design: khali q = 400", async () => { const r = await get("/api/design"); return must(r.status === 400); });
+await t("/api/design: bekaar sawal = 404", async () => { const r = await get("/api/design?q=qqqzzz%20xxyyw"); return must(r.status === 404); });
+await t("/api/design POST: UX check", async () => { const d = await (await realFetch(base + "/api/design", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ html: "<html><body><img src=a.png></body></html>" }) })).json(); return must(!d.ok && d.issues.length >= 2) && d.issues.length + " issues"; });
 try { process.kill(-srv.pid); } catch {}
 
 sec("11. Build + Browser Tester");

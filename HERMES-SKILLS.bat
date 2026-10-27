@@ -2,9 +2,10 @@
 chcp 65001 >nul
 title Hermes ke liye design skills
 echo.
-echo  Hermes Agent mein 2 design skills daal raha hoon:
+echo  Hermes Agent mein 3 design skills daal raha hoon:
 echo   1) faheem-design  (chhoti, free models ke liye)
 echo   2) hallmark       (poori, Nutlope/hallmark, MIT)
+echo   3) ui-ux-pro-max  (design database, nextlevelbuilder, MIT)
 echo.
 where hermes >nul 2>nul
 if errorlevel 1 (
@@ -12,10 +13,10 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-echo  --- 1/2 faheem-design ---
+echo  --- 1/3 faheem-design ---
 hermes skills install eswatinitravel/faheem-ai-dashboard/hermes-skills/faheem-design
 echo.
-echo  --- 2/2 hallmark ---
+echo  --- 2/3 hallmark ---
 hermes skills install Nutlope/hallmark/skills/hallmark
 if exist "%LOCALAPPDATA%\hermes\skills\hallmark\SKILL.md" goto hall_ok
 echo  Hermes index purana hai, seedha GitHub se utaar raha hoon...
@@ -34,7 +35,27 @@ rmdir /s /q "%HT%"
 echo  Installed: hallmark
 :hall_end
 echo.
+echo  --- 3/3 ui-ux-pro-max ---
+if exist "%LOCALAPPDATA%\hermes\skills\ui-ux-pro-max\SKILL.md" goto uu_ok
+set "UT=%TEMP%\uupm-dl"
+if exist "%UT%" rmdir /s /q "%UT%"
+mkdir "%UT%"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -UseBasicParsing 'https://codeload.github.com/nextlevelbuilder/ui-ux-pro-max-skill/zip/refs/heads/main' -OutFile '%UT%\u.zip'; Expand-Archive -Force '%UT%\u.zip' '%UT%'"
+if not exist "%UT%\ui-ux-pro-max-skill-main\.claude\skills\ui-ux-pro-max\SKILL.md" (
+  echo  [!] Download nahi hua. Internet check karke dobara chalayein.
+  goto uu_end
+)
+if not exist "%LOCALAPPDATA%\hermes\skills" mkdir "%LOCALAPPDATA%\hermes\skills"
+xcopy /e /i /y /q "%UT%\ui-ux-pro-max-skill-main\.claude\skills\ui-ux-pro-max" "%LOCALAPPDATA%\hermes\skills\ui-ux-pro-max" >nul
+rmdir /s /q "%UT%"
+:uu_ok
+echo  Installed: ui-ux-pro-max
+where python >nul 2>nul
+if errorlevel 1 echo  Note: is skill ki search ke liye Python 3 chahiye (python.org). Dashboard mein yeh bina Python chalti hai.
+:uu_end
+echo.
 echo  Mukammal. Hermes mein istemal:  /faheem-design Vestire ka homepage behtar karo
 echo  Ya:                              /hallmark ek luxury fashion store ka landing page
+echo  Ya:                              /ui-ux-pro-max fashion ecommerce ka design system
 echo.
 pause

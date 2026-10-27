@@ -57,3 +57,12 @@
 - Display: HD / 4K / 8K render quality, 3D orb (On / Ultra), UI size 90-200% (Options).
 - Fix: bina-key server agar apni had ka message "jawab" bana kar bheje to ab error mana jata hai aur agla brain chalta hai.
 - Full test suite: npm run test:full (116 checks).
+
+## v3.9.0
+- UI UX Pro Max (MIT) andar: 192 products, 88 styles, 74 font jore, 119 UX qawaid, BM25 search + Design System Generator (bina Python).
+- Naya Design Studio page (/design): rang, font, page dhaancha, CSS copy, qawaid search.
+- Agent Mode + Website Master ko khud design system milta hai; agent tools design_system aur design_search.
+- Naye UX Pro checks: contrast 4.5:1, 44px buttons, emoji icons, alt text, viewport, labels.
+- Dashboard mein SVG icons, phone par 44px buttons, focus ring, reduced-motion.
+- HERMES-SKILLS.bat ab ui-ux-pro-max bhi daalta hai.
+- Test suite: 175 checks.

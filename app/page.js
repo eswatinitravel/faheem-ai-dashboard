@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import Icon from "./components/Icon";
 import Link from "next/link";
 import Message from "./components/Message";
 import Background from "./components/Background";
@@ -271,13 +272,14 @@ export default function Home() {
       <header className="topbar">
         <div className="brand"><img src="/icon.png" alt="" className="logo" /> Faheem AI <span className={"stat " + mode} /></div>
         <div className="top-actions">
-          <button className="icon-btn" title="Search (Ctrl+K)" onClick={() => setShowSearch(true)}>⌕</button>
-          <button className="icon-btn" title="Naya chat" onClick={newChat}>＋</button>
-          <button className="icon-btn" title="Live workspace" onClick={() => setWsOpen(!wsOpen)}>◧</button>
+          <button className="icon-btn" title="Search (Ctrl+K)" aria-label="Search" onClick={() => setShowSearch(true)}><Icon name="search" /></button>
+          <button className="icon-btn" title="Naya chat" aria-label="Naya chat" onClick={newChat}><Icon name="plus" /></button>
+          <button className="icon-btn" title="Live workspace" aria-label="Live workspace" onClick={() => setWsOpen(!wsOpen)}><Icon name="panel" /></button>
           <ThemeBalls />
-          <Link className="icon-btn agentlink" href="/agent" title="Agent Mode (Cursor jaisa coding agent)">🤖 Agent</Link>
-          <Link className="icon-btn agentlink" href="/tools" title="Har brain ka apna chat board">🧪 Tools</Link>
-          <Link className="icon-btn" href="/options" title="Options">⋯</Link>
+          <Link className="icon-btn agentlink" href="/agent" title="Agent Mode (Cursor jaisa coding agent)"><Icon name="bot" size={16} /> Agent</Link>
+          <Link className="icon-btn agentlink" href="/tools" title="Har brain ka apna chat board"><Icon name="flask" size={16} /> Tools</Link>
+          <Link className="icon-btn agentlink" href="/design" title="Design Studio (UI UX Pro Max)"><Icon name="palette" size={16} /> Design</Link>
+          <Link className="icon-btn" href="/options" title="Options" aria-label="Options"><Icon name="more" /></Link>
         </div>
       </header>
 

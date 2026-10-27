@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Icon from "../components/Icon";
 import Background from "../components/Background";
 import VersionBadge from "../components/VersionBadge";
 import { prepareFiles } from "../../lib/attach";
@@ -113,15 +114,15 @@ export default function AgentPage() {
     <main className="agentpage">
       <Background />
       <header className="topbar">
-        <div className="brand"><Link href="/" className="icon-btn" title="Chat">←</Link> 🤖 Agent Mode <span className={"stat " + (busy ? "thinking" : "idle")} /></div>
+        <div className="brand"><Link href="/" className="icon-btn" title="Chat" aria-label="Chat"><Icon name="back" /></Link> <Icon name="bot" /> Agent Mode <span className={"stat " + (busy ? "thinking" : "idle")} /></div>
         <div className="top-actions">
           <select value={project} onChange={(e) => setProject(e.target.value)} className="ag-select" disabled={busy}>
             {!projects.find((p) => p.name === project) && project && <option value={project}>{project}</option>}
             {projects.map((p) => <option key={p.name} value={p.name}>{p.name}</option>)}
           </select>
-          <button className="icon-btn" title="Naya project" onClick={newProject} disabled={busy}>＋</button>
-          <button className="icon-btn" title="Aakhri run wapas (Undo)" onClick={undo} disabled={busy}>↩</button>
-          <Link className="icon-btn" href="/options" title="Options">⋯</Link>
+          <button className="icon-btn" title="Naya project" aria-label="Naya project" onClick={newProject} disabled={busy}><Icon name="plus" /></button>
+          <button className="icon-btn" title="Aakhri run wapas (Undo)" aria-label="Undo" onClick={undo} disabled={busy}><Icon name="undo" /></button>
+          <Link className="icon-btn" href="/options" title="Options" aria-label="Options"><Icon name="more" /></Link>
         </div>
       </header>
 
@@ -170,7 +171,7 @@ export default function AgentPage() {
           </div>
           {imgs.length > 0 && <div className="ag-imgs pending">{imgs.map((im, k) => <span key={k}><img src={im.dataUrl} alt="" /><button onClick={() => setImgs(imgs.filter((_, j) => j !== k))}>✕</button></span>)}</div>}
           <div className="ag-input" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); addImages(e.dataTransfer.files); }}>
-            <button className="icon-btn" title="Picture lagayein (design reference)" onClick={() => fileRef.current?.click()} disabled={busy}>📎</button>
+            <button className="icon-btn" title="Picture lagayein (design reference)" aria-label="Picture lagayein" onClick={() => fileRef.current?.click()} disabled={busy}><Icon name="clip" /></button>
             <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={(e) => { addImages(e.target.files); e.target.value = ""; }} />
             <textarea value={task} placeholder={busy ? "Agent kaam kar raha hai…" : "Kaam likhein… (Enter = chalao, Shift+Enter = nayi line)"} onChange={(e) => setTask(e.target.value)}
               onPaste={(e) => { const f = [...e.clipboardData.files]; if (f.length) { e.preventDefault(); addImages(f); } }}

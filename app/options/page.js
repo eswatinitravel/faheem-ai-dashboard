@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import Icon from "../components/Icon";
 import Settings from "../components/Settings";
 import Background from "../components/Background";
 import ThemeBalls from "../components/ThemeBalls";
@@ -42,7 +43,7 @@ export default function Options() {
     <main className="optpage">
       <Background />
       <header className="topbar">
-        <Link href="/" className="icon-btn" title="Wapas chat">←</Link>
+        <Link href="/" className="icon-btn" title="Wapas chat" aria-label="Wapas chat"><Icon name="back" /></Link>
         <div className="brand"><img src="/icon.png" alt="" className="logo" /> Options</div>
         <div className="top-actions"><span className="ok-text">{saved}</span><ThemeBalls /></div>
       </header>

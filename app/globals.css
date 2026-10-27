@@ -123,3 +123,42 @@ button.ghost { background: rgba(255,255,255,.03); border: 1px solid var(--line);
 .sitecard img{width:46px;height:46px;object-fit:cover;border-radius:8px}
 .sitecard b{display:block;font-size:13px}
 .sitecard span{font-size:11px;opacity:.7}
+
+/* v2.5: compact layout — chhote options, koi text screen se bahar nahi */
+html { font-size: 14px; }
+.shell { grid-template-columns: 250px minmax(0, 1fr); gap: 14px; padding: 14px; }
+.side { padding: 16px; gap: 9px; overflow-x: hidden; }
+.side > * { min-width: 0; max-width: 100%; }
+.brand { font-size: 19px; }
+.status { font-size: 12px; padding: 4px 10px; }
+.label { font-size: 10px; }
+select, textarea, input { padding: 8px 10px; border-radius: 10px; font-size: 13px; }
+button { padding: 8px 12px; border-radius: 10px; font-size: 13px; }
+button, .chip, .agent-chip, .pitem, .sitecard, .last, .update, .status { overflow-wrap: anywhere; word-break: break-word; }
+.side-actions button { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pitem { padding: 6px 9px; gap: 8px; font-size: 12px; }
+.pitem > div { min-width: 0; }
+.agent-chip { font-size: 11px; padding: 3px 7px; }
+.last { font-size: 12px; padding: 8px 10px; }
+.voicepick { margin-top: 4px; }
+.voicepick select, .testvoice { padding: 6px 8px; font-size: 12px; }
+.sites { margin-top: 6px; }
+.sitecard { padding: 6px; }
+.sitecard img { width: 36px; height: 36px; }
+.sitecard > div { min-width: 0; }
+.msgs { padding: 18px; gap: 12px; }
+.hello h1 { font-size: clamp(24px, 3vw, 40px); }
+.hello p { font-size: 14px; }
+.chips { gap: 7px; margin-top: 16px; }
+.chip { font-size: 12px; padding: 7px 11px; max-width: 100%; }
+.talk { margin-top: 16px; padding: 10px 20px; font-size: 15px; }
+.bubble { font-size: 14px; padding: 10px 14px; overflow-wrap: anywhere; }
+.msg { max-width: 86%; min-width: 0; }
+.composer { padding: 10px 12px 12px; gap: 8px; }
+.composer textarea { min-height: 42px; }
+.mic { min-width: 86px; height: 42px; font-size: 13px; padding: 0 12px; }
+.modal { padding: 18px; gap: 10px; }
+.field { padding: 10px; }
+.field-head { gap: 8px; flex-wrap: wrap; }
+@media (max-width: 1000px) { .shell { grid-template-columns: 210px minmax(0, 1fr); } }
+@media (max-width: 760px) { .shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr; } .side { max-height: 34vh; } }

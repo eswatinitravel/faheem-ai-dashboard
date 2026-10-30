@@ -86,6 +86,33 @@ rmdir /s /q "%IT%"
 echo  Installed: impeccable
 :imp_end
 echo.
+echo  ---- Extra tools (optional): Playwright, Graphify, 21st MCP, Compound ----
+set "XT=N"
+set /p XT= Extra tools install karein? (Y/N): 
+if /i not "%XT%"=="Y" goto xt_end
+pushd "%USERPROFILE%"
+where npm >nul 2>nul && (
+  echo  Playwright CLI...
+  call npm i -g @playwright/cli@latest
+  call playwright-cli install --skills
+) || echo  [!] npm nahi mila - pehle Node.js install karein.
+where uv >nul 2>nul && (
+  echo  Graphify via uv...
+  call uv tool install graphifyy
+) || (
+  echo  Graphify via pip...
+  call pip install graphifyy
+)
+where graphify >nul 2>nul && call graphify install
+popd
+echo.
+echo  21st MCP (free key: https://21st.dev/mcp) - key ho to chalayein:
+echo     npx @21st-dev/cli@latest init --client claude --write
+echo  Compound Engineering - Claude Code mein likhein:
+echo     /plugin marketplace add EveryInc/compound-engineering-plugin
+echo     /plugin install compound-engineering
+:xt_end
+echo.
 echo  Mukammal. Hermes mein istemal:  /faheem-design Vestire ka homepage behtar karo
 echo  Ya:                              /hallmark ek luxury fashion store ka landing page
 echo  Ya:                              /ui-ux-pro-max fashion ecommerce ka design system

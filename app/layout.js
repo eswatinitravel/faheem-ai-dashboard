@@ -1,4 +1,5 @@
 import "./globals.css";
+import AgentationDock from "./components/AgentationDock";
 
 export const metadata = {
   title: "Faheem AI Dashboard",
@@ -8,7 +9,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>{children}<AgentationDock /></body>
     </html>
   );
 }

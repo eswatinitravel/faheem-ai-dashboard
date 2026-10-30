@@ -45,7 +45,7 @@ export default function Options() {
       <header className="topbar">
         <Link href="/" className="icon-btn" title="Wapas chat" aria-label="Wapas chat"><Icon name="back" /></Link>
         <div className="brand"><img src="/icon.png" alt="" className="logo" /> Options</div>
-        <div className="top-actions"><span className="ok-text">{saved}</span><ThemeBalls /></div>
+        <div className="top-actions"><span className="ok-text">{saved}</span><Link href="/skills" className="icon-btn" title="Skills" aria-label="Skills"><Icon name="grid" /></Link><Link href="/gallery" className="icon-btn" title="Gallery" aria-label="Gallery"><Icon name="image" /></Link><Link href="/flights" className="icon-btn" title="Flights" aria-label="Flights"><Icon name="globe" /></Link><ThemeBalls /></div>
       </header>
 
       {prefs && (

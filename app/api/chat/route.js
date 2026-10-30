@@ -100,9 +100,9 @@ export async function POST(req) {
   const rank = (id) => {
     if (body?.provider && body.provider !== "auto" && id === body.provider) return -1;
     if (images.length && providers.find((p) => p.id === id)?.vision) return -0.5;
-    if (id === "pollinations") return 50;
-    if (id === "llm7") return 51;
-    if (id === "ollama") return 60;
+    const pp = providers.find((x) => x.id === id);
+    if (id === "ollama") return 90;
+    if (pp?.keyless) return 50 + ["kilo", "ovh", "pollinations", "llm7"].indexOf(id);
     const i = order.indexOf(id);
     return i < 0 ? 40 : i;
   };

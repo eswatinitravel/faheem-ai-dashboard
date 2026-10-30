@@ -48,6 +48,16 @@ export default function Home() {
     setPrefs(loadPrefs());
     const p = new URLSearchParams(location.search);
     if (p.get("live")) { setWsOpen(true); }
+    // v3.11: Gallery / skill page se "Chat mein bhejein" — file attach + sawal tayyar.
+    try {
+      const h = JSON.parse(sessionStorage.getItem("faheem-handoff") || "null");
+      if (h?.url && h.url.startsWith("/api/gallery?file=")) {
+        sessionStorage.removeItem("faheem-handoff");
+        fetch(h.url).then((r) => (r.ok ? r.blob() : Promise.reject(new Error("file nahi mili")))).then((b) => prepareFiles([new File([b], h.name || "file", { type: b.type.split(";")[0] })]))
+          .then((add) => { setFiles((f) => [...f, ...add].slice(0, 6)); if (h.prompt) setInput(h.prompt); setNotice("Gallery se file lag gayi — Send dabayein."); })
+          .catch((e) => setNotice("Gallery file nahi lagi: " + e.message));
+      }
+    } catch {}
     const k = (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setShowSearch(true); } };
     addEventListener("keydown", k);
     return () => removeEventListener("keydown", k);
@@ -279,6 +289,8 @@ export default function Home() {
           <Link className="icon-btn agentlink" href="/agent" title="Agent Mode (Cursor jaisa coding agent)"><Icon name="bot" size={16} /> Agent</Link>
           <Link className="icon-btn agentlink" href="/tools" title="Har brain ka apna chat board"><Icon name="flask" size={16} /> Tools</Link>
           <Link className="icon-btn agentlink" href="/design" title="Design Studio (UI UX Pro Max)"><Icon name="palette" size={16} /> Design</Link>
+          <Link className="icon-btn agentlink" href="/skills" title="Saari skills: Hallmark, UI UX Pro Max, Impeccable, Agentation, Hermes"><Icon name="grid" size={16} /> Skills</Link>
+          <Link className="icon-btn" href="/gallery" title="Gallery (pictures/files)" aria-label="Gallery"><Icon name="image" /></Link>
           <Link className="icon-btn" href="/options" title="Options" aria-label="Options"><Icon name="more" /></Link>
         </div>
       </header>

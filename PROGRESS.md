@@ -74,3 +74,15 @@
 - Design rules prompt mein Impeccable ki sab se aam AI-slop nishaniyan.
 - /api/design?rules=impeccable aur POST /api/design ab Impeccable findings bhi deta hai.
 - HERMES-SKILLS.bat ab 4 skills: impeccable bhi (hermes install, official installer, GitHub ZIP fallback).
+
+## 28 Oct 2026 — v3.11.0 (Skills + Gallery + Agentation)
+- Pipeline tests: mock fetch theek, Pollinations ab key mangta hai, OVH 429 → Llama fallback pass, Cloudflare URL docs ke mutabiq sahi.
+- Naya /skills hub + har skill ka page (/skills/hallmark, /ui-ux-pro-max, /impeccable, /faheem-design, /agentation, /hermes-installer, /design-studio, /tools-board, /agent-mode, /browser-tester): live panel + "Kaise kaam karta hai" + "Setup".
+- Naya /gallery + /api/gallery (sirf localhost, data/gallery): drag-drop, kai files, preview, delete, skill ko bhejein, chat mein bhejein.
+- /api/skills: Hallmark / UX Pro / Impeccable / Browser Tester ko HTML ya Gallery file se chalayein.
+- Agentation 3.1.2 toolbar (dev mein khud, production mein toggle). License NOTICE.md mein.
+
+
+## v3.11.0 — extra tools
+- [x] Playwright, Graphify, Compound Engineering, 21st MCP: skill pages, live panels, HERMES-SKILLS.bat Extra tools block, NOTICE.
+- [x] Harvey: shamil nahi (legal enterprise).

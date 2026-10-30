@@ -2,7 +2,7 @@
 
 Free 3D AI assistant for Windows: likh kar ya bol kar baat karein. Jab ek free AI ki limit khatam ho, agla khud jawab deta hai.
 
-**Order:** Groq → Gemini → OpenRouter (free models) → Ollama (laptop, bina limit)
+**Order (v3.11):** pehle aap ke key wale brains (Groq, Gemini, OpenRouter, Z.ai, Mistral, Cohere, NVIDIA, SambaNova, Cloudflare, Hugging Face, Hetzner, Nous, Requesty, Pollinations) → bina-key free brains (Kilo, OVHcloud, LLM7) → Ollama (laptop, bina limit). Pollinations ab free key mangta hai (enter.pollinations.ai).
 
 ## Install (ek dafa)
 
@@ -37,6 +37,31 @@ Keys sirf isi laptop par `data/keys.json` mein rehti hain. Purani `.env.local` b
 
 - Kholna: Desktop icon **Faheem AI**
 - Band karna: **STOP.bat**
+
+## Skills (v3.11) — localhost:3000/skills
+
+Saari skills ek jagah, har ek ka apna page (live panel + side panel: **Kaise kaam karta hai** aur **Setup**):
+Hallmark design rules, UI UX Pro Max, Impeccable (62 checks), Faheem Design (Hermes), Agentation, Hermes skills installer,
+Design Studio, Tools board, Agent Mode, Browser Tester. Hermes mein sab design skills: **HERMES-SKILLS.bat**.
+
+**Agentation** (visual feedback toolbar, PolyForm Shield 1.0.0): `npm run dev` mein khud chalu; START.bat (production) mein
+`/skills/agentation` par "Toolbar dikhayein" On karein. Agent se jorna: `npx add-mcp "npx -y agentation-mcp server"`,
+endpoint `http://localhost:4747`, jaanch `npx agentation-mcp doctor`.
+
+### Extra tools (v3.11)
+- **Playwright** — /skills/playwright: "Run Playwright check" (Windows Edge/Chrome, screenshot gallery mein). MCP: `npx @playwright/mcp@latest`.
+- **Graphify** — /skills/graphify: `uv tool install graphifyy` → `graphify install` → agent mein `/graphify .`; graph.html yahan dikhta hai.
+- **Compound Engineering** — /skills/compound-engineering: brainstorm → plan → work → review → compound notes.
+- **21st MCP** — /skills/21st-mcp: free key 21st.dev/mcp, Options → Keys → Tool keys. Sirf free search use.
+- Sab HERMES-SKILLS.bat ke "Extra tools (Y/N)" se.
+
+## Gallery (v3.11) — localhost:3000/gallery
+
+Pictures/files drag-drop ya click se (kai ek sath; png, jpg, webp, gif, html, css, txt, md, json, pdf; har file 10MB tak).
+Files sirf isi laptop par `data/gallery` mein (update se nahi mitti). HTML/CSS file seedha skill audit ko; picture
+"Chat" button se chat mein lagti hai (vision ke liye Gemini ya Groq key).
+
+Credits/licenses: **NOTICE.md**.
 
 ## Ollama (optional)
 

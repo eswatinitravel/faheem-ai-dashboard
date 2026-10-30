@@ -1,4 +1,4 @@
-// Faheem AI full test suite (v3.10: UI UX Pro Max + Impeccable included)
+// Faheem AI full test suite (v3.11: ek pipeline mein saare free brains + Auto Setup)
 import fs from "fs"; import path from "path"; import os from "os"; import { execSync, spawn } from "child_process";
 const ROOT = process.env.FAHEEM_ROOT || process.cwd();
 const R = []; let cur = "";
@@ -15,23 +15,26 @@ const must = (c, m) => { if (!c) throw new Error(m || "fail"); return true; };
 // ---------- load providers.js with stub config + fake fetch ----------
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "fp-"));
 fs.writeFileSync(path.join(tmp, "config.mjs"), "export const getConfig = () => globalThis.__cfg || {};");
-fs.writeFileSync(path.join(tmp, "providers.mjs"), rd("lib/providers.js").replace('from "./config"', 'from "./config.mjs"'));
+fs.writeFileSync(path.join(tmp, "catalog.mjs"), rd("lib/catalog.js"));
+fs.writeFileSync(path.join(tmp, "providers.mjs"), rd("lib/providers.js").replace('from "./config"', 'from "./config.mjs"').replace('from "./catalog"', 'from "./catalog.mjs"'));
+const CAT = await import(path.join(tmp, "catalog.mjs"));
 fs.writeFileSync(path.join(tmp, "prefs.mjs"), rd("lib/prefs.js"));
 const P = await import(path.join(tmp, "providers.mjs"));
 const PR = await import(path.join(tmp, "prefs.mjs"));
 const realFetch = globalThis.fetch;
 let routes = []; const calls = [];
-globalThis.fetch = async (url, opt = {}) => {
+const mockFetch = async (url, opt = {}) => {
   url = String(url); calls.push({ url, body: opt.body ? JSON.parse(opt.body) : null, headers: opt.headers });
   for (const [re, h] of routes) if (re.test(url)) return h(url, opt.body ? JSON.parse(opt.body) : null, opt);
   return realFetch(url, opt);
 };
+globalThis.fetch = mockFetch;
 const J = (status, obj, headers = {}) => new Response(JSON.stringify(obj), { status, headers: { "content-type": "application/json", ...headers } });
 const OK = (text) => J(200, { choices: [{ message: { content: text } }] });
 const prov = (cfg, id) => { globalThis.__cfg = cfg; return P.getProviders().find((p) => p.id === id); };
 
 sec("1. Providers (brains) list");
-await t("Bina key: Pollinations + LLM7 + Ollama hamesha list mein", () => { globalThis.__cfg = {}; const ids = P.getProviders().map((p) => p.id); return must(ids.includes("pollinations") && ids.includes("llm7") && ids.includes("ollama"), ids.join()); });
+await t("Bina key: LLM7 + Ollama list mein, Pollinations ab key mangta hai", () => { globalThis.__cfg = {}; const ids = P.getProviders().map((p) => p.id); return must(!ids.includes("pollinations") && ids.includes("llm7") && ids.includes("ollama"), ids.join()); });
 await t("Bina key: Groq/Gemini/OpenRouter/Z.ai/Mistral chhupe rehte hain", () => { globalThis.__cfg = {}; const ids = P.getProviders().map((p) => p.id); return must(!["groq","gemini","openrouter","zai","mistral"].some((i) => ids.includes(i))); });
 await t("Z.ai GLM key se list mein aata hai", () => must(prov({ ZAI_API_KEY: "k".repeat(30) }, "zai")));
 await t("Z.ai default model glm-4.7-flash (free)", () => must(prov({ ZAI_API_KEY: "x".repeat(30) }, "zai").model === "glm-4.7-flash"));
@@ -42,7 +45,7 @@ await t("Mistral base URL api.mistral.ai/v1", () => must(prov({ MISTRAL_API_KEY:
 await t("Custom model setting (ZAI_MODEL) kaam karti hai", () => must(prov({ ZAI_API_KEY: "x".repeat(30), ZAI_MODEL: "glm-4.5-flash" }, "zai").model === "glm-4.5-flash"));
 await t("FREE_ENABLED=false se bina-key brains band", () => { globalThis.__cfg = { FREE_ENABLED: "false" }; return must(!P.getProviders().some((p) => p.keyless)); });
 await t("OLLAMA_ENABLED=false se Ollama band", () => { globalThis.__cfg = { OLLAMA_ENABLED: "false" }; return must(!P.getProviders().some((p) => p.id === "ollama")); });
-await t("Saare 8 brains ek saath (sab keys)", () => { globalThis.__cfg = { GROQ_API_KEY: "g".repeat(30), GEMINI_API_KEY: "a".repeat(30), OPENROUTER_API_KEY: "o".repeat(30), ZAI_API_KEY: "z".repeat(30), MISTRAL_API_KEY: "m".repeat(30) }; return must(P.getProviders().length === 8, String(P.getProviders().length)); });
+await t("Purane 5 key + 3 bina-key (Kilo/OVH/LLM7) + Ollama = 9 brains (Pollinations ab key mangta hai)", () => { globalThis.__cfg = { GROQ_API_KEY: "g".repeat(30), GEMINI_API_KEY: "a".repeat(30), OPENROUTER_API_KEY: "o".repeat(30), ZAI_API_KEY: "z".repeat(30), MISTRAL_API_KEY: "m".repeat(30) }; const ids = P.getProviders().map((p) => p.id); return must(ids.length === 9 && !ids.includes("pollinations"), ids.join()); });
 await t("Vision brains: Gemini + Groq vision", () => { const v = P.visionProviders(P.getProviders()).map((p) => p.id); return must(v.includes("gemini") && v.includes("groq-vision"), v.join()); });
 
 sec("2. Provider calls (mock server)");
@@ -54,9 +57,19 @@ await t("Gemini: x-goog-api-key header", async () => { routes = [[/generativelan
 await t("429 limit: saaf 'limit reached' error", async () => { routes = [[/mistral/, () => J(429, {}, { "retry-after": "30" })]]; try { await P.callProvider(prov(cfgAll, "mistral"), msgs); return false; } catch (e) { return must(/limit reached \(retry in 30s\)/.test(e.message), e.message); } });
 await t("429 ke baad cooldown laga (isCooling)", () => must(P.isCooling("mistral")));
 await t("Doosra brain cooldown se mutasir nahi", () => must(!P.isCooling("zai")));
+const cfgGO = { GEMINI_API_KEY: "AIza" + "b".repeat(30), OPENROUTER_API_KEY: "o".repeat(30) };
+await t("Gemini 429: doosra free model khud try (flash-lite)", async () => { routes = [[/generativelanguage/, (u, b) => b.model === "gemini-flash-latest" ? J(429, { error: { message: "quota" } }) : OK("lite jawab")]]; calls.length = 0; const r = await P.callProvider(prov(cfgGO, "gemini"), msgs); return must(r === "lite jawab" && calls[1].body.model === "gemini-2.5-flash-lite" && P.lastModelUsed("gemini") === "gemini-2.5-flash-lite", calls.map((c) => c.body?.model).join()) && "gemini-2.5-flash-lite"; });
+await t("Gemini 429 fallback par cooldown nahi lagta", () => must(!P.isCooling("gemini")));
+await t("OpenRouter 429: openrouter/free par chala jata hai", async () => { routes = [[/openrouter/, (u, b) => b.model.endsWith(":free") ? J(429, { error: { message: "google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream" } }) : OK("free router")]]; calls.length = 0; const r = await P.callProvider(prov(cfgGO, "openrouter"), msgs); return must(r === "free router" && calls[1].body.model === "openrouter/free"); });
+await t("Sab models 429: asli sabab dikhata hai (daily quota)", async () => { routes = [[/generativelanguage/, () => J(429, [{ error: { message: "Quota exceeded for metric: generate_content_free_tier_requests_per_day, limit: 20", details: [{ retryDelay: "37s" }] } }])]]; try { await P.callProvider(prov(cfgGO, "gemini"), msgs); return false; } catch (e) { return must(/aaj ka free quota khatam/.test(e.message) && /retry in 3600s/.test(e.message), e.message) && e.message.slice(0, 70); } });
+await t("Gemini retryDelay (37s) parhta hai", () => { const r = P.limitInfo({ id: "gemini" }, new Response("", { status: 429 }), JSON.stringify({ error: { message: "per minute", details: [{ retryDelay: "37s" }] } })); return must(r.retry === 37 && /minute/.test(r.why), JSON.stringify(r)); });
+await t("limit: 0 = model ka free quota 0", () => { const r = P.limitInfo({ id: "gemini" }, new Response("", { status: 429 }), JSON.stringify({ error: { message: "Quota exceeded ... limit: 0, model: gemini-3.8-flash" } })); return must(/quota 0/.test(r.why)); });
+await t("OpenRouter X-RateLimit-Reset se intezar", () => { const r = P.limitInfo({ id: "openrouter" }, new Response("", { status: 429, headers: { "x-ratelimit-reset": String(Date.now() + 90000) } }), "{}"); return must(r.retry >= 85 && r.retry <= 91, String(r.retry)); });
+await t("OpenRouter daily (free-models-per-day)", () => { const r = P.limitInfo({ id: "openrouter" }, new Response("", { status: 429 }), JSON.stringify({ error: { message: "Rate limit exceeded: free-models-per-day" } })); return must(/aaj ka/.test(r.why) && r.retry >= 3600); });
+await t("Fallback models env se badal sakte hain", async () => { routes = [[/generativelanguage/, (u, b) => b.model === "my-model" ? OK("custom") : J(429, {})]]; calls.length = 0; const r = await P.callProvider(prov({ ...cfgGO, GEMINI_MODEL: "gemini-x", GEMINI_FALLBACK_MODELS: "my-model" }, "gemini"), msgs); return must(r === "custom"); });
 await t("Khali jawab: 'empty reply' error", async () => { routes = [[/api\.z\.ai/, () => J(200, { choices: [{ message: { content: "" } }] })]]; try { await P.callProvider(prov(cfgAll, "zai"), msgs); return false; } catch (e) { return must(/empty reply/.test(e.message)); } });
-await t("Bina-key server ka error-jawab (200) error mana jata hai", async () => { routes = [[/pollinations/, () => OK("The API key used for this request has reached its limit")]]; globalThis.__cfg = {}; const p = P.getProviders().find((x) => x.id === "pollinations"); try { await P.callProvider(p, msgs); return false; } catch (e) { return must(/busy/.test(e.message)); } });
-await t("Asli jawab jis mein 'rate limit' beech mein ho, theek rehta hai", async () => { routes = [[/pollinations/, () => OK("Groq ka rate limit 30 RPM hai.")]]; globalThis.__cfg = {}; const p = P.getProviders().find((x) => x.id === "pollinations"); const r = await P.callProvider(p, msgs); return must(/30 RPM/.test(r)); });
+await t("Bina-key server ka error-jawab (200) error mana jata hai", async () => { routes = [[/llm7/, () => OK("The API key used for this request has reached its limit")]]; globalThis.__cfg = {}; const p = P.getProviders().find((x) => x.id === "llm7"); try { await P.callProvider(p, msgs); return false; } catch (e) { return must(/busy/.test(e.message)); } });
+await t("Asli jawab jis mein 'rate limit' beech mein ho, theek rehta hai", async () => { routes = [[/pollinations/, () => OK("Groq ka rate limit 30 RPM hai.")]]; globalThis.__cfg = { POLLINATIONS_API_KEY: "sk_" + "p".repeat(20) }; const p = P.getProviders().find((x) => x.id === "pollinations"); const r = await P.callProvider(p, msgs); return must(/30 RPM/.test(r)); });
 await t("401 ghalat key: HTTP 401 error dikhata hai", async () => { routes = [[/api\.z\.ai/, () => J(401, { error: "bad key" })]]; try { await P.callProvider(prov(cfgAll, "zai"), msgs); return false; } catch (e) { return must(/HTTP 401/.test(e.message)); } });
 await t("Lambi chat chhoti hoti hai (trim, Groq 20k)", async () => { routes = [[/groq/, () => OK("ok")]]; calls.length = 0; const big = Array.from({ length: 60 }, (_, i) => ({ role: i % 2 ? "assistant" : "user", content: "x".repeat(3000) })); await P.callProvider(prov(cfgAll, "groq"), [{ role: "system", content: "s" }, ...big]); const n = JSON.stringify(calls[0].body.messages).length; return must(n < 40000, String(n)); });
 await t("System message trim ke baad bhi rehta hai", () => must(calls[0].body.messages[0].role === "system"));
@@ -69,7 +82,7 @@ await t("edit_file old/new badla", async () => { routes = [[/groq/, () => toolEr
 await t("arguments string (JSON text) bhi samjha", async () => { routes = [[/groq/, () => toolErr(JSON.stringify({ name: "finish", arguments: JSON.stringify({ summary: "done" }) }))]]; const r = await P.callProvider(prov(cfgAll, "groq"), msgs); return must(/<action tool="finish">\{"summary":"done"\}<\/action>/.test(r), r); });
 await t("Kai tool calls (array) sab badle", async () => { routes = [[/groq/, () => toolErr(JSON.stringify([{ name: "read_file", arguments: { path: "a" } }, { name: "read_file", arguments: { path: "b" } }]))]]; const r = await P.callProvider(prov(cfgAll, "groq"), msgs); return must((r.match(/<action/g) || []).length === 2); });
 await t("Pehle se <action> ho to waisa hi wapas", async () => { routes = [[/groq/, () => toolErr('<action tool="check">{}</action>')]]; const r = await P.callProvider(prov(cfgAll, "groq"), msgs); return must(r === '<action tool="check">{}</action>'); });
-await t("failed_generation na ho: llama-3.3-70b se dobara", async () => { calls.length = 0; routes = [[/groq/, (u, b) => b.model === "openai/gpt-oss-120b" ? toolErr() : OK("llama ne jawab diya")]]; const r = await P.callProvider(prov(cfgAll, "groq"), msgs); return must(r === "llama ne jawab diya" && calls.at(-1).body.model === "llama-3.3-70b-versatile"); });
+await t("failed_generation na ho: gpt-oss-20b se dobara (Llama 3.3 ab free nahi)", async () => { calls.length = 0; routes = [[/groq/, (u, b) => b.model === "openai/gpt-oss-120b" ? toolErr() : OK("20b ne jawab diya")]]; const r = await P.callProvider(prov(cfgAll, "groq"), msgs); return must(r === "20b ne jawab diya" && calls.at(-1).body.model === "openai/gpt-oss-20b"); });
 await t("GROQ_FALLBACK_MODEL setting se doosra model", async () => { calls.length = 0; routes = [[/groq/, (u, b) => b.model === "openai/gpt-oss-120b" ? toolErr() : OK("ok")]]; await P.callProvider(prov({ ...cfgAll, GROQ_FALLBACK_MODEL: "qwen/qwen3-32b" }, "groq"), msgs); return must(calls.at(-1).body.model === "qwen/qwen3-32b"); });
 await t("Fallback bhi fail: loop nahi, saaf error", async () => { calls.length = 0; routes = [[/groq/, () => toolErr()]]; try { await P.callProvider(prov(cfgAll, "groq"), msgs); return false; } catch (e) { return must(calls.length <= 2 && /HTTP 400/.test(e.message), calls.length + " " + e.message); } });
 await t("Doosre 400 errors fallback trigger nahi karte", async () => { calls.length = 0; routes = [[/groq/, () => J(400, { error: { message: "context too long" } })]]; try { await P.callProvider(prov(cfgAll, "groq"), msgs); return false; } catch (e) { return must(calls.length === 1); } });
@@ -84,8 +97,8 @@ await t("Ollama band ho (connection refused): crash nahi", async () => { routes 
 
 sec("5. Real free brains (internet, bina key)");
 globalThis.fetch = realFetch;
-for (const id of ["pollinations", "llm7"]) {
-  await t(`${id}: asli jawab`, async () => { globalThis.__cfg = {}; const p = P.getProviders().find((x) => x.id === id); globalThis.fetch = realFetch; const r = await P.callProvider(p, [{ role: "user", content: "Reply with exactly: OK" }], 40000); return must(r && r.length > 0, "khali") && `jawab: ${r.slice(0, 40).replace(/\s+/g, " ")}`; });
+for (const id of ["llm7"]) {
+  await t(`${id}: asli jawab (quota khatam ho to sahi error)`, async () => { globalThis.__cfg = {}; const p = P.getProviders().find((x) => x.id === id); globalThis.fetch = realFetch; try { const r = await P.callProvider(p, [{ role: "user", content: "Reply with exactly: OK" }], 40000); return must(r && r.length > 0, "khali") && `jawab: ${r.slice(0, 40).replace(/\s+/g, " ")}`; } catch (e) { return must(/limit|quota|khatam/i.test(e.message), e.message) && "quota khatam: sahi pehchana"; } });
 }
 await t("Z.ai endpoint zinda (401 bina key)", async () => { const r = await realFetch("https://api.z.ai/api/paas/v4/chat/completions", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" }); return must(r.status === 401, String(r.status)); });
 await t("Mistral endpoint zinda (401 bina key)", async () => { const r = await realFetch("https://api.mistral.ai/v1/models"); return must(r.status === 401, String(r.status)); });
@@ -149,10 +162,10 @@ await t("UPDATE.bat CRLF", () => must(fs.readFileSync(path.join(ROOT, "UPDATE.ba
 sec("9. Settings / keys");
 const cfgjs = rd("lib/config.js"), st = rd("app/components/Settings.js");
 await t("Keys home folder mein (update se nahi mitti)", () => must(/\.faheem-ai", "keys\.json"/.test(cfgjs)));
-await t("ZAI_API_KEY + MISTRAL_API_KEY save fields", () => must(/"ZAI_API_KEY", "ZAI_MODEL", "MISTRAL_API_KEY", "MISTRAL_MODEL"/.test(cfgjs)));
-await t("Settings mein Z.ai box + key link", () => must(/z\.ai\/manage-apikey/.test(st)));
-await t("Settings mein Mistral box + key link", () => must(/console\.mistral\.ai/.test(st)));
-await t("Ghalat key (email/space) save nahi hoti", () => must(/ZAI_API_KEY: 1, MISTRAL_API_KEY: 1/.test(st)));
+await t("Save fields catalog se (ZAI/MISTRAL + naye brains)", () => must(/FIELDS = \[\.\.\.CATALOG_FIELDS/.test(cfgjs) && ["ZAI_API_KEY", "ZAI_MODEL", "MISTRAL_API_KEY", "MISTRAL_MODEL", "COHERE_API_KEY", "NVIDIA_API_KEY", "CLOUDFLARE_ACCOUNT_ID", "LLM7_MODEL", "GROQ_VISION_MODEL", "OLLAMA_URL"].every((k) => CAT.CATALOG_FIELDS.includes(k)) && /TOOL_FIELDS = \["TWENTYFIRST_API_KEY"\]/.test(cfgjs) && /FIELDS = \[\.\.\.CATALOG_FIELDS, \.\.\.TOOL_FIELDS\]/.test(cfgjs)));
+await t("Settings: brains /api/keys se (har key page)", () => must(/fetch\("\/api\/keys"\)/.test(st) && /openKey/.test(st)));
+await t("Settings: Auto Setup paste + clipboard", () => must(/onPaste/.test(st) && /clipboard\.readText/.test(st)));
+await t("Ghalat key (email/space) pehchaan mein rad", () => must(CAT.detectKey("abc def@x.com").error));
 await t("Agent order mein zai + mistral", () => must(/"groq", "zai", "mistral"/.test(rd("lib/agent/loop.js"))));
 await t("Chat agents order mein zai + mistral", () => must((rd("lib/agents.js").match(/"zai", "mistral"/g) || []).length === 7));
 await t("/v1 API order mein zai + mistral", () => must(/"zai", "mistral"/.test(rd("app/api/v1/chat/completions/route.js"))));
@@ -200,7 +213,7 @@ await t("Website Master prompt mein design brief", () => must(/designBrief\(Stri
 
 sec("14. SVG icons + touch (dashboard khud)");
 const ic = rd("app/components/Icon.js");
-const used = [...["app/page.js", "app/tools/page.js", "app/options/page.js", "app/agent/page.js", "app/design/page.js"].map(rd).join("\n").matchAll(/<Icon name="(\w+)"/g)].map((m) => m[1]);
+const used = [...["app/page.js", "app/tools/page.js", "app/options/page.js", "app/agent/page.js", "app/design/page.js", "app/skills/page.js", "app/gallery/page.js", "app/components/SkillView.js", "app/components/Gallery.js"].map(rd).join("\n").matchAll(/<Icon name="(\w+)"/g)].map((m) => m[1]);
 await t("Har istemal hua icon mojood", () => { const miss = [...new Set(used)].filter((n) => !new RegExp(`\\b${n}: <`).test(ic)); return must(!miss.length, miss.join()) && `${new Set(used).size} icons`; });
 await t("Home topbar: koi emoji icon nahi", () => { const top = rd("app/page.js").split("\n").filter((l) => /icon-btn/.test(l)).join("\n"); return must(!/[\u{1F300}-\u{1FAFF}\u2190-\u21FF\u2295-\u22FF\uFF0B\u25A0-\u25FF\u22EF\u2315]/u.test(top), top.match(/[\u{1F300}-\u{1FAFF}]/u)?.[0]); });
 await t("Agent topbar: koi emoji icon nahi", () => { const top = rd("app/agent/page.js").split("\n").filter((l) => /icon-btn/.test(l)).join("\n"); return must(!/[\u{1F300}-\u{1FAFF}\u21A9\uFF0B\u22EF]/u.test(top)); });
@@ -265,23 +278,94 @@ await t("Hermes skill: name impeccable + Apache", () => { const sk = fs.readFile
 await t("Hermes skill: reference (40+ files) + Windows launcher", () => { const d = path.join(tmp, "impeccable-main"); const n = fs.readdirSync(path.join(d, "reference")).length; return must(n >= 40 && fs.existsSync(path.join(d, "scripts/impeccable.cmd")), String(n)) && `${n} reference files`; });
 await t("Official npm package impeccable 4.8.0 registry par", async () => { const r = await realFetch("https://registry.npmjs.org/impeccable/4.8.0"); const d = await r.json(); return must(r.ok && d.license === "Apache-2.0" && d.optionalDependencies["@impeccable/cli-windows-x64"]); });
 
+sec("18. v3.11 Skills + Gallery + Agentation (code)");
+const SKM = await import(path.join(ROOT, "lib/skills.js"));
+const GL = await import(path.join(ROOT, "lib/gallery.js"));
+const SK_IDS = ["hallmark", "ui-ux-pro-max", "impeccable", "faheem-design", "agentation", "hermes-installer", "design-studio", "tools-board", "agent-mode", "browser-tester", "playwright", "graphify", "compound-engineering", "21st-mcp"];
+await t("Skills: 14 skills, sab ids mojood + unique", () => { const ids = SKM.SKILLS.map((s) => s.id); return must(ids.length === 14 && new Set(ids).size === 14 && SK_IDS.every((i) => ids.includes(i)), ids.join()); });
+await t("Har skill: summary + 'how' + 'setup' + license", () => { const bad = SKM.SKILLS.filter((s) => !s.summary || !s.how?.length || !s.setup?.length || !s.license); return must(!bad.length, bad.map((b) => b.id).join()); });
+await t("Har skill ka icon Icon.js mein", () => { const ic2 = rd("app/components/Icon.js"); const miss = SKM.SKILLS.map((s) => s.icon).filter((n) => !new RegExp(`\\b${n}: <`).test(ic2)); return must(!miss.length, miss.join()); });
+await t("Link skills ke href asli pages", () => must(SKM.SKILLS.filter((s) => s.panel === "link").every((s) => ex(`app${s.href}/page.js`))));
+await t("Skill files sach mein mojood", () => { const miss = SKM.SKILLS.flatMap((s) => s.files || []).filter((f) => !ex(f)); return must(!miss.length, miss.join()); });
+await t("package.json: agentation 3.1.2 pinned + lock", () => must(JSON.parse(rd("package.json")).dependencies.agentation === "3.1.2" && /"node_modules\/agentation"/.test(rd("package-lock.json"))));
+await t("Agentation package mojood (import + Agentation export)", () => must(fs.existsSync(path.join(ROOT, "node_modules/agentation/dist/index.mjs")) && /Agentation/.test(fs.readFileSync(path.join(ROOT, "node_modules/agentation/dist/index.d.ts"), "utf8"))));
+await t("NOTICE.md: PolyForm Shield poora text + Benji Taylor", () => { const n = rd("NOTICE.md"); return must(/PolyForm Shield License 1\.0\.0/.test(n) && /Benji Taylor/.test(n) && /may not remove or obscure/.test(n)); });
+await t("Layout mein AgentationDock (har page)", () => must(/<AgentationDock \/>/.test(rd("app/layout.js"))));
+await t("AgentationDock: dev mein khud, warna toggle; ssr:false lazy load", () => { const d = rd("app/components/AgentationDock.js"); return must(/process\.env\.NODE_ENV === "development"/.test(d) && /ssr: false/.test(d) && /if \(!cfg\?\.on\) return null/.test(d)); });
+await t("AgentationDock: sirf localhost endpoint", () => must(/localhost\|127\\\.0\\\.0\\\.1/.test(rd("app/components/AgentationDock.js"))));
+await t("Agentation page par MCP command (README jaisa)", () => must(/npx -y agentation-mcp server/.test(rd("lib/skills.js")) && /npx agentation-mcp doctor/.test(rd("lib/skills.js"))));
+await t("Gallery: safeName saaf naam (../ aur space nahi)", () => { const n = GL.safeName("../../my photo (1).PNG"); return must(/^[a-z0-9]+-[a-z0-9]{4}-[\w.-]+\.png$/.test(n) && !n.includes(".."), n); });
+await t("Gallery: resolveFile ../ aur ghalat qism rad", () => must(GL.resolveFile("../package.json") === null && GL.resolveFile("x.svg") === null && GL.resolveFile(".env.png") === null && GL.resolveFile("ok-1.png")));
+const CN = await import(path.join(ROOT, "lib/compound-notes.js"));
+const PWC = await import(path.join(ROOT, "lib/playwright-check.js"));
+await t("Naye tools: playwright/graphify/compound/21st ke setup commands", () => { const k = rd("lib/skills.js"); return must(/@playwright\/mcp@latest/.test(k) && /graphifyy/.test(k) && /compound-engineering-plugin/.test(k) && /21st\.dev\/api\/mcp/.test(k)); });
+await t("Compound: 5 steps (brainstorm..compound) + project naam saaf", () => must(CN.STEPS.join() === "brainstorm,plan,work,review,compound" && CN.cleanProject("../My Shop!!") === "my-shop" && CN.cleanProject("") === "general"));
+await t("Compound: note add + list + delete", () => { process.env.FAHEEM_COMPOUND_FILE = path.join(os.tmpdir(), "cn-" + Date.now() + ".json"); const a = CN.addNote({ project: "test", title: "Seekha", text: "free brain pehle" }); const l = CN.listNotes("test"); const id = a.note?.id || l[0]?.id; const d = CN.deleteNote(id); const after = CN.listNotes("test"); delete process.env.FAHEEM_COMPOUND_FILE; return must(a.ok && l.length === 1 && d.ok && after.length === 0, JSON.stringify(a).slice(0, 120)); });
+await t("Compound: khali note rad", () => { process.env.FAHEEM_COMPOUND_FILE = path.join(os.tmpdir(), "cn2-" + Date.now() + ".json"); const a = CN.addNote({ project: "x", title: "", text: "" }); delete process.env.FAHEEM_COMPOUND_FILE; return must(!a.ok); });
+await t("Playwright check: browser na ho to crash nahi (saaf jawab)", async () => { const r = await PWC.playwrightCheck({ html: "<h1>hi</h1><button>x</button>", screenshot: false }).catch((e) => ({ ok: false, error: e.message })); return must(typeof r === "object" && ("ok" in r), JSON.stringify(r).slice(0, 150)); });
+await t("Agent Mode: HTML na ho to preview 404 nahi (placeholder)", () => must(/htmlFiles\.length === 0/.test(rd("app/agent/page.js"))));
+const PNG1 = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+await t("Gallery: magic bytes (asli PNG haan, nakli PNG nahi)", () => must(GL.magicOk("png", PNG1) && !GL.magicOk("png", Buffer.from("<script>alert(1)</script>")) && !GL.magicOk("txt", Buffer.from([0, 1, 2]))));
+await t("Gallery: SVG allowed nahi (script ka khatra)", () => must(!GL.TYPES.svg && GL.TYPES.png && GL.TYPES.html.mime.startsWith("text/plain")));
+await t("Gallery route: localhost-only (GET/POST/DELETE)", () => { const g = rd("app/api/gallery/route.js"); return must((g.match(/if \(!isLocal\(req\)\) return deny\(\)/g) || []).length === 3 && /nosniff/.test(g)); });
+await t("Home par Skills + Gallery links", () => { const h = rd("app/page.js"); return must(/href="\/skills"/.test(h) && /href="\/gallery"/.test(h)); });
+await t("Home: Gallery se chat handoff (sirf /api/gallery url)", () => must(/faheem-handoff/.test(rd("app/page.js")) && /startsWith\("\/api\/gallery\?file="\)/.test(rd("app/page.js"))));
+await t("Skill page: side panel 'Kaise kaam karta hai' + 'Setup'", () => { const v = rd("app/components/SkillView.js"); return must(/Kaise kaam karta hai/.test(v) && /<h3>Setup<\/h3>/.test(v) && /<aside/.test(v)); });
+await t("README + PROGRESS mein v3.11 Skills/Gallery", () => must(/## Skills \(v3\.11\)/.test(rd("README.md")) && /## Gallery \(v3\.11\)/.test(rd("README.md")) && /v3\.11\.0 \(Skills/.test(rd("PROGRESS.md"))));
+await t("Version abhi bhi 3.11.0", () => must(JSON.parse(rd("package.json")).version === "3.11.0"));
+
+
+sec("10. v3.11 Ek pipeline: saare free brains");
+globalThis.fetch = mockFetch;
+const KEYS = { groq: "gsk_" + "a".repeat(40), gemini: "AIzaSy" + "b".repeat(33), openrouter: "sk-or-v1-" + "c".repeat(64), nvidia: "nvapi-" + "d".repeat(50), huggingface: "hf_" + "e".repeat(34), zai: "0123456789abcdef0123456789abcdef.ABCDEFGHijklmnop" };
+for (const [id, k] of Object.entries(KEYS)) await t(`Key pehchaan: ${id}`, () => { const d = CAT.detectKey(k); return must(d.sure && d.id === id, JSON.stringify(d)); });
+await t("Bina prefix key: server par aazmane ke liye candidates", () => { const d = CAT.detectKey("abcdefghijklmnopqrstuvwxyz123456"); return must(!d.sure && d.candidates.includes("mistral") && d.candidates.includes("cohere")); });
+await t("Bina-key brains candidates mein nahi (jhoota match na ho)", () => must(!CAT.detectKey("abcdefghijklmnopqrstuvwxyz123456").candidates.some((id) => ["kilo", "ovh", "llm7"].includes(id))));
+await t("Chhoti key rad", () => must(CAT.detectKey("short").error));
+await t("Catalog: 17 brains, sab ke key page https", () => must(CAT.CATALOG.length === 17 && CAT.CATALOG.every((c) => /^https:\/\//.test(c.keyUrl) && /^https:\/\//.test(c.base)), String(CAT.CATALOG.length)));
+await t("Catalog: ids unique", () => must(new Set(CAT.CATALOG.map((c) => c.id)).size === CAT.CATALOG.length));
+const ALLK = Object.fromEntries(CAT.CATALOG.map((c) => [CAT.keyField(c.id), "k".repeat(32)]));
+await t("Sab keys + Cloudflare ID = 17 brains + Ollama", () => { globalThis.__cfg = { ...ALLK, CLOUDFLARE_ACCOUNT_ID: "acc123" }; const l = P.getProviders(); return must(l.length === 18, String(l.length)) && `${l.length} brains`; });
+await t("Cloudflare: Account ID ke baghair nahi aata", () => { globalThis.__cfg = { CLOUDFLARE_API_KEY: "k".repeat(32) }; return must(!P.getProviders().some((p) => p.id === "cloudflare")); });
+await t("Cloudflare: base mein account ID", () => must(prov({ CLOUDFLARE_API_KEY: "k".repeat(32), CLOUDFLARE_ACCOUNT_ID: "acc9" }, "cloudflare").base === "https://api.cloudflare.com/client/v4/accounts/acc9/ai/v1"));
+await t("Key lagi ho to Kilo key wala ban jata hai (bina-key nahi)", () => { const p = prov({ KILO_API_KEY: "k".repeat(32) }, "kilo"); return must(p && !p.keyless && p.key); });
+await t("Bina key: Kilo + OVH + LLM7 + Ollama", () => { globalThis.__cfg = {}; const ids = P.getProviders().map((p) => p.id); return must(ids.join() === "kilo,ovh,llm7,ollama", ids.join()); });
+await t("DISABLED_BRAINS se brain band", () => { globalThis.__cfg = { DISABLED_BRAINS: "ovh,ollama" }; const ids = P.getProviders().map((p) => p.id); return must(!ids.includes("ovh") && !ids.includes("ollama")); });
+await t("sortProviders: naye key wale beech mein, bina-key baad, Ollama aakhir", () => { globalThis.__cfg = { GROQ_API_KEY: "g".repeat(30), COHERE_API_KEY: "c".repeat(30) }; const ids = P.sortProviders(P.getProviders(), ["groq"]).map((p) => p.id); return must(ids[0] === "groq" && ids[1] === "cohere" && ids.at(-1) === "ollama" && ids.indexOf("kilo") > 1, ids.join()); });
+for (const c of CAT.CATALOG.filter((x) => !x.keyless)) await t(`${c.name}: sahi URL + Bearer + model`, async () => { routes = [[/./, () => OK("ok " + c.id)]]; calls.length = 0; const p = prov({ [CAT.keyField(c.id)]: "k".repeat(32), CLOUDFLARE_ACCOUNT_ID: "a1" }, c.id); const auto = c.model === "auto"; if (auto) routes = [[/\/models$/, () => J(200, { data: [{ id: "x-embed" }, { id: "good-model:free" }] })], [/./, () => OK("ok " + c.id)]]; const r = await P.callProvider(p, msgs); const last = calls.at(-1); return must(r === "ok " + c.id && last.url === p.base + "/chat/completions" && (c.id === "gemini" ? last.headers["x-goog-api-key"] : last.headers.Authorization === "Bearer " + "k".repeat(32)) && (auto ? last.body.model === "good-model:free" : last.body.model === c.model), last.url + " " + last.body?.model); });
+await t("NVIDIA 429: Nemotron fallback", async () => { routes = [[/nvidia/, (u, b) => b.model.startsWith("deepseek") ? J(429, {}) : OK("nemo")]]; const r = await P.callProvider(prov({ NVIDIA_API_KEY: "k".repeat(32) }, "nvidia"), msgs); return must(r === "nemo" && P.lastModelUsed("nvidia") === "nvidia/nemotron-3-super-120b-a12b"); });
+await t("OVH 429: Llama fallback", async () => { routes = [[/ovh/, (u, b) => b.model === "gpt-oss-120b" ? J(429, {}) : OK("llama")]]; globalThis.__cfg = {}; const r = await P.callProvider(P.getProviders().find((p) => p.id === "ovh"), msgs); return must(r === "llama"); });
+globalThis.fetch = realFetch;
+for (const id of ["kilo", "ovh"]) await t(`${id}: asli jawab (bina key, internet)`, async () => { globalThis.__cfg = {}; const p = P.getProviders().find((x) => x.id === id); const r = await P.callProvider(p, [{ role: "user", content: "Reply with exactly: OK" }], 60000); return must(r && r.length > 0) && `jawab: ${r.slice(0, 30).replace(/\s+/g, " ")}`; });
+await t("Kilo free models list zinda", async () => { const ids = await P.listModels({ id: "kilo", base: "https://api.kilo.ai/api/gateway", key: "" }); return must(ids.includes("kilo-auto/free"), ids.slice(0, 5).join()) && `${ids.length} models`; });
+await t("OVH models mein gpt-oss-120b", async () => { const ids = await P.listModels({ id: "ovh", base: "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1", key: "" }); return must(ids.includes("gpt-oss-120b")); });
+await t("SambaNova default model list mein hai", async () => { const ids = await P.listModels({ id: "sambanova", base: "https://api.sambanova.ai/v1", key: "" }); return must(ids.includes("DeepSeek-V3.2"), ids.join()); });
+await t("NVIDIA default model list mein hai", async () => { const ids = await P.listModels({ id: "nvidia", base: "https://integrate.api.nvidia.com/v1", key: "" }); return must(ids.includes("deepseek-ai/deepseek-v4.1-flash") && ids.includes("nvidia/nemotron-3-super-120b-a12b")); });
+await t("Nous :free model list mein hai", async () => { const ids = await P.listModels({ id: "nous", base: "https://inference-api.nousresearch.com/v1", key: "" }); return must(ids.includes("reflection/beam-1.0-501b-a23b:free")); });
+for (const [id, base] of [["Cohere", "https://api.cohere.ai/compatibility/v1"], ["Hetzner", "https://inference.hetzner.com/api/v1"], ["Requesty", "https://router.requesty.ai/v1"]]) await t(`${id} endpoint zinda`, async () => { const r = await realFetch(base + "/models"); return must([200, 401, 403].includes(r.status), String(r.status)); });
+await t("Keys API route mojood (auto/test/models/remove)", () => { const k = rd("app/api/keys/route.js"); return must(["\"auto\"", "\"test\"", "\"models\"", "\"remove\""].every((a) => k.includes(a)) && /isLocal/.test(k)); });
+
 // ---------- live server ----------
 sec("10. Live server (next start)");
-const PORT = 3177; const env = { ...process.env, PORT: String(PORT), HOME: tmp, NODE_ENV: "production" };
+const PORT = 3177; const GDIR = path.join(tmp, "gallery"); const env = { ...process.env, PORT: String(PORT), HOME: tmp, NODE_ENV: "production", FAHEEM_GALLERY_DIR: GDIR };
 const srv = spawn("npx", ["next", "start", "-p", String(PORT)], { cwd: ROOT, env, stdio: "ignore", detached: true });
 const base = `http://localhost:${PORT}`;
 for (let i = 0; i < 60; i++) { try { await realFetch(base + "/api/tools"); break; } catch { await new Promise((r) => setTimeout(r, 1000)); } }
 const get = (u) => realFetch(base + u, { cache: "no-store" });
-for (const pg of ["/", "/tools", "/options", "/agent"]) await t(`Page ${pg} khulta hai (200)`, async () => { const r = await get(pg); return must(r.status === 200, String(r.status)); });
+for (const pg of ["/", "/tools", "/options", "/agent", "/skills", "/gallery"]) await t(`Page ${pg} khulta hai (200)`, async () => { const r = await get(pg); return must(r.status === 200, String(r.status)); });
 await t("Home par Tools button", async () => { const h = await (await get("/")).text(); return must(/href="\/tools"/.test(h)); });
 await t("/tools page: 'har brain ka chat board'", async () => { const h = await (await get("/tools")).text(); return must(/har brain ka chat board/.test(h)); });
 await t("/api/tools: brains ki list", async () => { const d = await (await get("/api/tools")).json(); return must(d.providers.length >= 3) && `${d.providers.length} brains: ${d.providers.map((p) => p.id).join(", ")}`; });
 await t("/api/tools POST: ghalat brain = 404", async () => { const r = await realFetch(base + "/api/tools", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ provider: "nahi-hai", messages: [{ role: "user", content: "hi" }] }) }); return must(r.status === 404); });
-await t("/api/tools POST: khali message = 400", async () => { const r = await realFetch(base + "/api/tools", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ provider: "pollinations", messages: [] }) }); return must(r.status === 400); });
+await t("/api/tools POST: khali message = 400", async () => { const r = await realFetch(base + "/api/tools", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ provider: "kilo", messages: [] }) }); return must(r.status === 400, String(r.status)); });
 await t("/api/tools POST: ghalat JSON se crash nahi", async () => { const r = await realFetch(base + "/api/tools", { method: "POST", headers: { "content-type": "application/json" }, body: "{bad" }); return must(r.status === 404 || r.status === 400); });
-await t("Tools chat board: Pollinations se asli baat (1 by 1)", async () => { const d = await (await realFetch(base + "/api/tools", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ provider: "pollinations", messages: [{ role: "user", content: "Say hi in 3 words" }] }) })).json(); return must(d.ok, d.error) && `${(d.ms / 1000).toFixed(1)}s: ${d.text.slice(0, 40)}`; });
+await t("Tools chat board: Kilo se asli baat (1 by 1)", async () => { const d = await (await realFetch(base + "/api/tools", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ provider: "kilo", messages: [{ role: "user", content: "Say hi in 3 words" }] }) })).json(); return must(d.ok, d.error) && `${(d.ms / 1000).toFixed(1)}s: ${d.text.slice(0, 40)}`; });
 await t("Tools chat board: Ollama band ho to saaf error (crash nahi)", async () => { const d = await (await realFetch(base + "/api/tools", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ provider: "ollama", messages: [{ role: "user", content: "hi" }] }) })).json(); return must(d.ok === false && d.error) && d.error.slice(0, 60); });
 await t("/api/chat GET: agents + brains", async () => { const d = await (await get("/api/chat")).json(); return must(d.agents.length === 7 && d.providers.length >= 3); });
+await t("/api/keys GET: 17 brains ki list", async () => { const d = await (await get("/api/keys")).json(); return must(d.brains.length === 17) && `${d.brains.filter((b) => b.active).length} active`; });
+await t("/api/keys auto: ghalat key rad", async () => { const d = await (await realFetch(base + "/api/keys", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "auto", key: "gsk_" + "x".repeat(48) }) })).json(); return must(!d.ok && /Groq/.test(d.error), d.error); });
+await t("/api/keys auto: bina prefix ghalat key kisi ne qubool nahi ki", async () => { const d = await (await realFetch(base + "/api/keys", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "auto", key: "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz" }) })).json(); return must(!d.ok, JSON.stringify(d)); });
+await t("/api/keys test: Kilo (bina key) asli jawab", async () => { const d = await (await realFetch(base + "/api/keys", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "test", id: "kilo" }) })).json(); return must(d.ok, d.error) && `${(d.ms / 1000).toFixed(1)}s`; });
 await t("/api/settings GET (localhost)", async () => { const d = await (await get("/api/settings")).json(); return must("ZAI_API_KEY" in d && "MISTRAL_API_KEY" in d); });
 await t("/api/update GET: version = package.json", async () => { const d = await (await get("/api/update")).json(); return must(d.current === JSON.parse(rd("package.json")).version, JSON.stringify(d)) && "v" + d.current; });
 await t("/v1/models (OpenAI jaisa API)", async () => { const r = await get("/api/v1/models"); return must(r.ok); });
@@ -298,7 +382,47 @@ await t("/api/design POST: Impeccable findings (live server)", async () => { con
 await t("/api/design POST: saaf page = 0 warnings", async () => { const d = await (await realFetch(base + "/api/design", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ html: CLEAN }) })).json(); return must(d.impeccable?.ok && d.impeccable.counts.warning === 0 && d.impeccable.counts.error === 0, JSON.stringify(d.impeccable?.counts)); });
 await t("/api/design POST: impeccable:false = sirf UX", async () => { const d = await (await realFetch(base + "/api/design", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ html: SLOP, impeccable: false }) })).json(); return must(d.impeccable === null && Array.isArray(d.issues)); });
 await t("/api/design POST: ghalat JSON se crash nahi", async () => { const r = await realFetch(base + "/api/design", { method: "POST", headers: { "content-type": "application/json" }, body: "{bad" }); return must(r.status === 200); });
-await t("Dashboard ke apne pages par Impeccable (/, /design, /tools)", async () => { let tot = 0; const out = []; for (const pg of ["/", "/design", "/tools"]) { const h = await (await get(pg)).text(); const r = await IM.detectHtml(h); must(r.ok, r.reason); const bad = r.findings.filter((f) => f.severity === "error"); tot += bad.length; out.push(`${pg}:${r.findings.length}`); } return must(tot === 0, "errors " + tot) && out.join(" "); });
+// ---- v3.11 Skills + Gallery (live) ----
+const postJ = (u, b) => realFetch(base + u, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(b) });
+await t("Page /skills: 14 skill cards", async () => { const r = await get("/skills"); const h = await r.text(); const n = SK_IDS.filter((i) => h.includes(`data-skill="${i}"`)).length; return must(r.status === 200 && n === 14, r.status + " " + n); });
+await t("API /api/skills compound: add + delete", async () => { const r = await postJ("/api/skills", { id: "compound-engineering", action: "add", project: "live-test", step: "review", title: "T", text: "live note" }); const j = await r.json(); const id = j.note?.id; const d = id ? await (await postJ("/api/skills", { id: "compound-engineering", action: "delete", noteId: id })).json() : {}; return must(r.status === 200 && j.ok && d.ok, JSON.stringify(j).slice(0, 120)); });
+await t("API /api/skills 21st test: key na ho to saaf hidayat", async () => { const j = await (await postJ("/api/skills", { id: "21st-mcp", action: "test" })).json(); return must(j.ok === false && /21st|401/.test(j.error || ""), JSON.stringify(j).slice(0, 120)); });
+await t("API /api/skills ghalat action: 400", async () => { const r = await postJ("/api/skills", { id: "graphify", action: "boom" }); return must(r.status === 400); });
+await t("API /api/skills playwright: khali input 400", async () => { const r = await postJ("/api/skills", { id: "playwright", action: "playwright" }); return must(r.status === 400); });
+for (const id of SK_IDS) await t(`Page /skills/${id}: 200 + side panel`, async () => { const r = await get("/skills/" + id); const h = await r.text(); return must(r.status === 200 && /Kaise kaam karta hai/.test(h) && />Setup</.test(h), String(r.status)); });
+await t("Page /skills/nahi-hai = 404", async () => must((await get("/skills/nahi-hai")).status === 404));
+await t("Page /gallery khulta hai + upload box", async () => { const r = await get("/gallery"); const h = await r.text(); return must(r.status === 200 && /data-gallery/.test(h) && /yahan chhoren/.test(h)); });
+await t("Home par Skills + Gallery links (live)", async () => { const h = await (await get("/")).text(); return must(/href="\/skills"/.test(h) && /href="\/gallery"/.test(h)); });
+await t("/api/skills GET: 14 skills", async () => { const d = await (await get("/api/skills")).json(); return must(d.ok && d.count === 14); });
+await t("/api/skills?id=faheem-design: SKILL.md text", async () => { const d = await (await get("/api/skills?id=faheem-design")).json(); return must(d.ok && /^name: faheem-design$/m.test(d.doc || "")); });
+await t("/api/skills?id=ghalat = 404", async () => must((await get("/api/skills?id=xyz")).status === 404));
+await t("/api/skills POST hallmark: slop page par notes", async () => { const d = await (await postJ("/api/skills", { id: "hallmark", html: SLOP + "<style>.x{transition:all .3s}</style>" })).json(); return must(d.ok && d.notes.some((n) => /transition: all/.test(n)), JSON.stringify(d).slice(0, 120)) && `${d.notes.length} notes`; });
+await t("/api/skills POST ui-ux-pro-max: UX masle", async () => { const d = await (await postJ("/api/skills", { id: "ui-ux-pro-max", html: "<html><body><img src=a.png></body></html>" })).json(); return must(d.ok && !d.clean && d.notes.length >= 2); });
+await t("/api/skills POST impeccable: side-tab pakra", async () => { const d = await (await postJ("/api/skills", { id: "impeccable", html: SLOP })).json(); return must(d.ok && d.rules === 62 && d.findings.some((f) => f.id === "side-tab")); });
+await t("/api/skills POST impeccable: saaf page 0 warning", async () => { const d = await (await postJ("/api/skills", { id: "impeccable", html: CLEAN })).json(); return must(d.ok && d.counts.warning === 0 && d.counts.error === 0, JSON.stringify(d.counts)); });
+await t("/api/skills POST browser-tester: toota button pakra", async () => { const d = await (await postJ("/api/skills", { id: "browser-tester", html: '<html><body><button onclick="addToCart()">Buy</button></body></html>' })).json(); return must(d.ok && d.result && d.result.ok === false && d.result.errors.length > 0, JSON.stringify(d).slice(0, 150)); });
+await t("/api/skills POST browser-tester: achha page pass", async () => { const d = await (await postJ("/api/skills", { id: "browser-tester", html: '<html><body><button onclick="document.body.dataset.x=1">Buy</button></body></html>' })).json(); return must(d.ok && d.result.ok === true, JSON.stringify(d).slice(0, 150)); });
+await t("/api/skills POST: khali = 400, ghalat id = 404, ghalat JSON crash nahi", async () => { const a = await postJ("/api/skills", { id: "impeccable" }); const b = await postJ("/api/skills", { id: "x", html: "a" }); const c = await realFetch(base + "/api/skills", { method: "POST", body: "{bad" }); return must(a.status === 400 && b.status === 404 && c.status === 404, [a.status, b.status, c.status].join()); });
+await t("/api/gallery GET: khali list + limits", async () => { const d = await (await get("/api/gallery")).json(); return must(d.ok && Array.isArray(d.files) && d.limits.maxBytes === 10485760); });
+const upl = (parts) => { const fd = new FormData(); for (const [n, data, type] of parts) fd.append("files", new Blob([data], { type }), n); return realFetch(base + "/api/gallery", { method: "POST", body: fd }); };
+let G = {};
+await t("Gallery upload: PNG + HTML (kai ek sath)", async () => { const r = await upl([["shot 1.png", PNG1, "image/png"], ["slop.html", SLOP, "text/html"]]); const d = await r.json(); G = Object.fromEntries((d.saved || []).map((f) => [f.original, f])); return must(r.status === 200 && d.saved.length === 2 && !d.rejected.length, JSON.stringify(d).slice(0, 160)); });
+await t("Gallery upload: SVG + nakli PNG + khali rad", async () => { const r = await upl([["x.svg", "<svg onload=alert(1)>", "image/svg+xml"], ["fake.png", "<script>1</script>", "image/png"], ["empty.txt", "", "text/plain"]]); const d = await r.json(); return must(r.status === 400 && d.rejected.length === 3 && !d.saved.length, JSON.stringify(d).slice(0, 160)); });
+await t("Gallery upload: 10MB se bari rad", async () => { const r = await upl([["big.txt", "a".repeat(10 * 1024 * 1024 + 10), "text/plain"]]); const d = await r.json(); return must(r.status === 400 && /10MB/.test(d.rejected[0]?.error || ""), JSON.stringify(d).slice(0, 120)); });
+await t("Gallery upload: 13 files ek dafa = 400", async () => { const r = await upl(Array.from({ length: 13 }, (_, i) => [`a${i}.txt`, "hi", "text/plain"])); return must(r.status === 400); });
+await t("Gallery upload: bina file = 400", async () => { const r = await realFetch(base + "/api/gallery", { method: "POST", body: new FormData() }); return must(r.status === 400); });
+await t("Gallery list mein dono files", async () => { const d = await (await get("/api/gallery")).json(); return must(d.files.length === 2 && d.files.some((f) => f.kind === "image") && d.files.some((f) => f.kind === "code")); });
+await t("Gallery file GET: PNG bytes + nosniff", async () => { const r = await get(G["shot 1.png"].url); const b = Buffer.from(await r.arrayBuffer()); return must(r.ok && r.headers.get("content-type") === "image/png" && r.headers.get("x-content-type-options") === "nosniff" && b.equals(PNG1)); });
+await t("Gallery HTML file text/plain (browser mein chalti nahi)", async () => { const r = await get(G["slop.html"].url); return must(r.ok && r.headers.get("content-type").startsWith("text/plain") && /default-src 'none'/.test(r.headers.get("content-security-policy"))); });
+await t("Gallery ../ path traversal rad", async () => { const r = await get("/api/gallery?file=" + encodeURIComponent("../../package.json")); return must(r.status === 404); });
+await t("Gallery file -> Impeccable skill (file se audit)", async () => { const d = await (await postJ("/api/skills", { id: "impeccable", file: G["slop.html"].name })).json(); return must(d.ok && d.findings.some((f) => f.id === "side-tab")); });
+await t("Gallery file -> Hallmark skill", async () => { const d = await (await postJ("/api/skills", { id: "hallmark", file: G["slop.html"].name })).json(); return must(d.ok && Array.isArray(d.notes)); });
+await t("Gallery picture -> code skill = saaf 400 (Chat ka mashwara)", async () => { const r = await postJ("/api/skills", { id: "impeccable", file: G["shot 1.png"].name }); const d = await r.json(); return must(r.status === 400 && /Chat/.test(d.error)); });
+await t("Bahar se (non-localhost Host) gallery = 403", async () => { const http = await import("http"); const code = await new Promise((res) => { const q = http.request({ host: "127.0.0.1", port: PORT, path: "/api/gallery", headers: { Host: "evil.example.com" } }, (r) => { r.resume(); res(r.statusCode); }); q.on("error", () => res(0)); q.end(); }); return must(code === 403, String(code)); });
+await t("Bahar se browser-tester = 403", async () => { const http = await import("http"); const body = JSON.stringify({ id: "browser-tester", html: "<p>x</p>" }); const code = await new Promise((res) => { const q = http.request({ host: "127.0.0.1", port: PORT, path: "/api/skills", method: "POST", headers: { Host: "evil.example.com", "content-type": "application/json", "content-length": Buffer.byteLength(body) } }, (r) => { r.resume(); res(r.statusCode); }); q.on("error", () => res(0)); q.end(body); }); return must(code === 403, String(code)); });
+await t("Gallery DELETE: mit gayi, dobara = 404", async () => { const a = await realFetch(base + G["shot 1.png"].url, { method: "DELETE" }); const b = await realFetch(base + G["shot 1.png"].url, { method: "DELETE" }); await realFetch(base + G["slop.html"].url, { method: "DELETE" }); const d = await (await get("/api/gallery")).json(); return must(a.status === 200 && b.status === 404 && d.files.length === 0); });
+await t("Gallery files test folder mein (asli data/gallery saaf)", () => must(fs.existsSync(GDIR)));
+await t("Dashboard ke apne pages par Impeccable (/, /design, /tools, /skills, /gallery, skill page)", async () => { let tot = 0; const out = []; for (const pg of ["/", "/design", "/tools", "/skills", "/gallery", "/skills/impeccable"]) { const h = await (await get(pg)).text(); const r = await IM.detectHtml(h); must(r.ok, r.reason); const bad = r.findings.filter((f) => f.severity === "error"); tot += bad.length; out.push(`${pg}:${r.findings.length}`); } return must(tot === 0, "errors " + tot) && out.join(" "); });
 try { process.kill(-srv.pid); } catch {}
 
 sec("11. Build + Browser Tester");

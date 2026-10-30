@@ -184,9 +184,11 @@ export default function AgentPage() {
           <div className="ws-tabs">
             <button className={tab === "preview" ? "on" : ""} onClick={() => setTab("preview")}>Live Preview</button>
             <button className={tab === "code" ? "on" : ""} onClick={() => setTab("code")}>Code{open ? ` · ${open.split("/").pop()}` : ""}</button>
-            <a className="ag-open" href={previewUrl} target="_blank" rel="noreferrer" title="Nayi window mein kholein">↗</a>
+            {htmlFiles.length > 0 && project && <a className="ag-open" href={previewUrl} target="_blank" rel="noreferrer" title="Nayi window mein kholein">↗</a>}
           </div>
-          {tab === "preview"
+          {tab === "preview" && (!project || htmlFiles.length === 0)
+            ? <div className="ag-code muted" style={{ display: "grid", placeItems: "center", textAlign: "center" }}>Abhi koi HTML file nahi. Agent website banaye ga to preview yahan dikhe ga.</div>
+            : tab === "preview"
             ? <iframe key={previewUrl} className="ag-frame" src={previewUrl} title="preview" sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-modals" />
             : <pre className="ag-code">{open ? code : "Baayen se koi file chunein."}</pre>}
         </section>

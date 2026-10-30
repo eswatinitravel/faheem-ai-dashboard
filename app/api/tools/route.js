@@ -1,4 +1,4 @@
-import { getProviders, callProvider, isCooling } from "../../../lib/providers";
+import { getProviders, callProvider, isCooling, lastModelUsed } from "../../../lib/providers";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -18,8 +18,8 @@ export async function POST(req) {
   const messages = [{ role: "system", content: "You are a helpful assistant inside Faheem's AI dashboard. Reply briefly in the user's language (Roman Urdu or English)." }, ...history];
   const t0 = Date.now();
   try {
-    const text = await callProvider(p, messages, Math.min(Number(body.timeoutMs) || 60000, 110000));
-    return Response.json({ ok: true, provider: p.id, model: p.model, ms: Date.now() - t0, text });
+    const text = await callProvider(p, messages, Math.min(Number(body.timeoutMs) || (p.id === "ollama" ? 110000 : 60000), 110000));
+    return Response.json({ ok: true, provider: p.id, model: lastModelUsed(p.id) || p.model, ms: Date.now() - t0, text });
   } catch (e) {
     return Response.json({ ok: false, provider: p.id, model: p.model, ms: Date.now() - t0, error: e.message || String(e) });
   }

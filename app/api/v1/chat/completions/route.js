@@ -1,12 +1,12 @@
 // OpenAI-compatible bridge: Dyad (ya koi bhi app) yahan baat kare to jawab
 // Faheem AI ki free pipeline deti hai — aapki keys pehle, phir bina-key free brains.
 // Dyad mein: Base URL = http://localhost:3000/api/v1 , API key = free , Model = faheem-free
-import { getProviders, callProvider, isCooling } from "../../../../../lib/providers";
+import { getProviders, callProvider, isCooling, sortProviders } from "../../../../../lib/providers";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-const ORDER = ["groq", "gemini", "zai", "mistral", "openrouter", "pollinations", "llm7", "ollama"];
+const ORDER = ["groq", "gemini", "zai", "mistral", "openrouter"];
 
 function toText(c) {
   if (typeof c === "string") return c;
@@ -22,7 +22,7 @@ export async function POST(req) {
     .map((m) => ({ role: m.role, content: toText(m.content) }))
     .filter((m) => m.content);
 
-  const providers = getProviders().sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
+  const providers = sortProviders(getProviders(), ORDER);
   const errors = [];
   let reply = null, used = null;
   for (const p of providers) {

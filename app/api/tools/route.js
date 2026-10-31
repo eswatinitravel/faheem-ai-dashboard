@@ -1,10 +1,12 @@
 import { getProviders, callProvider, isCooling, lastModelUsed } from "../../../lib/providers";
+import { ensureLive } from "../../../lib/free-live";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 // v3.8 Tools page: har brain ko alag se, bina fallback, seedha chalayein (1 by 1 test + chat).
 export async function GET() {
+  try { ensureLive(); } catch {}
   const list = getProviders().map((p) => ({ id: p.id, name: p.name, model: p.model, keyless: !!p.keyless, cooling: !!isCooling(p.id) }));
   return Response.json({ providers: list }, { headers: { "Cache-Control": "no-store" } });
 }

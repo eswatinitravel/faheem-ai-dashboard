@@ -1,4 +1,4 @@
-# NOTICE — Third-party credits (Faheem AI Dashboard v3.11.0)
+# NOTICE — Third-party credits (Faheem AI Dashboard v3.13.0)
 
 Yeh dashboard in open-source projects ko istemal karta hai. Har ek ka license aur notice yahan mehfooz hai.
 
@@ -58,3 +58,21 @@ For more information, see https://polyformproject.org/licenses/shield/1.0.0
 - **Compound Engineering plugin** — Every Inc, MIT. https://github.com/EveryInc/compound-engineering-plugin
 - **21st MCP (21st.dev, pehle Magic MCP)** — repo ISC; service 21st.dev terms ke tehat. Free plan: search + logo search; AI generate paid credits.
 - **Harvey** — shamil nahi (Harvey.ai enterprise legal AI, sirf demo).
+
+---
+
+## v3.13 — Ruflo se inspired (code shamil nahi)
+
+- **Ruflo — ruvnet (github.com/ruvnet/ruflo), MIT License.** Agent Team (swarm: coordinator + Designer/Coder/Tester/Reviewer roles, shared task board, handoffs, budget guard) aur Persistent Memory (local yaad + retrieval) ke *ideas* Ruflo se liye gaye. Dashboard ka code (`lib/agent/team.js`, `lib/agent/team-run.js`, `lib/memory.js`, `app/memory`, `app/api/memory`) apna likha hua hai — Ruflo ka koi code copy ya install nahi kiya (Ruflo ko paid Claude Code/Codex chahiye; yeh dashboard sirf free brains istemal karta hai). Shukriya ruvnet.
+- Memory ki retrieval `lib/uupm` wala BM25 formula istemal karti hai (UI UX Pro Max, MIT — upar).
+
+---
+
+## v3.14 — Brains Rooms + bina-jhanjhat free brains (code shamil nahi, sirf ideas/services)
+
+- **freelm — shihabshahrier (github.com/shihabshahrier/freelm), MIT License.** "Key pool" ka *idea* (har brain ki 2-3 keys, 429 par agli key, 401 par key band, thaki hui keys ko aaram) freelm se liya. Dashboard ka code (`lib/brain-status.js`, `lib/brain-check.js`, `lib/providers.js` ka pool hissa) apna likha hua hai — freelm ka koi code copy ya install nahi kiya. Shukriya.
+- **stillworks (stillworks.supercapybara.com)** — free LLM endpoints ki live list (`/api/llm/up`). Dashboard har ghante sirf yeh public JSON parhta hai; service band ho to purani list chalti hai. Pollinations purane host aur Free.ai ki maloomat bhi yahin se (2026-10-31).
+- **Pollinations (text.pollinations.ai)**, **Free.ai (api.free.ai)**, **AI Horde (aihorde.net, public anonymous key 0000000000)** — doosron ki free services; apni terms ke tehat, kabhi bhi badal sakti hain.
+- **Puter.js (heyPuter/puter, js.puter.com/v2)** — browser mein, user ke apne Puter account se (koi API key nahi). "User-pays" model: free mahana hissa, had likhi nahi. Script sirf zaroorat par load hoti hai, bundle nahi.
+- **Meta AI / Meta Model API (Muse Image, muse-image-1.0)** — Meta Platforms. Free: meta.ai website/app (user ka apna login, alag Edge window). Meta Model API paid ($0.01/tasveer) — dashboard mein default BAND. Meta ka koi code shamil nahi.
+- Jaan bujh kar shamil NAHI: OpenCode Zen free, Hack Club AI, gpt4free / web scrapers (Terms of Service).

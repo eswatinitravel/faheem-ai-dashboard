@@ -19,7 +19,7 @@ export default function Settings({ onClose }) {
     fetch("/api/keys").then((r) => r.json()).then((d) => setBrains(d.brains || []));
     fetch("/api/settings").then((r) => r.json()).then((d) => {
       setCfg(d);
-      setForm({ OLLAMA_MODEL: d.OLLAMA_MODEL, OLLAMA_ENABLED: d.OLLAMA_ENABLED || "true", FREE_ENABLED: d.FREE_ENABLED || "true" });
+      setForm({ OLLAMA_MODEL: d.OLLAMA_MODEL, OLLAMA_ENABLED: d.OLLAMA_ENABLED || "true", FREE_ENABLED: d.FREE_ENABLED || "true", LIVE_FREE_ENABLED: d.LIVE_FREE_ENABLED || "true" });
       setCfAcc(d.CLOUDFLARE_ACCOUNT_ID || "");
     });
   };
@@ -129,6 +129,16 @@ export default function Settings({ onClose }) {
             <div className="field-head"><b>Bina key wale brains</b></div>
             <small className="muted">Kilo, OVH, LLM7: koi key nahi chahiye (Pollinations ab free key mangta hai), aakhir mein khud jawab dete hain. Dyad: Base URL http://localhost:3000/api/v1 , key: free , model: faheem-free</small>
             <select value={form.FREE_ENABLED || "true"} onChange={(e) => setForm({ ...form, FREE_ENABLED: e.target.value })}>
+              <option value="true">On</option>
+              <option value="false">Off</option>
+            </select>
+          </div>
+        )}
+        {cfg && (
+          <div className="field" data-live-option>
+            <div className="field-head"><b>Live free list (har ghanta)</b><a href="https://stillworks.supercapybara.com/api/llm/up" target="_blank" rel="noreferrer">List ↗</a></div>
+            <small className="muted">stillworks se abhi jawab dene wale bina-key brains khud Ollama se pehle jur jate hain (zyada se zyada 6). Service band ho to purani list chalti hai. Brains Rooms (/brains) mein status lights.</small>
+            <select value={form.LIVE_FREE_ENABLED || "true"} onChange={(e) => setForm({ ...form, LIVE_FREE_ENABLED: e.target.value })}>
               <option value="true">On</option>
               <option value="false">Off</option>
             </select>

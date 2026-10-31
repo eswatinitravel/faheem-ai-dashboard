@@ -86,3 +86,36 @@
 ## v3.11.0 — extra tools
 - [x] Playwright, Graphify, Compound Engineering, 21st MCP: skill pages, live panels, HERMES-SKILLS.bat Extra tools block, NOTICE.
 - [x] Harvey: shamil nahi (legal enterprise).
+
+## 31 Oct 2026 — v3.13.0 (Agent Team + Persistent Memory · Ruflo se inspired)
+- 👥 **Agent Team (Team mode):** bara kaam (website/store/kai files) ab 4 roles mein bant sakta hai: Designer (design spec + files ki list) → Coder (poori files) → Tester (bina AI checks + browser test, free) → Reviewer (aakhri jaanch). Har handoff live log mein dikhta hai aur project ke `team.json` board par likha jata hai.
+- Har role apna free brain leta hai (specialist ka prefer order, jahan ho sake alag brain). Free limit bachane ke liye had: max 3 rounds, ~60k tokens, 10 brain calls. Brains limit par hon ya Coder file na likhe to khud purana single Agent Mode chalta hai. Chhota kaam ya picture wala kaam seedha single agent ko.
+- Toggle: Agent Mode topbar mein "Team", ya Options → Agent Team. **Default band.**
+- 🧠 **Yaad-dasht (Persistent Memory):** naya /memory page — pasand (Roman Urdu jawab, Stitch jaisa design, Vestire brand), project khulase, ghalti → hal seekh. Dekhein, talaash (BM25), badlein, mitayein, pin, Export/Import (JSON), on/off switch, "Prompt preview".
+- Jagah: `~/.faheem-ai/memory` (keys.json ki tarah) — ZIP update se nahi mitti. Koi database ya embeddings API nahi.
+- Chat, Agent Mode aur Team ke prompts mein sirf sab se mutalliq yaadein jaati hain (default 300 tokens tak, Memory page se 150–800).
+- Khud save: test fail ho kar pass ho to seekh; kaam khatam par project khulasa (har project ka ek).
+- /skills mein 2 naye pages: Agent Team, Yaad-dasht. NOTICE.md mein Ruflo (ruvnet, MIT) ka credit — sirf idea, apna code; Ruflo install nahi kiya.
+- Purane functions nahi badle (Agent Mode, Master Agent, Website pipeline, prefs, compound notes) — sirf naye hisse jore. Koi nayi dependency nahi.
+- Test suite: Memory CRUD, BM25 ranking, injection cap, team board handoffs (mock brains), fallback, budget guard, naye pages browser mein bina JS error.
+
+
+
+## 31 Oct 2026 — v3.14.0 (Brains Rooms + bina-jhanjhat free brains)
+- 🧠 **Brains Rooms** (oopar "Brains" button, ya localhost:3000/brains): har brain ka apna card + apna chat room. Ek screen par bilkul 4 (2x2), neeche "Page 1..6". Page 1 sab se tez: Groq, Gemini, Z.ai, Mistral.
+- Har card par: naam, model, **"Key lein ↗"** (brain ka key page), chhupi key (sirf ••••aakhri 4) + apna **Save**, aur **status light**: 🟢 key chal rahi · 🔴 key ghalat/expire/revoke (401/403) ya quota bilkul khatam · 🟡 limit (429) "X min baad wapas" · ⚪ key nahi. Save par aur har 30 min sasta check (/models ya 1-token, bari kharch nahi). Bina-key brains ki light asli live test se.
+- 🔑 **Key pool:** "+" se ek brain ki 2-3 keys. Limit (429) par khud agli key, ghalat key (401) band, thaki key aaram ke baad wapas. Lal light par: "Nayi key banayein — No expiration chunein" + link.
+- 💬 Har room ki apni history isi laptop par (`C:\Users\<naam>\.faheem-ai\rooms\<brain>.json`). 📎 attach (tasveer/video/file, drag-drop, Ctrl+V): tasveer sirf dekhne wale brains ko (Gemini, Groq vision, Free.ai qwen25-vl, Puter), baaqi ko saaf note; text files parhi jati hain.
+- 🔴 **Soch raha hai animation:** brain kaam kare to us room ke kinare par tez laal dots, aur har page ke oopar patli dots ki patti. Jawab aate hi band. Windows "animations off" (reduced motion) par animation band.
+- 🖼 **Meta page** (localhost:3000/meta): tasveer chunein (upload / Gallery se), tayyar prompts (background badlein, product safed, cheez hatayein, style, Vestire banner) Copy ke sath, **"Meta AI mein kholo"** = alag Edge window (meta.ai, apna Facebook/Meta login — FREE). Meta Model API (PAID $0.01/tasveer) ka optional key box — default BAND, chalane ke liye switch + "$0.01 lagega" tick dono. Free backup: Puter.js edit (dashboard ke andar). Natija Gallery mein save + Download.
+- 📘 **Skills guide** (localhost:3000/skills/guide): saari 16 skills aasaan Roman Urdu mein — kya karti hai, kab, kaise (steps), misaal prompt.
+- 🆓 **Naye bina-key brains:** Pollinations purana host (text.pollinations.ai/openai, openai-fast — bina key), Free.ai (qwen3-coder; tasveer: qwen25-vl), AI Horde (bilkul free, bohat dheema — sirf aakhri sahara). **Puter.js** brain (browser, ek dafa Puter sign-in, "free mahana hissa, had likhi nahi" — backup).
+- 📡 **Live free list:** har ghante stillworks se abhi chalne wale bina-key brains khud Ollama se pehle jurte hain (6 tak). Service band = purani list. Options mein On/Off.
+- Purana /tools, Agent Mode, Team, Memory, chat pipeline waise hi chalte hain (sirf izafa).
+- Shamil NAHI kiye (Terms ki wajah se): OpenCode Zen, Hack Club AI, gpt4free.
+
+### Baaki (v3.14 ke baad)
+- Asli Windows par /brains aur "Meta AI mein kholo" (Edge app window) dekhna.
+- Puter sign-in aur Puter edit asli account se aazmana (sandbox mein account nahi).
+- Meta Model API key sirf zaroorat ho to — paid hai.
+- GitHub par push aap ki ijazat ke baad.

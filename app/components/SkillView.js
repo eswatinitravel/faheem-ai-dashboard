@@ -171,6 +171,8 @@ function LinkPanel({ skill }) {
   const [info, setInfo] = useState("");
   useEffect(() => {
     if (skill.id === "tools-board") fetch("/api/tools").then((r) => r.json()).then((d) => setInfo(`${d.providers?.length || 0} brains abhi tayyar: ${(d.providers || []).map((p) => p.id).join(", ")}`)).catch(() => {});
+    if (skill.id === "memory") fetch("/api/memory").then((r) => r.json()).then((d) => setInfo(`Memory ${d.settings?.enabled !== false ? "on ✓" : "band"} · ${d.stats?.total || 0} yaadein · max ${d.settings?.maxTokens || 300} tokens`)).catch(() => {});
+    if (skill.id === "agent-team") setInfo("Agent Mode → 'Team' toggle. Designer → Coder → Tester → Reviewer · max 3 rounds · budget guard · fallback single agent.");
     if (skill.id === "design-studio") fetch("/api/design?rules=impeccable").then((r) => r.json()).then((d) => setInfo(`Impeccable ${d.count} rules · engine ${d.available ? "tayyar ✓" : "nahi mila"}`)).catch(() => {});
   }, [skill.id]);
   return (

@@ -1,14 +1,17 @@
 import vm from "vm";
 import { getProviders, callProvider, isCooling, visionProviders } from "../../../lib/providers";
+import { ensureLive } from "../../../lib/free-live";
 import { AGENTS, BASE, routeAgent } from "../../../lib/agents";
 import { DESIGN_RULES, designCheckFull } from "../../../lib/design";
 import { designBrief } from "../../../lib/uupm/index.js";
 import { runtimeTest } from "../../../lib/runtime";
+import { memoryContext, lessonTracker, saveProjectSummary } from "../../../lib/memory.js";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 export async function GET() {
+  try { ensureLive(); } catch {}
   const providers = getProviders().map((p) => ({ id: p.id, name: p.name, model: p.model, cooling: !!isCooling(p.id), keyless: !!p.keyless }));
   const agents = AGENTS.map((a) => ({ id: a.id, name: a.name, icon: a.icon }));
   return Response.json({ providers, agents });
@@ -68,6 +71,7 @@ function imageUrl(prompt, seed, w = 768, h = 768) {
 }
 
 export async function POST(req) {
+  try { ensureLive(); } catch {}
   let body;
   try { body = await req.json(); } catch { return Response.json({ error: "Bad request" }, { status: 400 }); }
   const history = Array.isArray(body?.messages) ? body.messages.slice(-20) : [];
@@ -90,6 +94,9 @@ export async function POST(req) {
   if (body?.voice) system.push({ role: "system", content: "The user is talking by voice and your reply will be read aloud. Answer in 1-4 short spoken sentences, no markdown, no lists, no code unless asked." });
   if (body?.voice && body?.voiceLang === "ur") system.push({ role: "system", content: "Write this spoken reply in proper Urdu script (اردو رسم الخط), not Roman Urdu and not English." });
   if (!images.length && /\[Video attached/.test(lastUser)) system.push({ role: "system", content: "The user attached a video. You cannot watch it; you only know its name, length and size. Help based on what they wrote and ask them to describe the part they need help with." });
+  // v3.13 Persistent Memory: pasand + seekh (chhota, token cap). Memory band ho to kuch nahi.
+  const longMem = (() => { try { return body?.memory === false ? "" : memoryContext(lastUser); } catch { return ""; } })();
+  if (longMem) system.push({ role: "system", content: longMem });
   const messages = [...system, ...clean];
   // Vision brain ke liye aakhri message mein pictures jor dein.
   const visionMessages = images.length ? messages.map((m, i) => (i === messages.length - 1 && m.role === "user") ? { role: "user", content: [{ type: "text", text: m.content }, ...images.map((a) => ({ type: "image_url", image_url: { url: a.dataUrl } }))] } : m) : messages;
@@ -102,7 +109,9 @@ export async function POST(req) {
     if (images.length && providers.find((p) => p.id === id)?.vision) return -0.5;
     const pp = providers.find((x) => x.id === id);
     if (id === "ollama") return 90;
-    if (pp?.keyless) return 50 + ["kilo", "ovh", "pollinations", "llm7"].indexOf(id);
+    if (pp?.lastResort) return 89; // v3.14 AI Horde: bohat dheema, Ollama se bilkul pehle
+    if (pp?.live) return 80;       // v3.14 live auto list
+    if (pp?.keyless) return 50 + ["kilo", "ovh", "pollinations", "llm7", "pollfree", "freeai"].indexOf(id);
     const i = order.indexOf(id);
     return i < 0 ? 40 : i;
   };
@@ -223,6 +232,7 @@ ${designBrief(String(rawText || ""))}`;
           const fresh = [...system, { role: "system", content: `Plan:\n${plan}\n\n${RULES}` }, { role: "user", content: design ? `${lastUser}\n\nREFERENCE DESIGN (rebuild this closely):\n${design}` : lastUser }];
           let { reply, p } = await ask(fresh, "Build");
           let fixes = 0, left = [];
+          const tracker = lessonTracker("chat-website");
           for (let round = 1; round <= 3; round++) {
             const code = (reply.match(/```html\s*([\s\S]*?)```/i) || [])[1] || "";
             const issues = staticCheck(code, rawText);
@@ -249,6 +259,7 @@ ${designBrief(String(rawText || ""))}`;
               } catch { step("🧪 Tester Agent", "AI tester abhi masroof — basic tests pass."); }
             }
             left = issues;
+            try { const realIss = issues.filter((x) => !String(x).startsWith("Design:")); if (realIss.length) tracker.fail(realIss); else if (tracker.pass(`Fixer ne round ${round} tak theek kiya.`)?.ok) step("🧠 Memory", "Seekh yaad rakh li (ghalti → hal)."); } catch {}
             if (!issues.length) { step("🧪 Tester Agent", "✅ Sab test pass — koi galti nahi mili."); break; }
             step("🧪 Tester Agent", `⚠ ${issues.length} masle: ${issues.join(" | ").slice(0, 300)}`);
             if (round === 3) break;
@@ -258,6 +269,7 @@ ${designBrief(String(rawText || ""))}`;
           }
           const real = left.filter((x) => !x.startsWith("Design:"));
           step(agent.name, real.length ? `⚠ Ban gaya, lekin ${real.length} masle baqi: ${real.join(" | ").slice(0, 200)}` : `✓ Tayyar${fixes ? ` (${fixes} dafa theek kiya)` : ""}${left.length ? ` · design tips: ${left.join(" | ").slice(0, 160)}` : ""}.`);
+          try { saveProjectSummary({ project: "chat-website", task: rawText, summary: `${real.length ? `${real.length} masle baqi` : "Tayyar"} · Plan: ${plan.replace(/\s+/g, " ").slice(0, 400)}` }); } catch {}
           emit({ type: "done", reply: `**Plan**\n${plan}\n\n${reply}`, provider: p.name, model: p.model, agent: { id: agent.id, name: agent.name, icon: agent.icon }, skipped, task: "web" });
           ctrl.close();
           return;

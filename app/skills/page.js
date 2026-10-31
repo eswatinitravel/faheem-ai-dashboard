@@ -14,10 +14,10 @@ export default function Skills() {
       <header className="topbar">
         <Link href="/" className="icon-btn" title="Wapas chat" aria-label="Wapas chat"><Icon name="back" /></Link>
         <div className="brand"><Icon name="grid" /> Skills · sab ek jagah</div>
-        <div className="top-actions"><Link href="/gallery" className="icon-btn" title="Gallery" aria-label="Gallery"><Icon name="image" /></Link><ThemeBalls /></div>
+        <div className="top-actions"><Link href="/skills/guide" className="icon-btn agentlink" title="Har skill aasaan Roman Urdu mein" data-guide-link><Icon name="sparkle" size={16} /> Guide</Link><Link href="/gallery" className="icon-btn" title="Gallery" aria-label="Gallery"><Icon name="image" /></Link><ThemeBalls /></div>
       </header>
       <div className="toolspage">
-        <p className="muted skillintro">{SKILLS.length} skills aur tools. Har card kholein: live panel, "Kaise kaam karta hai" aur "Setup" (commands, keys, license).</p>
+        <p className="muted skillintro">{SKILLS.length} skills aur tools. Har card kholein: live panel, "Kaise kaam karta hai" aur "Setup" (commands, keys, license). Aasaan zubaan mein: <Link href="/skills/guide">Skills guide →</Link></p>
         <div className="toolsgrid">
           {SKILLS.map((s) => (
             <Link key={s.id} href={`/skills/${s.id}`} className="card panel skillcard" data-skill={s.id}>

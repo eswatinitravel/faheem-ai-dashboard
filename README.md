@@ -2,7 +2,20 @@
 
 Free 3D AI assistant for Windows: likh kar ya bol kar baat karein. Jab ek free AI ki limit khatam ho, agla khud jawab deta hai.
 
-**Order (v3.11):** pehle aap ke key wale brains (Groq, Gemini, OpenRouter, Z.ai, Mistral, Cohere, NVIDIA, SambaNova, Cloudflare, Hugging Face, Hetzner, Nous, Requesty, Pollinations) → bina-key free brains (Kilo, OVHcloud, LLM7) → Ollama (laptop, bina limit). Pollinations ab free key mangta hai (enter.pollinations.ai).
+**Order (v3.14):** pehle aap ke key wale brains (Groq, Gemini, OpenRouter, Z.ai, Mistral, Cohere, NVIDIA, SambaNova, Cloudflare, Hugging Face, Hetzner, Nous, Requesty, Pollinations) → bina-key free brains (Kilo, OVHcloud, LLM7, Pollinations purana host, Free.ai) → live free list (stillworks, har ghanta) → AI Horde (dheema, aakhri sahara) → Ollama (laptop, bina limit). Puter.js browser mein backup brain hai (Brains Rooms / Meta page).
+
+## Brains Rooms (v3.14) — localhost:3000/brains
+
+Har brain ka apna card + chat room, ek screen par 4 (2x2), Page 1..6. Card par "Key lein" link, chhupi key + Save, status light (🟢 chal rahi · 🔴 ghalat/expire · 🟡 limit, X min baad · ⚪ key nahi), key pool (+ se 2-3 keys, limit par agli). Har room ki history `~/.faheem-ai/rooms/`. Attach: tasveer sirf dekhne wale brains ko.
+Brain kaam kare to room ke kinare aur oopar patli patti par laal dots.
+
+## Meta page (v3.14) — localhost:3000/meta
+
+Meta AI (Muse Image) se tasveer edit: tayyar prompts + Copy, "Meta AI mein kholo" (alag Edge window, FREE, apna Meta login). Meta Model API paid ($0.01/tasveer) — default band. Free backup: Puter.js.
+
+## Skills guide (v3.14) — localhost:3000/skills/guide
+
+16 skills aasaan Roman Urdu mein: kya, kab, kaise, misaal prompt.
 
 ## Install (ek dafa)
 
@@ -62,6 +75,15 @@ Files sirf isi laptop par `data/gallery` mein (update se nahi mitti). HTML/CSS f
 "Chat" button se chat mein lagti hai (vision ke liye Gemini ya Groq key).
 
 Credits/licenses: **NOTICE.md**.
+
+## Agent Team (v3.13) — Agent Mode → "Team"
+- Bara kaam (website / store / kai files): Designer → Coder → Tester → Reviewer. Shared board: `~/.faheem-ai/projects/<project>/team.json`.
+- Har role apna free brain (lib/providers.js pipeline). Had: 3 rounds, ~60k tokens, 10 brain calls. Brains limit par → khud single Agent Mode.
+- Default band: Agent Mode topbar mein "Team" ya Options → Agent Team.
+
+## Memory (v3.13) — localhost:3000/memory
+- Yaad-dasht: pasand, project khulase, ghalti → hal seekh. `~/.faheem-ai/memory/memories.jsonl` (update se nahi mitti).
+- BM25 search se chhota hissa (default 300 tokens) chat, Agent Mode aur Team prompts mein. On/off, talaash, badlein, mitayein, Export/Import.
 
 ## Ollama (optional)
 

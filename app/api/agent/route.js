@@ -1,4 +1,5 @@
 import { runAgent } from "../../../lib/agent/loop";
+import { runTeamMode } from "../../../lib/agent/team-run";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 1800;
@@ -20,7 +21,8 @@ export async function POST(req) {
     async start(ctrl) {
       let open = true;
       const emit = (o) => { if (!open) return; try { ctrl.enqueue(enc.encode(JSON.stringify({ ...o, at: Date.now() }) + "\n")); } catch { open = false; } };
-      try { await runAgent({ project: body.project, task, images, emit, signal: req.signal }); }
+      // v3.13: Team mode (Designer → Coder → Tester → Reviewer) sirf jab user ne on kiya ho; warna purana Agent Mode.
+      try { if (body.team === true) await runTeamMode({ project: body.project, task, images, emit, signal: req.signal }); else await runAgent({ project: body.project, task, images, emit, signal: req.signal }); }
       catch (e) { emit({ type: "error", text: e.message }); }
       open = false;
       try { ctrl.close(); } catch {}

@@ -287,9 +287,12 @@ export default function Home() {
           <button className="icon-btn" title="Live workspace" aria-label="Live workspace" onClick={() => setWsOpen(!wsOpen)}><Icon name="panel" /></button>
           <ThemeBalls />
           <Link className="icon-btn agentlink" href="/agent" title="Agent Mode (Cursor jaisa coding agent)"><Icon name="bot" size={16} /> Agent</Link>
+          <Link className="icon-btn agentlink" href="/brains" title="Brains Rooms: har brain ka apna kamra + status light"><Icon name="brain" size={16} /> Brains</Link>
           <Link className="icon-btn agentlink" href="/tools" title="Har brain ka apna chat board"><Icon name="flask" size={16} /> Tools</Link>
           <Link className="icon-btn agentlink" href="/design" title="Design Studio (UI UX Pro Max)"><Icon name="palette" size={16} /> Design</Link>
           <Link className="icon-btn agentlink" href="/skills" title="Saari skills: Hallmark, UI UX Pro Max, Impeccable, Agentation, Hermes"><Icon name="grid" size={16} /> Skills</Link>
+          <Link className="icon-btn" href="/meta" title="Meta AI tasveer edit" aria-label="Meta AI tasveer edit"><Icon name="sparkle" /></Link>
+          <Link className="icon-btn" href="/skills/guide" title="Skills guide (aasaan Roman Urdu)" aria-label="Skills guide"><Icon name="check" /></Link>
           <Link className="icon-btn" href="/gallery" title="Gallery (pictures/files)" aria-label="Gallery"><Icon name="image" /></Link>
           <Link className="icon-btn" href="/options" title="Options" aria-label="Options"><Icon name="more" /></Link>
         </div>

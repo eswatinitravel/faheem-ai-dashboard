@@ -5,6 +5,7 @@ import Icon from "../components/Icon";
 import Background from "../components/Background";
 import VersionBadge from "../components/VersionBadge";
 import { prepareFiles } from "../../lib/attach";
+import { loadPrefs, savePrefs } from "../../lib/prefs";
 
 const ICON = { list_files: "📂", read_file: "📖", write_file: "✍️", edit_file: "✏️", delete_file: "🗑", search: "🔍", run_command: "▶", check: "🧪", test: "🖱", web_fetch: "🌐", image_url: "🎨" };
 
@@ -22,6 +23,7 @@ export default function AgentPage() {
   const [busy, setBusy] = useState(false);
   const [imgs, setImgs] = useState([]);
   const [stamp, setStamp] = useState(Date.now());
+  const [team, setTeam] = useState(false); // v3.13 Team mode (default band)
   const ctrlRef = useRef(null);
   const endRef = useRef(null);
   const fileRef = useRef(null);
@@ -56,6 +58,8 @@ export default function AgentPage() {
     loadFiles(project);
   }, [project, loadFiles]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [events]);
+  useEffect(() => { setTeam(!!loadPrefs().teamMode); const f = (e) => setTeam(!!e.detail?.teamMode); window.addEventListener("faheem-prefs", f); return () => window.removeEventListener("faheem-prefs", f); }, []);
+  function toggleTeam(v) { setTeam(v); savePrefs({ ...loadPrefs(), teamMode: v }); }
 
   async function newProject() {
     const name = prompt("Naye project ka naam (jaise vestire-store):");
@@ -72,7 +76,7 @@ export default function AgentPage() {
     const sendImgs = imgs; setImgs([]);
     const ctrl = new AbortController(); ctrlRef.current = ctrl;
     try {
-      const res = await fetch("/api/agent", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project, task: t, images: sendImgs.map((i) => ({ dataUrl: i.dataUrl })) }), signal: ctrl.signal });
+      const res = await fetch("/api/agent", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project, task: t, team, images: sendImgs.map((i) => ({ dataUrl: i.dataUrl })) }), signal: ctrl.signal });
       if (!res.ok || !res.body) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`);
       const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = "";
       for (;;) {
@@ -120,6 +124,7 @@ export default function AgentPage() {
             {!projects.find((p) => p.name === project) && project && <option value={project}>{project}</option>}
             {projects.map((p) => <option key={p.name} value={p.name}>{p.name}</option>)}
           </select>
+          <label className="teamtoggle" title="Team mode: Designer → Coder → Tester → Reviewer (sirf bare kaam: website/store). Brains limit par hon to khud single agent."><input type="checkbox" checked={team} onChange={(e) => toggleTeam(e.target.checked)} disabled={busy} data-team-toggle /><Icon name="users" size={15} /> Team</label>
           <button className="icon-btn" title="Naya project" aria-label="Naya project" onClick={newProject} disabled={busy}><Icon name="plus" /></button>
           <button className="icon-btn" title="Aakhri run wapas (Undo)" aria-label="Undo" onClick={undo} disabled={busy}><Icon name="undo" /></button>
           <Link className="icon-btn" href="/options" title="Options" aria-label="Options"><Icon name="more" /></Link>
@@ -136,7 +141,7 @@ export default function AgentPage() {
             </button>
           ))}
           {todo.length > 0 && (<>
-            <div className="ag-h" style={{ marginTop: 12 }}>Plan</div>
+            <div className="ag-h" style={{ marginTop: 12 }}>{team ? "Team board" : "Plan"}</div>
             {todo.map((t, i) => <div key={i} className={"ag-todo" + (/^\s*\[x\]/i.test(t) ? " done" : "")}>{t.replace(/^\s*\[[ x]\]\s*/i, /^\s*\[x\]/i.test(t) ? "✓ " : "○ ")}</div>)}
           </>)}
         </aside>
@@ -147,6 +152,7 @@ export default function AgentPage() {
               <div className="hello small">
                 <h2>Kya banayein?</h2>
                 <p className="muted">Agent khud plan banata hai, files likhta hai, test karta hai aur ghaltiyan theek karta hai — jaise Cursor.</p>
+                {team && <p className="muted small-note" data-team-note>Team mode on: bara kaam Designer → Coder → Tester → Reviewer mein bantega (budget guard ke sath). Chhota kaam single agent hi karega.</p>}
                 <div className="chips">
                   {["Vestire Collection ka poora online store banao: Home, Shop, Product, Cart, Checkout, About, Contact", "Is project mein cart ka button aur behtar karo aur mobile menu theek karo", "Ek portfolio website banao Faheem Ahmed ke liye"].map((c) => <button key={c} onClick={() => setTask(c)}>{c}</button>)}
                 </div>
@@ -156,6 +162,7 @@ export default function AgentPage() {
               if (e.type === "user") return <div key={i} className="ag-user">{e.text}{e.imgs?.length > 0 && <div className="ag-imgs">{e.imgs.map((u, k) => <img key={k} src={u} alt="" />)}</div>}</div>;
               if (e.type === "thought") return <div key={i} className="ag-thought">💭 {e.text}</div>;
               if (e.type === "brain") return <div key={i} className="ag-brain">{e.text}</div>;
+              if (e.type === "handoff" || e.type === "team") return <div key={i} className="ag-handoff">{e.text}</div>;
               if (e.type === "tool") return (
                 <details key={i} className={"ag-tool " + (e.ok === undefined ? "run" : e.ok ? "ok" : "bad")}>
                   <summary>{ICON[e.name] || "🔧"} <b>{e.name}</b> <span>{e.label}</span> {e.ok === undefined ? "…" : e.ok ? "✓" : "⚠"}</summary>

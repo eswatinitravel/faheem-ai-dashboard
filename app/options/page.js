@@ -16,17 +16,24 @@ export default function Options() {
   const [voices, setVoices] = useState([]);
   const [showKeys, setShowKeys] = useState(false);
   const [saved, setSaved] = useState("");
+  const [mem, setMem] = useState(null); // v3.13 Memory settings (server, ~/.faheem-ai/memory)
 
   const load = useCallback(() => {
     fetch("/api/chat").then((r) => r.json()).then((d) => { setProviders(d.providers || []); setAgents(d.agents || []); }).catch(() => {});
   }, []);
   useEffect(() => {
     setPrefs(loadPrefs()); load();
+    fetch("/api/memory").then((r) => r.json()).then((d) => setMem(d.settings ? { ...d.settings, total: d.stats?.total || 0 } : null)).catch(() => {});
     const s = window.speechSynthesis;
     if (s) { const f = () => setVoices(s.getVoices()); f(); s.onvoiceschanged = f; }
   }, [load]);
 
   const set = (k, v) => { const p = { ...prefs, [k]: v }; setPrefs(p); savePrefs(p); setSaved("Save ✓"); setTimeout(() => setSaved(""), 1200); };
+
+  async function setMemory(enabled) {
+    const d = await fetch("/api/memory", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "settings", settings: { enabled } }) }).then((r) => r.json()).catch(() => ({}));
+    if (d.ok) { setMem((m) => ({ ...m, ...d.settings })); setSaved("Save ✓"); setTimeout(() => setSaved(""), 1200); }
+  }
 
   function testVoice() {
     const s = window.speechSynthesis; if (!s) return;
@@ -45,7 +52,7 @@ export default function Options() {
       <header className="topbar">
         <Link href="/" className="icon-btn" title="Wapas chat" aria-label="Wapas chat"><Icon name="back" /></Link>
         <div className="brand"><img src="/icon.png" alt="" className="logo" /> Options</div>
-        <div className="top-actions"><span className="ok-text">{saved}</span><Link href="/skills" className="icon-btn" title="Skills" aria-label="Skills"><Icon name="grid" /></Link><Link href="/gallery" className="icon-btn" title="Gallery" aria-label="Gallery"><Icon name="image" /></Link><Link href="/flights" className="icon-btn" title="Flights" aria-label="Flights"><Icon name="globe" /></Link><ThemeBalls /></div>
+        <div className="top-actions"><span className="ok-text">{saved}</span><Link href="/brains" className="icon-btn" title="Brains Rooms (status lights)" aria-label="Brains"><Icon name="users" /></Link><Link href="/skills" className="icon-btn" title="Skills" aria-label="Skills"><Icon name="grid" /></Link><Link href="/memory" className="icon-btn" title="Yaad-dasht (Memory)" aria-label="Memory"><Icon name="brain" /></Link><Link href="/gallery" className="icon-btn" title="Gallery" aria-label="Gallery"><Icon name="image" /></Link><Link href="/flights" className="icon-btn" title="Flights" aria-label="Flights"><Icon name="globe" /></Link><ThemeBalls /></div>
       </header>
 
       {prefs && (
@@ -71,6 +78,19 @@ export default function Options() {
               ))}
             </div>
             <button className="ghost" onClick={() => setShowKeys(true)}>⚙ Keys / Free pipeline settings</button>
+          </section>
+
+          <section className="card panel" data-opt="team">
+            <h3>👥 Agent Team (Team mode)</h3>
+            <label className="toggle"><input type="checkbox" checked={!!prefs.teamMode} onChange={(e) => set("teamMode", e.target.checked)} data-team-option /><span>Agent Mode mein bare kaam team se: Designer → Coder → Tester → Reviewer</span></label>
+            <small className="muted">Default band. Sirf website/store/kai files wale kaam. Har role apna free brain; max 3 rounds, ~60k token aur 10 calls ki had (free limit bachat). Brains limit par hon to khud purana single Agent Mode chalta hai. Board: project folder mein team.json.</small>
+          </section>
+
+          <section className="card panel" data-opt="memory">
+            <h3>🧠 Yaad-dasht (Memory)</h3>
+            {mem ? <label className="toggle"><input type="checkbox" checked={mem.enabled !== false} onChange={(e) => setMemory(e.target.checked)} data-memory-option /><span>{mem.enabled !== false ? `On · ${mem.total} yaadein · max ${mem.maxTokens} tokens prompt mein` : "Band"}</span></label> : <small className="muted">Load ho raha hai…</small>}
+            <small className="muted">Pasand (Roman Urdu, design), project khulase aur ghalti → hal seekh. Sirf isi laptop par (~/.faheem-ai/memory), update se nahi mitti.</small>
+            <Link className="ghost linkbtn" href="/memory">Memory kholein — dekhein, badlein, export/import</Link>
           </section>
 
           <section className="card panel">

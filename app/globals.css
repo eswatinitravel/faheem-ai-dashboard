@@ -364,3 +364,111 @@ a, button, select, [role="button"] { cursor: pointer; }
 .cform { display: flex; flex-direction: column; gap: 8px; }
 .cform button, .tmsg button.small { align-self: flex-start; }
 .tmsg button.small { margin-top: 6px; padding: 4px 10px; font-size: 11px; }
+
+/* v3.13 Agent Team + Memory */
+.teamtoggle { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); border: 1px solid var(--line); background: var(--field); border-radius: 10px; padding: 4px 8px; cursor: pointer; min-height: 32px; }
+.teamtoggle input { width: auto; margin: 0; accent-color: var(--accent); }
+.teamtoggle:has(input:checked) { color: var(--text); border-color: var(--accent); }
+.ag-handoff { font-size: 12px; color: var(--text); border-left: 2px solid var(--accent); padding: 3px 8px; background: var(--field); border-radius: 6px; }
+.small-note { font-size: 12px; margin-top: 6px; }
+.memorypage .memgrid { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: minmax(260px, 320px) 1fr; gap: 14px; align-items: start; }
+.memgrid .memlist { grid-column: 1 / -1; }
+.memside .toggle { margin: 6px 0; }
+.memform { display: flex; flex-direction: column; gap: 8px; }
+.memrow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.memrow > input, .memrow > select { flex: 1 1 160px; width: auto; }
+.memrow > button { width: auto; }
+.memactions { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.memactions .ghost { display: inline-flex; align-items: center; gap: 6px; width: auto; }
+.memitem { border-top: 1px solid var(--line); padding: 10px 0; display: flex; flex-direction: column; gap: 4px; }
+.memitem p { font-size: 13px; white-space: pre-wrap; line-height: 1.45; }
+.memhead { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 13px; }
+.memtag { font-size: 11px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); background: var(--field); color: var(--muted); }
+.memtag.t-preference, .memtag.t-lesson { color: var(--text); border-color: var(--accent); }
+.memfoot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.memfoot .ghost { width: auto; padding: 5px 10px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; }
+.mempreview { white-space: pre-wrap; font-size: 12px; background: var(--field); border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin: 8px 0; max-height: 220px; overflow: auto; }
+@media (max-width: 760px) { .memorypage .memgrid { grid-template-columns: 1fr; } }
+
+/* ===== v3.14 Thinking animation (global top strip + room border dots) ===== */
+.thinkbar { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 60; pointer-events: none; opacity: 0; transition: opacity .2s;
+  background-image: radial-gradient(circle, #ff3b3b 1.2px, transparent 1.6px); background-size: 10px 3px; background-repeat: repeat-x; }
+.thinkbar.on { opacity: 1; animation: thinkrun .45s linear infinite; }
+@keyframes thinkrun { to { background-position: 10px 0; } }
+.room { position: relative; }
+.room .thinkborder { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; opacity: 0; transition: opacity .2s; }
+.room.thinking .thinkborder { opacity: 1; }
+.room .thinkborder rect { fill: none; stroke: #ff3b3b; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 0 9; animation: thinkdots .6s linear infinite; filter: drop-shadow(0 0 3px rgba(255,59,59,.8)); }
+@keyframes thinkdots { to { stroke-dashoffset: -18; } }
+@media (prefers-reduced-motion: reduce) {
+  .thinkbar.on { animation: none; }
+  .room .thinkborder rect { animation: none; }
+}
+
+/* ===== v3.14 Brains Rooms (/brains) — 2x2, 4 per page ===== */
+.optpage.brainsmain { padding: 64px 14px 10px; overflow: hidden; }
+.brainspage { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; gap: 8px; }
+.cnt { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; } .cnt .light { width: 8px; height: 8px; }
+.brainsbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pagetabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.pagetabs button { padding: 5px 11px; font-size: 12px; border-radius: 9px; background: var(--field); color: var(--text); border: 1px solid var(--line); font-weight: 500; }
+.pagetabs button.on { background: var(--accent); color: var(--btntext, #fff); border-color: transparent; }
+.roomgrid { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; }
+@media (max-width: 900px) { .optpage.brainsmain { overflow-y: auto; } .brainspage { height: auto; } .roomgrid { grid-template-columns: 1fr; grid-template-rows: none; grid-auto-rows: minmax(340px, auto); } }
+.room { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; min-height: 0; border-radius: 18px; }
+.room.drag { outline: 2px dashed var(--accent); outline-offset: -4px; }
+.roomhead { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.roomhead .rname { min-width: 0; flex: 1; }
+.roomhead .rname b { display: block; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.roomhead .rname small { display: block; color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.light { flex: none; width: 11px; height: 11px; border-radius: 50%; background: #71717a; box-shadow: 0 0 0 3px rgba(113,113,122,.18); }
+.light.green { background: #22c55e; box-shadow: 0 0 8px #22c55e; } .light.red { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+.light.yellow { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; } .light.grey { background: #71717a; }
+.rlabel { font-size: 11px; color: var(--muted); max-width: 42%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.roomhead a.keylink { font-size: 11.5px; color: var(--accent); text-decoration: none; white-space: nowrap; }
+.roomhead .icon-btn { width: 28px; height: 28px; border-radius: 9px; }
+.keybox { display: flex; flex-direction: column; gap: 5px; padding: 7px; border-radius: 12px; background: var(--field); border: 1px solid var(--line); font-size: 12px; }
+.keybox .krow { display: flex; gap: 6px; align-items: center; }
+.keybox .krow input { padding: 6px 9px; font-size: 12px; }
+.keybox .krow button { padding: 6px 10px; font-size: 12px; border-radius: 9px; }
+.keychips { display: flex; gap: 5px; flex-wrap: wrap; }
+.keychip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 8px; border-radius: 99px; border: 1px solid var(--line); font-family: inherit; font-size: 11px; }
+.keychip button { padding: 0 6px; background: transparent; color: var(--muted); font-size: 12px; }
+.keyhelp { color: #f87171; font-size: 11.5px; } .keyhelp a { color: inherit; }
+.rlog { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; font-size: 13px; }
+.rmsg { padding: 6px 9px; border-radius: 10px; background: var(--field); white-space: pre-wrap; word-break: break-word; max-width: 92%; }
+.rmsg.me { align-self: flex-end; background: rgba(var(--dot), .16); }
+.rmsg.err { color: #f87171; } .rmsg.note { align-self: center; font-size: 11.5px; color: #f59e0b; background: transparent; border: 1px dashed rgba(245,158,11,.4); }
+.rmsg small { display: block; color: var(--muted); font-size: 10.5px; margin-top: 2px; }
+.rform { display: flex; gap: 5px; align-items: center; }
+.rform input[type=text] { padding: 7px 10px; }
+.rform button { padding: 7px 10px; border-radius: 10px; }
+.rfiles { display: flex; gap: 4px; flex-wrap: wrap; font-size: 11px; }
+.rfiles span { padding: 2px 8px; border-radius: 99px; background: var(--field); border: 1px solid var(--line); }
+.livestrip { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+/* ===== v3.14 Meta page + Skills guide ===== */
+.metapage, .guidepage { position: relative; z-index: 1; }
+.metagrid { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr); gap: 14px; max-width: 1200px; margin: 0 auto; }
+@media (max-width: 900px) { .metagrid { grid-template-columns: 1fr; } }
+.metagrid .card { padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.metapick { min-height: 180px; border: 1.5px dashed var(--line); border-radius: 14px; display: grid; place-items: center; text-align: center; padding: 10px; cursor: pointer; }
+.metapick img, .metaout img { max-width: 100%; max-height: 300px; border-radius: 10px; }
+.tpl { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border-radius: 12px; background: var(--field); border: 1px solid var(--line); font-size: 12.5px; }
+.tpl .tplrow { display: flex; gap: 6px; align-items: flex-start; }
+.tpl .tplrow span { flex: 1; }
+.tpl button { padding: 4px 9px; font-size: 11.5px; border-radius: 8px; }
+.paidwarn { color: #f59e0b; font-size: 12.5px; }
+.freebadge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; background: rgba(34,197,94,.15); color: #16a34a; }
+.paidbadge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; background: rgba(245,158,11,.15); color: #d97706; }
+.metasteps { padding-left: 18px; font-size: 13px; display: flex; flex-direction: column; gap: 3px; }
+.btnrow { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.gthumbs { display: flex; gap: 6px; flex-wrap: wrap; } .gthumbs img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 1px solid var(--line); }
+.guidelist { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+.guidecard { padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; }
+.guidecard h2 { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.guidecard h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .4px; color: var(--accent); font-weight: 600; margin-top: 4px; }
+.guidecard ol { padding-left: 18px; display: flex; flex-direction: column; gap: 2px; }
+.guidecard .misaal { padding: 8px 10px; border-radius: 10px; background: var(--field); border: 1px solid var(--line); font-size: 13px; }
+.guidetoc { display: flex; flex-wrap: wrap; gap: 6px; max-width: 980px; margin: 0 auto 12px; }
+.guidetoc a { font-size: 12px; padding: 4px 10px; border-radius: 99px; background: var(--field); border: 1px solid var(--line); text-decoration: none; }

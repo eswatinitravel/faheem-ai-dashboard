@@ -5,7 +5,10 @@ import { AGENTS, BASE, routeAgent } from "../../../lib/agents";
 import { DESIGN_RULES, designCheckFull } from "../../../lib/design";
 import { designBrief } from "../../../lib/uupm/index.js";
 import { runtimeTest } from "../../../lib/runtime";
-import { memoryContext, lessonTracker, saveProjectSummary } from "../../../lib/memory.js";
+import { memoryContext, lessonTracker, saveProjectSummary, warmMemory } from "../../../lib/memory.js";
+import { UIUX_PROMPT, uiuxAudit } from "../../../lib/uiux-specialist.js";
+import { addLearned, learnedContext, reorderByLearned, isCorrection } from "../../../lib/learned.js";
+try { warmMemory(); } catch {}
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -97,6 +100,11 @@ export async function POST(req) {
   // v3.13 Persistent Memory: pasand + seekh (chhota, token cap). Memory band ho to kuch nahi.
   const longMem = (() => { try { return body?.memory === false ? "" : memoryContext(lastUser); } catch { return ""; } })();
   if (longMem) system.push({ role: "system", content: longMem });
+  // v3.15 Seekha hua: pichle kaamon ke sabaq + website par UI/UX Specialist.
+  const learnedMem = (() => { try { return learnedContext(task); } catch { return ""; } })();
+  if (learnedMem) system.push({ role: "system", content: learnedMem });
+  if (task === "web") system.push({ role: "system", content: UIUX_PROMPT });
+  try { if (isCorrection(lastUser)) addLearned({ kind: "correction", task, text: lastUser }); } catch {}
   const messages = [...system, ...clean];
   // Vision brain ke liye aakhri message mein pictures jor dein.
   const visionMessages = images.length ? messages.map((m, i) => (i === messages.length - 1 && m.role === "user") ? { role: "user", content: [{ type: "text", text: m.content }, ...images.map((a) => ({ type: "image_url", image_url: { url: a.dataUrl } }))] } : m) : messages;
@@ -116,6 +124,8 @@ export async function POST(req) {
     return i < 0 ? 40 : i;
   };
   providers.sort((a, b) => rank(a.id) - rank(b.id));
+  // v3.15: jo brain is kaam par pehle kamyab raha use aage (sirf jab user ne brain na chuna ho).
+  if (!body?.provider || body.provider === "auto") { try { const re = reorderByLearned(providers.filter((p) => !p.keyless && p.id !== "ollama"), task); let k = 0; providers.forEach((p, i) => { if (!p.keyless && p.id !== "ollama") providers[i] = re[k++]; }); } catch {} }
 
   const enc = new TextEncoder();
   const stream = new ReadableStream({
@@ -124,22 +134,22 @@ export async function POST(req) {
       const step = (who, text) => emit({ type: "step", who, text, at: Date.now() });
 
       step("Master Agent", "Request padhi — kaam samajh raha hoon.");
-      step("Master Agent", `Yeh kaam ${agent.icon} ${agent.name} ko diya.`);
+      step("Master Agent", `Yeh kaam ${agent.name} ko diya.`);
       emit({ type: "task", task, agent: { id: agent.id, name: agent.name, icon: agent.icon } });
 
-      if (images.length) step("Vision Agent", visionProviders(providers).length ? `🖼 ${images.length} picture mili — ${visionProviders(providers).map((v) => v.name).join(" / ")} dekhega.` : `🖼 ${images.length} picture mili — dekhne ke liye Gemini ya Groq key chahiye (Options > Keys).`);
+      if (images.length) step("Vision Agent", visionProviders(providers).length ? `${images.length} picture mili — ${visionProviders(providers).map((v) => v.name).join(" / ")} dekhega.` : `${images.length} picture mili — dekhne ke liye Gemini ya Groq key chahiye (Options > Keys).`);
       if (task === "image") {
         const seed = Math.floor(Math.random() * 1e6);
-        step("Image Agent", "🎨 Tasveer ban rahi hai (free image model)…");
+        step("Image Agent", "Tasveer ban rahi hai (free image model)…");
         emit({ type: "image", urls: [imageUrl(rawText, seed), imageUrl(rawText, seed + 1)] });
       } else if (task === "video") {
         const seed = Math.floor(Math.random() * 1e6);
-        step("Video Agent", "🎬 Free video model abhi nahi — 4 frames ka storyboard bana raha hoon jo video ki tarah chalega.");
+        step("Video Agent", "Free video model abhi nahi — 4 frames ka storyboard bana raha hoon jo video ki tarah chalega.");
         emit({ type: "video", urls: [0, 1, 2, 3].map((i) => imageUrl(`${rawText}, cinematic frame ${i + 1} of 4, consistent scene`, seed + i, 960, 540)) });
       } else if (task === "web") {
-        step(agent.name, "🌐 Page ka design aur code likh raha hoon — tayyar hote hi live dikhega.");
+        step(agent.name, "Page ka design aur code likh raha hoon — tayyar hote hi live dikhega.");
       } else if (task === "code") {
-        step(agent.name, "💻 Code likh raha hoon.");
+        step(agent.name, "Code likh raha hoon.");
       }
 
       const skipped = [];
@@ -162,7 +172,8 @@ export async function POST(req) {
             return { reply: r, p };
           } catch (err) {
             skipped.push(`${p.name}: ${err.message}`);
-            step("Brain", `⏭ ${label}: ${p.name} — ${err.message.slice(0, 60)}`);
+          try { addLearned({ kind: "brain", task, brain: p.name, ok: false }); } catch {}
+            step("Brain", `${label}: ${p.name} — ${err.message.slice(0, 60)}`);
           }
         }
         throw new Error("Koi brain jawab nahi de saka.");
@@ -173,36 +184,36 @@ export async function POST(req) {
         try {
           // Banner sirf tab jab saaf manga ho (attached picture ka zikr banner nahi).
           const wantsBanner = /\b(banner|logo|poster)\b/i.test(rawText);
-          // 👁 Vision Agent: pehle Gemini picture ko tafseel se parhta hai; yeh bayan phir har brain ko milta hai.
+          // Vision Agent: pehle Gemini picture ko tafseel se parhta hai; yeh bayan phir har brain ko milta hai.
           let design = "", visionErr = "";
           if (images.length) {
             const vp = visionProviders(providers).filter((x) => !isCooling(x.id));
-            if (!vp.length) step("👁 Vision Agent", "⚠ Gemini/Groq key nahi mili — picture dekhi nahi ja sakti. Options > Keys mein key daalein.");
+            if (!vp.length) step("Vision Agent", "Gemini/Groq key nahi mili — picture dekhi nahi ja sakti. Options > Keys mein key daalein.");
             for (const v of vp) {
-              step("👁 Vision Agent", `${v.name} picture ko tafseel se parh raha hai…`);
+              step("Vision Agent", `${v.name} picture ko tafseel se parh raha hai…`);
               try {
                 design = (await callProvider(v, [
                   { role: "system", content: "You are a senior UI designer. Describe this website screenshot so a developer can rebuild it exactly: overall layout, header/nav items, search bar, hero/banner, every section in order, category list names, product card structure (image, name, price, rating, badges), grid columns, colors (hex), fonts, spacing, buttons, footer. Be specific and complete, max 350 words." },
                   { role: "user", content: [{ type: "text", text: "Describe this design." }, ...images.map((im) => ({ type: "image_url", image_url: { url: im.dataUrl } }))] },
                 ], 90000)).trim();
-                step("👁 Vision Agent", "✓ Picture parh li: " + design.replace(/\s+/g, " ").slice(0, 220) + "…");
+                step("Vision Agent", "Picture parh li: " + design.replace(/\s+/g, " ").slice(0, 220) + "…");
                 break;
               } catch (e) {
                 visionErr = `${v.name}: ${e.message.slice(0, 300)}`;
-                step("👁 Vision Agent", `⚠ ${v.name} picture nahi parh saka: ${e.message.slice(0, 120)}`);
+                step("Vision Agent", `${v.name} picture nahi parh saka: ${e.message.slice(0, 120)}`);
               }
             }
             if (!design) {
               // Andaze se ghalat website banane ke bajaye saaf bata dein ke masla kya hai.
               const why = vp.length ? (visionErr || "Vision brain ne jawab nahi diya") : "Gemini ya Groq key load nahi hui";
-              const msg = `⚠ **Picture dekhi nahi ja saki, is liye website nahi banayi** (andaze se ghalat banti).\n\n**Wajah:** ${why}\n\n**Hal:** ⋯ Options → Keys mein Groq (gsk_…) ya Gemini key daal kar Save karein, phir tray icon → Restart. Agar key pehle se hai to yeh wajah wali line Hark ko bhej dein.`;
+              const msg = `**Picture dekhi nahi ja saki, is liye website nahi banayi** (andaze se ghalat banti).\n\n**Wajah:** ${why}\n\n**Hal:** ⋯ Options → Keys mein Groq (gsk_…) ya Gemini key daal kar Save karein, phir tray icon → Restart. Agar key pehle se hai to yeh wajah wali line Hark ko bhej dein.`;
               emit({ type: "done", reply: msg, provider: "Vision Agent", model: "-", agent: { id: agent.id, name: agent.name, icon: agent.icon }, skipped, task: "text" });
               ctrl.close();
               return;
             }
           }
           const request = design ? `${rawText}\n\nREFERENCE DESIGN (rebuild this closely):\n${design}` : rawText;
-          step("🧠 Planner Agent", "Soch raha hoon: kaam ko hisson mein baant raha hoon…");
+          step("Planner Agent", "Soch raha hoon: kaam ko hisson mein baant raha hoon…");
           const plan = (await ask([
             { role: "system", content: "You are a senior product planner. Write a short numbered build plan (max 8 lines) for EXACTLY the user's request: keep their business name, products, currency (PKR if Pakistani) and language. Sections, exact features, interactions, realistic data, colors. If a design reference picture is attached, describe its layout and style and follow it. No code." },
             { role: "user", content: request },
@@ -210,10 +221,10 @@ export async function POST(req) {
           if (wantsBanner) {
             const seed = Math.floor(Math.random() * 1e6);
             const topic = plan.replace(/[*#`_]/g, "").split("\n").filter(Boolean).slice(0, 2).join(" ").slice(0, 220);
-            step("Image Agent", "🎨 Banner bhi sath ban raha hai…");
+            step("Image Agent", "Banner bhi sath ban raha hai…");
             emit({ type: "image", urls: [imageUrl(`${topic}, professional wide website hero banner, no text`, seed, 1280, 512)] });
           }
-          step("🧠 Planner Agent", plan.split("\n").filter(Boolean).slice(0, 8).join(" · ").slice(0, 400));
+          step("Planner Agent", plan.split("\n").filter(Boolean).slice(0, 8).join(" · ").slice(0, 400));
 
           const RULES = `Build rules (must follow all):
 - Return ONE complete self-contained \`\`\`html code block: <!DOCTYPE html> to </html>, inline CSS and JS, nothing missing, no "..." or "rest of code".
@@ -227,7 +238,7 @@ export async function POST(req) {
 
 ${DESIGN_RULES}
 ${designBrief(String(rawText || ""))}`;
-          step(agent.name, "🔨 Plan ke mutabiq poora code likh raha hoon…");
+          step(agent.name, "Plan ke mutabiq poora code likh raha hoon…");
           // Sirf naya request + plan: purani chat (jaise pichla store) naye kaam mein na mile.
           const fresh = [...system, { role: "system", content: `Plan:\n${plan}\n\n${RULES}` }, { role: "user", content: design ? `${lastUser}\n\nREFERENCE DESIGN (rebuild this closely):\n${design}` : lastUser }];
           let { reply, p } = await ask(fresh, "Build");
@@ -239,13 +250,13 @@ ${designBrief(String(rawText || ""))}`;
             const tips = code ? await designCheckFull(code) : [];
             // Design tips sirf pehle 2 rounds mein theek karwayein; asli ghaltiyan har round.
             if (round < 3) issues.push(...tips);
-            step("🧪 Tester Agent", `Test ${round}: code check kar raha hoon…`);
+            step("Tester Agent", `Test ${round}: code check kar raha hoon…`);
             if (!issues.length && code) {
               // Browser Tester: page ko chhupe browser mein chala kar har button dabata hai.
-              step("🧪 Browser Tester", "Page chala kar har button daba raha hoon…");
+              step("Browser Tester", "Page chala kar har button daba raha hoon…");
               const rt = await runtimeTest({ html: code });
-              if (rt.skipped) step("🧪 Browser Tester", "Browser test is dafa nahi chala — baaki tests jari.");
-              else if (rt.ok) step("🧪 Browser Tester", `✅ ${rt.clicked} buttons/links dabaye — koi JavaScript ghalti nahi.`);
+              if (rt.skipped) step("Browser Tester", "Browser test is dafa nahi chala — baaki tests jari.");
+              else if (rt.ok) step("Browser Tester", `${rt.clicked} buttons/links dabaye — koi JavaScript ghalti nahi.`);
               else issues.push(...rt.errors.map((e) => `Runtime error when the page runs: ${e}`));
             }
             if (!issues.length) {
@@ -256,19 +267,21 @@ ${designBrief(String(rawText || ""))}`;
                 ], "Test")).reply;
                 const j = JSON.parse((rv.match(/\{[\s\S]*\}/) || ["{}"])[0]);
                 if (j.ok === false && Array.isArray(j.issues)) issues.push(...j.issues.slice(0, 5));
-              } catch { step("🧪 Tester Agent", "AI tester abhi masroof — basic tests pass."); }
+              } catch { step("Tester Agent", "AI tester abhi masroof — basic tests pass."); }
             }
             left = issues;
-            try { const realIss = issues.filter((x) => !String(x).startsWith("Design:")); if (realIss.length) tracker.fail(realIss); else if (tracker.pass(`Fixer ne round ${round} tak theek kiya.`)?.ok) step("🧠 Memory", "Seekh yaad rakh li (ghalti → hal)."); } catch {}
-            if (!issues.length) { step("🧪 Tester Agent", "✅ Sab test pass — koi galti nahi mili."); break; }
-            step("🧪 Tester Agent", `⚠ ${issues.length} masle: ${issues.join(" | ").slice(0, 300)}`);
+            try { const realIss = issues.filter((x) => !String(x).startsWith("Design:")); if (realIss.length) tracker.fail(realIss); else if (tracker.pass(`Fixer ne round ${round} tak theek kiya.`)?.ok) step("Memory", "Seekh yaad rakh li (ghalti → hal)."); } catch {}
+            if (!issues.length) { step("Tester Agent", "Sab test pass — koi galti nahi mili."); break; }
+            step("Tester Agent", `${issues.length} masle: ${issues.join(" | ").slice(0, 300)}`);
             if (round === 3) break;
-            step("🔧 Fixer Agent", "Masle theek kar raha hoon…");
+            step("Fixer Agent", "Masle theek kar raha hoon…");
             ({ reply, p } = await ask([...fresh, { role: "assistant", content: reply }, { role: "user", content: `Fix ALL these problems and return the COMPLETE corrected page again:\n- ${issues.join("\n- ")}\n\n${RULES}` }], "Fix"));
             fixes++;
           }
           const real = left.filter((x) => !x.startsWith("Design:"));
-          step(agent.name, real.length ? `⚠ Ban gaya, lekin ${real.length} masle baqi: ${real.join(" | ").slice(0, 200)}` : `✓ Tayyar${fixes ? ` (${fixes} dafa theek kiya)` : ""}${left.length ? ` · design tips: ${left.join(" | ").slice(0, 160)}` : ""}.`);
+          step(agent.name, real.length ? `Ban gaya, lekin ${real.length} masle baqi: ${real.join(" | ").slice(0, 200)}` : `Tayyar${fixes ? ` (${fixes} dafa theek kiya)` : ""}${left.length ? ` · design tips: ${left.join(" | ").slice(0, 160)}` : ""}.`);
+          // v3.15 UI/UX Specialist: aakhri page ka design audit + score yaad.
+          try { const fin = (reply.match(/```html\s*([\s\S]*?)```/i) || [])[1] || ""; if (fin) { const au = await uiuxAudit(fin); step("UI/UX Specialist", `Design audit score ${au.score}/100${au.notes.length ? " · " + au.notes.slice(0, 3).join(" | ").slice(0, 200) : ""}`); addLearned({ kind: "audit", task: "web", score: au.score, text: au.notes.slice(0, 2).join(" | ") }); } addLearned({ kind: "brain", task: "web", brain: p.name, ok: !real.length }); if (fixes && !real.length) addLearned({ kind: "fix", task: "web", text: `Fixer ne ${fixes} round mein theek kiya: ${String(left[0] || "").slice(0, 120)}` }); } catch {}
           try { saveProjectSummary({ project: "chat-website", task: rawText, summary: `${real.length ? `${real.length} masle baqi` : "Tayyar"} · Plan: ${plan.replace(/\s+/g, " ").slice(0, 400)}` }); } catch {}
           emit({ type: "done", reply: `**Plan**\n${plan}\n\n${reply}`, provider: p.name, model: p.model, agent: { id: agent.id, name: agent.name, icon: agent.icon }, skipped, task: "web" });
           ctrl.close();
@@ -279,18 +292,19 @@ ${designBrief(String(rawText || ""))}`;
       }
 
       for (const p of providers) {
-        if (isCooling(p.id)) { skipped.push(`${p.name}: cooling down`); step("Brain", `⏭ ${p.name} abhi aaraam par — agla.`); continue; }
-        step("Brain", `⚡ ${p.name} se jawab maang raha hoon…`);
+        if (isCooling(p.id)) { skipped.push(`${p.name}: cooling down`); step("Brain", `${p.name} abhi aaraam par — agla.`); continue; }
+        step("Brain", `${p.name} se jawab maang raha hoon…`);
         try {
           const vpp = images.length && !p.vision && p.visionModel ? { ...p, model: p.visionModel } : p;
           const reply = await callProvider(vpp, images.length ? (vpp.vision || vpp.visionModel === vpp.model ? visionMessages : blindMessages) : messages);
-          step(agent.name, "✓ Jawab tayyar.");
+          step(agent.name, "Jawab tayyar.");
+          try { addLearned({ kind: "brain", task, brain: p.name, ok: true }); } catch {}
           emit({ type: "done", reply, provider: p.name, model: p.model, agent: { id: agent.id, name: agent.name, icon: agent.icon }, skipped, task });
           ctrl.close();
           return;
         } catch (err) {
           skipped.push(`${p.name}: ${err.message}`);
-          step("Brain", `⏭ ${p.name}: ${err.message.slice(0, 80)} — agla try.`);
+          step("Brain", `${p.name}: ${err.message.slice(0, 80)} — agla try.`);
         }
       }
       emit({ type: "error", error: "Koi provider jawab nahi de saka.", details: skipped });

@@ -19,13 +19,19 @@ export default function MemoryPage() {
   const [editId, setEditId] = useState("");
   const [msg, setMsg] = useState("");
   const [preview, setPreview] = useState("");
+  const [learned, setLearned] = useState([]);
   const fileRef = useRef(null);
 
   const flash = (t) => { setMsg(t); setTimeout(() => setMsg(""), 2200); };
   const load = useCallback(async (query = q, ty = type) => {
     const u = new URLSearchParams(); if (query) u.set("q", query); if (ty) u.set("type", ty);
+    // v3.15: pehle browser cache se foran dikhayein, phir server se taaza.
+    const ck = "faheem-mem-cache:" + u;
+    try { const c = JSON.parse(localStorage.getItem(ck) || "null"); if (c) { setItems(c.items || []); setSettings(c.settings || null); setStats(c.stats || null); } } catch {}
     const d = await fetch(`/api/memory?${u}`).then((r) => r.json()).catch(() => ({}));
     setItems(d.items || []); setSettings(d.settings || null); setStats(d.stats || null);
+    try { if (d.ok) localStorage.setItem(ck, JSON.stringify({ items: (d.items || []).slice(0, 200), settings: d.settings, stats: d.stats })); } catch {}
+    fetch("/api/memory?learned=1").then((r) => r.json()).then((x) => setLearned(x.items || [])).catch(() => {});
   }, [q, type]);
   useEffect(() => { load("", ""); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -35,18 +41,18 @@ export default function MemoryPage() {
     e.preventDefault();
     const item = { ...form, tags: String(form.tags || "").split(",").map((t) => t.trim()).filter(Boolean) };
     const d = editId ? await post({ action: "update", id: editId, item }) : await post({ action: "add", item });
-    if (!d.ok) return flash("⚠ " + (d.error || "Save nahi hua"));
-    flash(editId ? "Badal diya ✓" : d.duplicate ? "Pehle se yaad hai ✓" : "Yaad rakh liya ✓");
+    if (!d.ok) return flash("Ghalti: " + (d.error || "Save nahi hua"));
+    flash(editId ? "Badal diya" : d.duplicate ? "Pehle se yaad hai" : "Yaad rakh liya");
     setForm(EMPTY); setEditId(""); load();
   }
   function edit(it) { setEditId(it.id); setForm({ type: it.type, title: it.title, text: it.text, project: it.project, tags: (it.tags || []).join(", "), pinned: !!it.pinned }); window.scrollTo?.(0, 0); }
-  async function del(it) { if (!confirm(`"${it.title}" mita dein?`)) return; const d = await post({ action: "delete", id: it.id }); flash(d.ok ? "Mita diya ✓" : "⚠ " + d.error); load(); }
-  async function setS(patch) { const d = await post({ action: "settings", settings: patch }); if (d.ok) { setSettings(d.settings); flash("Save ✓"); } }
+  async function del(it) { if (!confirm(`"${it.title}" mita dein?`)) return; const d = await post({ action: "delete", id: it.id }); flash(d.ok ? "Mita diya" : "Ghalti: " + d.error); load(); }
+  async function setS(patch) { const d = await post({ action: "settings", settings: patch }); if (d.ok) { setSettings(d.settings); flash("Save"); } }
   async function importFile(f) {
     if (!f) return;
-    let data; try { data = JSON.parse(await f.text()); } catch { return flash("⚠ File JSON nahi"); }
+    let data; try { data = JSON.parse(await f.text()); } catch { return flash("Ghalti: File JSON nahi"); }
     const d = await post({ action: "import", data, mode: "merge" });
-    flash(d.ok ? `Import: ${d.added} nayi, ${d.skipped} chhor di` : "⚠ " + d.error); load();
+    flash(d.ok ? `Import: ${d.added} nayi, ${d.skipped} chhor di` : "Ghalti: " + d.error); load();
   }
   async function showPreview() {
     const d = await fetch(`/api/memory?preview=${encodeURIComponent(q || "website design")}`).then((r) => r.json()).catch(() => ({}));
@@ -133,6 +139,20 @@ export default function MemoryPage() {
               </div>
             </article>
           ))}
+        </section>
+
+        <section className="card panel memlist" data-learned>
+          <div className="memhead"><Icon name="lightbulb" size={16} /> <b>Seekha hua (self-improvement)</b> <small className="muted">{learned.length} sabaq · har kaam ke baad khud · had 200</small></div>
+          <p className="muted">Kis kaam par kaun sa brain chala, ghalti → hal, aap ki tasheeh aur design audit score. Agli dafa routing aur prompt mein istemal hota hai. Koi paid call nahi.</p>
+          {learned.length === 0 && <p className="muted">Abhi kuch nahi seekha.</p>}
+          {learned.slice().reverse().slice(0, 60).map((x) => (
+            <article key={x.id} className="memitem" data-learned-item={x.kind}>
+              <div className="memhead"><span className="memtag">{x.kind === "brain" ? "Brain" : x.kind === "fix" ? "Ghalti → hal" : x.kind === "correction" ? "Tasheeh" : "Design audit"}</span><span className="memtag">{x.task}</span>{x.brain && <b>{x.brain} {x.ok ? "kamyab" : "fail"}</b>}{typeof x.score === "number" && <b>score {x.score}/100</b>}</div>
+              {x.text && <p>{x.text}</p>}
+              <div className="memfoot"><small className="muted">{String(x.at).slice(0, 16).replace("T", " ")}</small><button className="ghost" onClick={async () => { await post({ action: "learnedDelete", id: x.id }); setLearned(learned.filter((y) => y.id !== x.id)); }}><Icon name="trash" size={14} /> Mitayein</button></div>
+            </article>
+          ))}
+          {learned.length > 0 && <button className="ghost" onClick={async () => { if (confirm("Saara seekha hua mita dein?")) { await post({ action: "learnedClear", confirm: "haan" }); setLearned([]); } }}>Sab mitayein</button>}
         </section>
       </div>
     </main>

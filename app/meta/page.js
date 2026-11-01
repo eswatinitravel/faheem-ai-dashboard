@@ -42,44 +42,44 @@ export default function MetaPage() {
 
   async function pick(files) {
     const f = files?.[0];
-    if (!f || !f.type.startsWith("image/")) { setMsg("✕ Sirf tasveer (PNG/JPG/WEBP)"); return; }
+    if (!f || !f.type.startsWith("image/")) { setMsg("Ghalti: Sirf tasveer (PNG/JPG/WEBP)"); return; }
     setImg(await readFileAsDataUrl(f)); setImgName(f.name); setOut(""); setMsg("");
   }
-  async function fromGallery(f) { try { setImg(await urlToDataUrl(f.url)); setImgName(f.original || f.name); setOut(""); } catch (e) { setMsg("✕ " + e.message); } }
+  async function fromGallery(f) { try { setImg(await urlToDataUrl(f.url)); setImgName(f.original || f.name); setOut(""); } catch (e) { setMsg("Ghalti: " + e.message); } }
 
-  const copy = async (t) => { try { await navigator.clipboard.writeText(t); setMsg("Prompt copy ho gaya ✓ — Meta AI mein Ctrl+V"); } catch { setMsg("Copy nahi hua — khud select karke copy karein"); } };
+  const copy = async (t) => { try { await navigator.clipboard.writeText(t); setMsg("Prompt copy ho gaya — Meta AI mein Ctrl+V"); } catch { setMsg("Copy nahi hua — khud select karke copy karein"); } };
   async function copyImage() {
     if (!img) return setMsg("Pehle tasveer chunein");
     try {
       const png = await new Promise((res) => { const i = new Image(); i.onload = () => { const c = document.createElement("canvas"); c.width = i.width; c.height = i.height; c.getContext("2d").drawImage(i, 0, 0); c.toBlob(res, "image/png"); }; i.src = img; });
       await navigator.clipboard.write([new ClipboardItem({ "image/png": png })]);
-      setMsg("Tasveer copy ✓ — Meta AI chat mein Ctrl+V");
+      setMsg("Tasveer copy — Meta AI chat mein Ctrl+V");
     } catch { setMsg("Tasveer copy nahi hui — Meta AI mein + se upload karein"); }
   }
   async function openMeta() {
     const r = await fetch("/api/meta", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "open" }) }).then((x) => x.json()).catch(() => ({ fallback: true }));
-    if (r.ok) setMsg("Meta AI alag Edge window mein khul gaya ↗ (pehli dafa Facebook/Meta login)");
-    else { window.open(META_SITE, "metaai", "popup,width=1200,height=860"); setMsg("Meta AI nayi window mein khola ↗"); }
+    if (r.ok) setMsg("Meta AI alag Edge window mein khul gaya (pehli dafa Facebook/Meta login)");
+    else { window.open(META_SITE, "metaai", "popup,width=1200,height=860"); setMsg("Meta AI nayi window mein khola"); }
   }
   function setPaid(v) { setPaidOn(v); setConfirm(false); try { localStorage.setItem(PREF, v ? "on" : "off"); } catch {} }
   async function saveKey() {
     if (!keyIn.trim()) return;
     await fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ META_API_KEY: keyIn.trim() }) });
-    setKeyIn(""); loadInfo(); setMsg("Meta API key save ✓ (paid — switch abhi bhi band hai jab tak aap on na karein)");
+    setKeyIn(""); loadInfo(); setMsg("Meta API key save (paid — switch abhi bhi band hai jab tak aap on na karein)");
   }
   async function paidEdit() {
     if (!img || !prompt.trim()) return setMsg("Tasveer + prompt dono chahiye");
     setBusy(true); setMsg("Meta Model API (PAID $0.01)…");
     const r = await fetch("/api/meta", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "edit", image: img, prompt, paidOn, confirmPaid: confirm }) }).then((x) => x.json()).catch((e) => ({ ok: false, error: e.message }));
     setBusy(false);
-    if (r.ok) { setOut(r.image); setMsg(`Tayyar ✓ (kharch: $${r.cost})`); } else setMsg("✕ " + r.error);
+    if (r.ok) { setOut(r.image); setMsg(`Tayyar (kharch: $${r.cost})`); } else setMsg("Ghalti: " + r.error);
   }
   async function freeEdit() {
     if (!img || !prompt.trim()) return setMsg("Tasveer + prompt dono chahiye");
     setBusy(true); setMsg("Puter.js (free) — pehli dafa Puter sign-in khulega…");
     const id = thinking.start("meta-puter");
-    try { await puterSignIn(); const src = await puterEditImage(prompt, img); if (!src) throw new Error("natija khali"); setOut(src); setMsg("Free edit tayyar ✓ (Puter.js)"); }
-    catch (e) { setMsg("✕ Puter: " + (e?.message || String(e)) + " — Meta AI wala free raasta istemal karein."); }
+    try { await puterSignIn(); const src = await puterEditImage(prompt, img); if (!src) throw new Error("natija khali"); setOut(src); setMsg("Free edit tayyar (Puter.js)"); }
+    catch (e) { setMsg("Ghalti: Puter: " + (e?.message || String(e)) + " — Meta AI wala free raasta istemal karein."); }
     finally { thinking.stop(id); setBusy(false); }
   }
   async function saveToGallery() {
@@ -89,8 +89,8 @@ export default function MetaPage() {
       const fd = new FormData();
       fd.append("files", new Blob([blob], { type: blob.type || "image/png" }), `meta-edit-${Date.now()}.${(blob.type || "image/png").includes("jpeg") ? "jpg" : "png"}`);
       const r = await (await fetch("/api/gallery", { method: "POST", body: fd })).json();
-      setMsg(r.ok ? "Gallery mein save ✓" : "✕ " + (r.rejected?.[0]?.error || r.error || "save nahi hua"));
-    } catch (e) { setMsg("✕ " + e.message + " (link wali tasveer: pehle Download karein)"); }
+      setMsg(r.ok ? "Gallery mein save" : "Ghalti: " + (r.rejected?.[0]?.error || r.error || "save nahi hua"));
+    } catch (e) { setMsg("Ghalti: " + e.message + " (link wali tasveer: pehle Download karein)"); }
   }
 
   return (

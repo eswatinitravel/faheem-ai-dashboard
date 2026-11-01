@@ -77,7 +77,7 @@ export async function POST(req) {
       try {
         const r = await fetch(MCP21, { method: "POST", headers: { "content-type": "application/json", accept: "application/json, text/event-stream", "x-api-key": key }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "faheem-ai-dashboard", version: "3.11.0" } } }), signal: AbortSignal.timeout(20000) });
         const t = await r.text();
-        if (r.ok) return Response.json({ ok: true, status: r.status, text: "Key sahi ✓ — 21st MCP se jur gaya." });
+        if (r.ok) return Response.json({ ok: true, status: r.status, text: "Key sahi — 21st MCP se jur gaya." });
         return Response.json({ ok: false, status: r.status, error: r.status === 401 ? "Key qubool nahi (401) — 21st.dev/mcp se nayi key lein." : `HTTP ${r.status}: ${t.slice(0, 120)}` });
       } catch (e) { return Response.json({ ok: false, error: e.message }); }
     }

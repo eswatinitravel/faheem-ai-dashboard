@@ -7,9 +7,9 @@ import VersionBadge from "../components/VersionBadge";
 import { prepareFiles } from "../../lib/attach";
 import { loadPrefs, savePrefs } from "../../lib/prefs";
 
-const ICON = { list_files: "📂", read_file: "📖", write_file: "✍️", edit_file: "✏️", delete_file: "🗑", search: "🔍", run_command: "▶", check: "🧪", test: "🖱", web_fetch: "🌐", image_url: "🎨" };
+const ICON = { list_files: <Icon name="folder" size={14} />, read_file: <Icon name="file" size={14} />, write_file: <Icon name="edit" size={14} />, edit_file: <Icon name="edit" size={14} />, delete_file: <Icon name="trash" size={14} />, search: <Icon name="search" size={14} />, run_command: <Icon name="play" size={14} />, check: <Icon name="dot" size={14} />, test: <Icon name="dot" size={14} />, web_fetch: <Icon name="globe" size={14} />, image_url: <Icon name="palette" size={14} /> };
 
-// 🤖 Agent Mode — Cursor jaisa: baayen files, beech mein agent ka kaam, daayen live preview / code.
+// Agent Mode — Cursor jaisa: baayen files, beech mein agent ka kaam, daayen live preview / code.
 export default function AgentPage() {
   const [projects, setProjects] = useState([]);
   const [project, setProject] = useState("");
@@ -101,7 +101,7 @@ export default function AgentPage() {
 
   async function undo() {
     const d = await fetch("/api/agent/undo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project }) }).then((r) => r.json());
-    setEvents((e) => [...e, { type: "thought", text: "↩ " + d.message }]);
+    setEvents((e) => [...e, { type: "thought", text: "" + d.message }]);
     loadFiles(); setStamp(Date.now()); if (open) openFile(open);
   }
 
@@ -137,12 +137,12 @@ export default function AgentPage() {
           {files.length === 0 && <small className="muted">Khali project. Neeche kaam likhein.</small>}
           {files.map((f) => (
             <button key={f.path} className={"ag-file" + (f.dir ? " dir" : "") + (open === f.path ? " on" : "")} style={{ paddingLeft: 8 + (f.path.split("/").length - 1) * 12 }} onClick={() => !f.dir && openFile(f.path)} disabled={f.dir}>
-              {f.dir ? "📁" : "📄"} {f.path.split("/").pop()}
+              {f.dir ? <Icon name="folder" size={14} /> : <Icon name="file" size={14} />} {f.path.split("/").pop()}
             </button>
           ))}
           {todo.length > 0 && (<>
             <div className="ag-h" style={{ marginTop: 12 }}>{team ? "Team board" : "Plan"}</div>
-            {todo.map((t, i) => <div key={i} className={"ag-todo" + (/^\s*\[x\]/i.test(t) ? " done" : "")}>{t.replace(/^\s*\[[ x]\]\s*/i, /^\s*\[x\]/i.test(t) ? "✓ " : "○ ")}</div>)}
+            {todo.map((t, i) => <div key={i} className={"ag-todo" + (/^\s*\[x\]/i.test(t) ? " done" : "")}>{t.replace(/^\s*\[[ x]\]\s*/i, /^\s*\[x\]/i.test(t) ? "" : "○ ")}</div>)}
           </>)}
         </aside>
 
@@ -160,30 +160,30 @@ export default function AgentPage() {
             )}
             {events.map((e, i) => {
               if (e.type === "user") return <div key={i} className="ag-user">{e.text}{e.imgs?.length > 0 && <div className="ag-imgs">{e.imgs.map((u, k) => <img key={k} src={u} alt="" />)}</div>}</div>;
-              if (e.type === "thought") return <div key={i} className="ag-thought">💭 {e.text}</div>;
+              if (e.type === "thought") return <div key={i} className="ag-thought"><Icon name="chat" size={14} /> {e.text}</div>;
               if (e.type === "brain") return <div key={i} className="ag-brain">{e.text}</div>;
               if (e.type === "handoff" || e.type === "team") return <div key={i} className="ag-handoff">{e.text}</div>;
               if (e.type === "tool") return (
                 <details key={i} className={"ag-tool " + (e.ok === undefined ? "run" : e.ok ? "ok" : "bad")}>
-                  <summary>{ICON[e.name] || "🔧"} <b>{e.name}</b> <span>{e.label}</span> {e.ok === undefined ? "…" : e.ok ? "✓" : "⚠"}</summary>
+                  <summary>{ICON[e.name] || <Icon name="tool" size={14} />} <b>{e.name}</b> <span>{e.label}</span> {e.ok === undefined ? "…" : e.ok ? <Icon name="check" size={14} /> : <Icon name="alert" size={14} />}</summary>
                   {e.out && <pre>{e.out}</pre>}
                 </details>
               );
-              if (e.type === "done") return <div key={i} className="ag-done">{e.partial ? "⏸" : "✅"} {e.summary}{e.files?.length > 0 && <small> · Files: {e.files.join(", ")}</small>}</div>;
-              if (e.type === "error") return <div key={i} className="ag-err">⚠ {e.text}</div>;
+              if (e.type === "done") return <div key={i} className="ag-done">{e.partial ? <Icon name="pause" size={14} /> : <Icon name="check" size={14} />} {e.summary}{e.files?.length > 0 && <small> · Files: {e.files.join(", ")}</small>}</div>;
+              if (e.type === "error") return <div key={i} className="ag-err"><Icon name="alert" size={14} /> {e.text}</div>;
               return null;
             })}
-            {busy && <div className="ag-brain">⏳ Agent kaam kar raha hai…</div>}
+            {busy && <div className="ag-brain"><Icon name="clock" size={14} /> Agent kaam kar raha hai…</div>}
             <div ref={endRef} />
           </div>
-          {imgs.length > 0 && <div className="ag-imgs pending">{imgs.map((im, k) => <span key={k}><img src={im.dataUrl} alt="" /><button onClick={() => setImgs(imgs.filter((_, j) => j !== k))}>✕</button></span>)}</div>}
+          {imgs.length > 0 && <div className="ag-imgs pending">{imgs.map((im, k) => <span key={k}><img src={im.dataUrl} alt="" /><button onClick={() => setImgs(imgs.filter((_, j) => j !== k))} aria-label="Hatao"><Icon name="x" size={12} /></button></span>)}</div>}
           <div className="ag-input" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); addImages(e.dataTransfer.files); }}>
             <button className="icon-btn" title="Picture lagayein (design reference)" aria-label="Picture lagayein" onClick={() => fileRef.current?.click()} disabled={busy}><Icon name="clip" /></button>
             <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={(e) => { addImages(e.target.files); e.target.value = ""; }} />
             <textarea value={task} placeholder={busy ? "Agent kaam kar raha hai…" : "Kaam likhein… (Enter = chalao, Shift+Enter = nayi line)"} onChange={(e) => setTask(e.target.value)}
               onPaste={(e) => { const f = [...e.clipboardData.files]; if (f.length) { e.preventDefault(); addImages(f); } }}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); run(); } }} disabled={busy} rows={2} />
-            {busy ? <button className="stopbtn" onClick={() => ctrlRef.current?.abort()}>■ Roko</button> : <button onClick={() => run()} disabled={!task.trim()}>Chalao ➤</button>}
+            {busy ? <button className="stopbtn" onClick={() => ctrlRef.current?.abort()}>■ Roko</button> : <button onClick={() => run()} disabled={!task.trim()}>Chalao <Icon name="send" size={13} /></button>}
           </div>
         </section>
 
@@ -191,7 +191,7 @@ export default function AgentPage() {
           <div className="ws-tabs">
             <button className={tab === "preview" ? "on" : ""} onClick={() => setTab("preview")}>Live Preview</button>
             <button className={tab === "code" ? "on" : ""} onClick={() => setTab("code")}>Code{open ? ` · ${open.split("/").pop()}` : ""}</button>
-            {htmlFiles.length > 0 && project && <a className="ag-open" href={previewUrl} target="_blank" rel="noreferrer" title="Nayi window mein kholein">↗</a>}
+            {htmlFiles.length > 0 && project && <a className="ag-open" href={previewUrl} target="_blank" rel="noreferrer" title="Nayi window mein kholein"><Icon name="external" size={14} /> </a>}
           </div>
           {tab === "preview" && (!project || htmlFiles.length === 0)
             ? <div className="ag-code muted" style={{ display: "grid", placeItems: "center", textAlign: "center" }}>Abhi koi HTML file nahi. Agent website banaye ga to preview yahan dikhe ga.</div>

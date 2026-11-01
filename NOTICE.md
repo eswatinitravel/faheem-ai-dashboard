@@ -1,4 +1,4 @@
-# NOTICE — Third-party credits (Faheem AI Dashboard v3.13.0)
+# NOTICE — Third-party credits (Faheem AI Dashboard v3.15.0)
 
 Yeh dashboard in open-source projects ko istemal karta hai. Har ek ka license aur notice yahan mehfooz hai.
 
@@ -76,3 +76,13 @@ For more information, see https://polyformproject.org/licenses/shield/1.0.0
 - **Puter.js (heyPuter/puter, js.puter.com/v2)** — browser mein, user ke apne Puter account se (koi API key nahi). "User-pays" model: free mahana hissa, had likhi nahi. Script sirf zaroorat par load hoti hai, bundle nahi.
 - **Meta AI / Meta Model API (Muse Image, muse-image-1.0)** — Meta Platforms. Free: meta.ai website/app (user ka apna login, alag Edge window). Meta Model API paid ($0.01/tasveer) — dashboard mein default BAND. Meta ka koi code shamil nahi.
 - Jaan bujh kar shamil NAHI: OpenCode Zen free, Hack Club AI, gpt4free / web scrapers (Terms of Service).
+
+---
+
+## v3.15 — Hallmark redesign, UI/UX Specialist, Seekha hua, Research card, Flowstate background (sab apna code)
+
+- **Lucide icons (lucide.dev), ISC License** — `app/components/Icon.js` ki SVG shapes (v3.15 mein emoji ki jagah poora set). Copyright (c) Lucide Contributors.
+- **Flowstate 3D background** (`app/components/FlowBackground.js`) — *inspired by getlayers.ai free templates* (Flowstate/Soda/Gravity jaisa andaaz). Apna WebGL shader likha; GetLayers ka koi prompt, code ya tasveer shamil nahi (un ki terms prompts dobara baantne se mana karti hain).
+- **UI/UX Specialist** (`lib/uiux-specialist.js`) — Hallmark (MIT), Impeccable (Apache-2.0), UI UX Pro Max (MIT) ke qawaid par mabni apna prompt. plugin87/ux-ui-agent-skills ka code istemal nahi kiya.
+- **Ideas (code nahi):** NousResearch Hermes Agent (MIT) — self-improvement; Open WebUI aur LobeHub — chat export; Cline (Apache-2.0) — plan pehle, act baad mein; OpenHands (MIT), AnythingLLM (MIT), Jan, Continue (Apache-2.0) — `docs/IDEAS-FROM-TOP-ASSISTANTS.md`.
+- **Research card** free public APIs parhta hai: GitHub search API (bina key) aur DuckDuckGo Instant Answer API (bina key), apni terms ke tehat.

@@ -22,8 +22,8 @@ function ToolCard({ p, register }) {
     setStat({ c: "run", t: "soch raha…" });
     const r = await fetch("/api/tools", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ provider: p.id, messages: hist }) })
       .then((x) => x.json()).catch((e) => ({ ok: false, error: e.message }));
-    if (r.ok) { setLog((l) => [...l, { role: "assistant", content: r.text }]); setStat({ c: "ok", t: `✓ ${(r.ms / 1000).toFixed(1)}s${r.model && r.model !== p.model ? " · " + r.model : ""}` }); }
-    else { setLog((l) => [...l, { role: "assistant", content: r.error, err: true }]); setStat({ c: "bad", t: "✗ fail" }); }
+    if (r.ok) { setLog((l) => [...l, { role: "assistant", content: r.text }]); setStat({ c: "ok", t: `${(r.ms / 1000).toFixed(1)}s${r.model && r.model !== p.model ? " · " + r.model : ""}` }); }
+    else { setLog((l) => [...l, { role: "assistant", content: r.error, err: true }]); setStat({ c: "bad", t: "fail" }); }
     return r;
   }
   useEffect(() => register(p.id, send));
@@ -64,7 +64,7 @@ export default function Tools() {
       const r = await senders.current[p.id]?.(q);
       if (r?.ok) ok++; else bad++;
     }
-    setSummary(`Mukammal: ${ok} chale ✓, ${bad} fail ✗ (kul ${providers.length})`);
+    setSummary(`Mukammal: ${ok} chale, ${bad} fail (kul ${providers.length})`);
     setRunning(false);
   }
 
@@ -83,7 +83,7 @@ export default function Tools() {
           <span className="muted">{summary}</span>
         </div>
         {providers === null && <p className="muted">Brains load ho rahe hain…</p>}
-        {providers?.length === 0 && <p className="muted">Koi brain nahi mila. ⚙ se free keys lagayein.</p>}
+        {providers?.length === 0 && <p className="muted">Koi brain nahi mila. Settings se free keys lagayein.</p>}
         <div className="toolsgrid">{providers?.map((p) => <ToolCard key={p.id} p={p} register={register} />)}</div>
       </div>
     </main>

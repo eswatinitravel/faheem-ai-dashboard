@@ -28,11 +28,11 @@ export default function Options() {
     if (s) { const f = () => setVoices(s.getVoices()); f(); s.onvoiceschanged = f; }
   }, [load]);
 
-  const set = (k, v) => { const p = { ...prefs, [k]: v }; setPrefs(p); savePrefs(p); setSaved("Save ✓"); setTimeout(() => setSaved(""), 1200); };
+  const set = (k, v) => { const p = { ...prefs, [k]: v }; setPrefs(p); savePrefs(p); setSaved("Save"); setTimeout(() => setSaved(""), 1200); };
 
   async function setMemory(enabled) {
     const d = await fetch("/api/memory", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "settings", settings: { enabled } }) }).then((r) => r.json()).catch(() => ({}));
-    if (d.ok) { setMem((m) => ({ ...m, ...d.settings })); setSaved("Save ✓"); setTimeout(() => setSaved(""), 1200); }
+    if (d.ok) { setMem((m) => ({ ...m, ...d.settings })); setSaved("Save"); setTimeout(() => setSaved(""), 1200); }
   }
 
   function testVoice() {
@@ -58,7 +58,7 @@ export default function Options() {
       {prefs && (
         <div className="optgrid">
           <section className="card panel">
-            <h3>🧠 Master Agent</h3>
+            <h3><Icon name="brain" size={15} /> Master Agent</h3>
             <select value={prefs.agent} onChange={(e) => set("agent", e.target.value)}>
               <option value="auto">Auto: Master khud chune</option>
               {agents.map((a) => <option key={a.id} value={a.id}>{a.icon} {a.name}</option>)}
@@ -67,7 +67,7 @@ export default function Options() {
           </section>
 
           <section className="card panel">
-            <h3>⚡ Brain (AI)</h3>
+            <h3><Icon name="zap" size={15} /> Brain (AI)</h3>
             <select value={prefs.provider} onChange={(e) => set("provider", e.target.value)}>
               <option value="auto">Auto (best available)</option>
               {providers.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -77,24 +77,25 @@ export default function Options() {
                 <div key={p.id} className="pitem"><span className={"led " + (p.cooling ? "warn" : "ok")} /><div><b>{p.name}</b><small>{p.model}{p.keyless ? " · bina key" : ""}</small></div></div>
               ))}
             </div>
-            <button className="ghost" onClick={() => setShowKeys(true)}>⚙ Keys / Free pipeline settings</button>
+            <button className="ghost" onClick={() => setShowKeys(true)}>Keys / Free pipeline settings</button>
           </section>
 
           <section className="card panel" data-opt="team">
-            <h3>👥 Agent Team (Team mode)</h3>
+            <h3><Icon name="users" size={15} /> Agent Team (Team mode)</h3>
             <label className="toggle"><input type="checkbox" checked={!!prefs.teamMode} onChange={(e) => set("teamMode", e.target.checked)} data-team-option /><span>Agent Mode mein bare kaam team se: Designer → Coder → Tester → Reviewer</span></label>
+            <label className="toggle"><input type="checkbox" checked={prefs.research !== false} onChange={(e) => set("research", e.target.checked)} data-research-option /><span>Project/website banane se pehle research card (milte-julte products, extra features, stack)</span></label>
             <small className="muted">Default band. Sirf website/store/kai files wale kaam. Har role apna free brain; max 3 rounds, ~60k token aur 10 calls ki had (free limit bachat). Brains limit par hon to khud purana single Agent Mode chalta hai. Board: project folder mein team.json.</small>
           </section>
 
           <section className="card panel" data-opt="memory">
-            <h3>🧠 Yaad-dasht (Memory)</h3>
+            <h3><Icon name="brain" size={15} /> Yaad-dasht (Memory)</h3>
             {mem ? <label className="toggle"><input type="checkbox" checked={mem.enabled !== false} onChange={(e) => setMemory(e.target.checked)} data-memory-option /><span>{mem.enabled !== false ? `On · ${mem.total} yaadein · max ${mem.maxTokens} tokens prompt mein` : "Band"}</span></label> : <small className="muted">Load ho raha hai…</small>}
             <small className="muted">Pasand (Roman Urdu, design), project khulase aur ghalti → hal seekh. Sirf isi laptop par (~/.faheem-ai/memory), update se nahi mitti.</small>
             <Link className="ghost linkbtn" href="/memory">Memory kholein — dekhein, badlein, export/import</Link>
           </section>
 
           <section className="card panel">
-            <h3>🖥 Display: 4K / 8K / 3D</h3>
+            <h3><Icon name="monitor" size={15} /> Display: 4K / 8K / 3D</h3>
             <label className="muted">Render quality</label>
             <select value={prefs.quality} onChange={(e) => set("quality", e.target.value)}>
               <option value="auto">Auto (screen ke mutabiq)</option>
@@ -102,6 +103,12 @@ export default function Options() {
               <option value="4k">4K Ultra (3840px saaf render)</option>
               <option value="8k">8K Extreme (7680px, sirf taqatwar GPU)</option>
             </select>
+            <label className="muted">3D background (chatboard)</label>
+            <select value={prefs.bg3d || "off"} onChange={(e) => set("bg3d", e.target.value)} data-bg3d-picker>
+              <option value="off">Off (purana aura + dots)</option>
+              <option value="flow">Flowstate — behti 3D rang lehren (halka WebGL)</option>
+            </select>
+            <small className="muted">Windows "animations off" (reduced motion) par ruka hua frame. getlayers.ai free templates se inspired, apna code.</small>
             <label className="muted">3D orb (Three.js)</label>
             <select value={prefs.fx3d} onChange={(e) => set("fx3d", e.target.value)}>
               <option value="off">Band</option>
@@ -116,38 +123,38 @@ export default function Options() {
           </section>
 
           <section className="card panel">
-            <h3>🎙 Awaz</h3>
+            <h3><Icon name="mic" size={15} /> Awaz</h3>
             <label className="toggle"><input type="checkbox" checked={prefs.speakReplies} onChange={(e) => set("speakReplies", e.target.checked)} /><span>Voice mode mein jawab bol kar sunao</span></label>
             <select value={prefs.voiceChoice} onChange={(e) => set("voiceChoice", e.target.value)}>
-              <option value="urdu-female">🇵🇰 Urdu — Uzma (aurat)</option>
-              <option value="urdu-male">🇵🇰 Urdu — Asad (mard)</option>
+              <option value="urdu-female">Urdu — Uzma (aurat)</option>
+              <option value="urdu-male">Urdu — Asad (mard)</option>
               <option value="english">English awaz</option>
             </select>
             {prefs.voiceChoice !== "english" && voices.length > 0 && !voices.some((v) => v.lang.toLowerCase().startsWith("ur")) && <small className="warnline">Urdu awaz nahi mili — app ko Microsoft Edge mein kholein.</small>}
-            <button className="ghost" onClick={testVoice}>▶ Awaz test karein</button>
+            <button className="ghost" onClick={testVoice}><Icon name="play" size={14} /> Awaz test karein</button>
             <small className="muted">Voice (bol kar likhwana) ke liye Groq key chahiye.</small>
           </section>
 
           <section className="card panel">
-            <h3>🌐 Meri websites</h3>
+            <h3><Icon name="globe" size={15} /> Meri websites</h3>
             <Link className="sitecard" href="/?live=vestire">
               <img src="/sites/vestire/img/panel-men.jpg" alt="" />
               <div><b>Vestire Collection</b><span>Live workspace mein kholein</span></div>
             </Link>
-            <a className="ghost linkbtn" href="/sites/vestire/index.html" target="_blank" rel="noreferrer">↗ Naye tab mein</a>
+            <a className="ghost linkbtn" href="/sites/vestire/index.html" target="_blank" rel="noreferrer"><Icon name="external" size={14} /> Naye tab mein</a>
           </section>
 
           <section className="card panel">
-            <h3>🚀 Startup & taskbar</h3>
+            <h3><Icon name="rocket" size={15} /> Startup & taskbar</h3>
             <p className="muted">Laptop on hote hi Faheem AI khud start hota hai aur neeche taskbar (ghari ke paas) mein iska icon hamesha rehta hai. Icon par double-click = app khule; right-click = Restart / Band.</p>
             <small className="muted">Band karna ho to: Windows + R → <code>shell:startup</code> → "Faheem AI" shortcut delete karein.</small>
           </section>
 
           <section className="card panel">
-            <h3>✦ Bada kaam?</h3>
+            <h3><Icon name="sparkle" size={15} /> Bada kaam?</h3>
             <p className="muted">Mushkil ya lamba kaam Hark se karwayein.</p>
-            <a className="ghost linkbtn" href="https://hark.com" target="_blank" rel="noreferrer">Hark kholein ↗</a>
-            <button className="ghost" onClick={() => { if (confirm("Saari chats mita dein?")) { localStorage.removeItem("faheem-ai-chats-v2"); localStorage.removeItem("faheem-ai-archive"); setSaved("Chats saaf ✓"); } }}>🗑 Saari chats mitayein</button>
+            <a className="ghost linkbtn" href="https://hark.com" target="_blank" rel="noreferrer">Hark kholein <Icon name="external" size={13} /></a>
+            <button className="ghost" onClick={() => { if (confirm("Saari chats mita dein?")) { localStorage.removeItem("faheem-ai-chats-v2"); localStorage.removeItem("faheem-ai-archive"); setSaved("Chats saaf"); } }}>Saari chats mitayein</button>
           </section>
         </div>
       )}

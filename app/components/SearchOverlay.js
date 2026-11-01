@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import Icon from "./Icon";
 
 // Search: purani aur abhi ki chats mein dhoondein, ya web par.
 export default function SearchOverlay({ messages, onClose, onAsk }) {
@@ -18,15 +19,15 @@ export default function SearchOverlay({ messages, onClose, onAsk }) {
     <div className="search-bg" onClick={onClose}>
       <div className="search panel" onClick={(e) => e.stopPropagation()}>
         <div className="search-row">
-          <span>⌕</span>
+          <span><Icon name="search" size={14} /> </span>
           <input ref={ref} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Chats mein dhoondein…"
             onKeyDown={(e) => { if (e.key === "Enter" && q.trim() && hits.length === 0) { onAsk(q); onClose(); } }} />
-          <button className="icon-btn" onClick={onClose}>✕</button>
+          <button className="icon-btn" onClick={onClose}><Icon name="x" size={14} /> </button>
         </div>
         {q.trim() && (
           <div className="search-actions">
-            <button className="ghost" onClick={() => { onAsk(q); onClose(); }}>✦ AI se poochein</button>
-            <a className="ghost linkbtn" href={`https://www.google.com/search?q=${encodeURIComponent(q)}`} target="_blank" rel="noreferrer">🌐 Web par dhoondein</a>
+            <button className="ghost" onClick={() => { onAsk(q); onClose(); }}>AI se poochein</button>
+            <a className="ghost linkbtn" href={`https://www.google.com/search?q=${encodeURIComponent(q)}`} target="_blank" rel="noreferrer"><Icon name="globe" size={14} /> Web par dhoondein</a>
           </div>
         )}
         <div className="search-list">

@@ -11,7 +11,7 @@
   const nav = [["men", "Men", "men.html"], ["women", "Women", "women.html"], ["kids", "Juniors", "kids.html"], ["sale", "Sale", "index.html#arrivals"]];
   $("#nav").innerHTML = nav.map(([k, t, h]) => `<a href="${h}" class="${k === page ? "on" : ""}">${t}</a>`).join("");
   document.querySelectorAll(".brandname").forEach((e) => (e.textContent = C.brand));
-  const ann = `🚚 Pure Pakistan mein delivery  ·  💵 Cash on Delivery ${rs(C.deliveryCOD)}  ·  💳 Advance payment par FREE delivery  ·  ✨ Imported branded collection  ·  `;
+  const ann = `Pure Pakistan mein delivery  ·  Cash on Delivery ${rs(C.deliveryCOD)}  ·  Advance payment par FREE delivery  ·  Imported branded collection  ·  `;
   $("#announce").innerHTML = `<div class="marq"><span>${ann.repeat(3)}</span><span>${ann.repeat(3)}</span></div>`;
 
   // ---------- Products ----------
@@ -67,7 +67,7 @@
   function openProduct(id) {
     const p = ALL.find((x) => x.id === id); let size = null, qty = 1; modal.dataset.pid = id;
     modal.innerHTML = `<div class="sheet pd">
-      <button class="x" data-close>✕</button>
+      <button class="x" data-close>&times;</button>
       <div class="pdimg">${imgTag(p)}</div>
       <div class="pdinfo"><small>${p.brand || ""} · ${p.type} · ${p.colors.join(", ")}</small><h2>${p.name}</h2>
         <div class="price big">${rs(p.price)} ${p.old ? `<s>${rs(p.old)}</s>` : ""}</div>
@@ -76,7 +76,7 @@
         <div class="row"><b>Tadaad</b><div class="qty"><button data-q="-1">−</button><span id="q">1</span><button data-q="1">+</button></div></div>
         <button class="btn primary" id="add">Cart mein daalein</button>
         <button class="btn wa" id="waask">WhatsApp par poochein</button>
-        <ul class="perks"><li>🚚 Delivery ${C.deliveryDays}</li><li>💵 Cash on Delivery ${rs(C.deliveryCOD)}</li><li>🔁 7 din mein exchange (size)</li></ul>
+        <ul class="perks"><li>Delivery ${C.deliveryDays}</li><li>Cash on Delivery ${rs(C.deliveryCOD)}</li><li>7 din mein exchange (size)</li></ul>
         <p class="note">Demo photo — asli product ki photo jald.</p></div></div>`;
     modal.classList.add("open");
     modal.onclick = (e) => {
@@ -89,7 +89,7 @@
         if (!size) { toast("Pehle size chunein"); return; }
         const ex = cart.find((c) => c.id === p.id && c.size === size);
         ex ? (ex.qty += qty) : cart.push({ id: p.id, size, qty });
-        save(); close(); openCart(); toast("Cart mein add ho gaya ✓");
+        save(); close(); openCart(); toast("Cart mein add ho gaya");
       }
     };
   }
@@ -105,7 +105,7 @@
       : [["S", 20, 40], ["M", 21, 41], ["L", 22.5, 42], ["XL", 24, 43], ["XXL", 25.5, 44]];
     const box = document.createElement("div");
     box.className = "modal open"; box.style.zIndex = 60;
-    box.innerHTML = `<div class="sheet small"><button class="x">✕</button><h3>Size chart (inch)</h3>
+    box.innerHTML = `<div class="sheet small"><button class="x">&times;</button><h3>Size chart (inch)</h3>
       <table><tr><th>Size</th><th>${kids ? "Seena (½)" : "Seena (½)"}</th><th>Lambai</th></tr>
       ${rows.map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("")}</table>
       <p class="note">Andaza hai. Shak ho to WhatsApp par poochein.</p></div>`;
@@ -124,8 +124,8 @@
     $("#cartbody").innerHTML = lines.length ? lines.map((l, i) => `
       <div class="line">${imgTag(l.p)}<div><b>${l.p.name}</b><small>Size ${l.size} · ${rs(l.p.price)}</small>
         <div class="qty sm"><button data-i="${i}" data-d="-1">−</button><span>${l.qty}</span><button data-i="${i}" data-d="1">+</button></div></div>
-        <button class="rm" data-rm="${i}">✕</button></div>`).join("")
-      : `<p class="empty">Cart khali hai. Kuch pasand karein ✨</p>`;
+        <button class="rm" data-rm="${i}">&times;</button></div>`).join("")
+      : `<p class="empty">Cart khali hai. Kuch pasand karein</p>`;
     $("#subtotal").textContent = rs(sub);
     $("#checkout").disabled = !lines.length;
     return { lines, sub };
@@ -141,7 +141,7 @@
   // ---------- Checkout (COD / Advance) ----------
   function checkout() {
     const { lines, sub } = drawCart();
-    modal.innerHTML = `<div class="sheet small"><button class="x" data-close>✕</button><h3>Order details</h3>
+    modal.innerHTML = `<div class="sheet small"><button class="x" data-close>&times;</button><h3>Order details</h3>
       <form id="of">
         <input name="name" placeholder="Poora naam" required>
         <input name="phone" placeholder="Mobile number (03xx...)" required pattern="[0-9+ ]{10,14}">
@@ -163,13 +163,13 @@
       e.preventDefault();
       const d = Object.fromEntries(new FormData(f));
       const id = "VC" + Date.now().toString().slice(-6);
-      const msg = [`🛍️ Naya order ${id} — ${C.brand}`, ...lines.map((l) => `• ${l.p.name} | Size ${l.size} | x${l.qty} = ${rs(l.p.price * l.qty)}`),
+      const msg = [`Naya order ${id} — ${C.brand}`, ...lines.map((l) => `• ${l.p.name} | Size ${l.size} | x${l.qty} = ${rs(l.p.price * l.qty)}`),
         `Payment: ${d.pay}`, `Total: ${rs(total())}`, `Naam: ${d.name}`, `Phone: ${d.phone}`, `Pata: ${d.addr}, ${d.city}`].join("\n");
       const orders = JSON.parse(localStorage.getItem("vestire-orders") || "[]");
       orders.push({ id, at: new Date().toISOString(), ...d, total: total(), lines: lines.map((l) => ({ id: l.id, size: l.size, qty: l.qty })) });
       localStorage.setItem("vestire-orders", JSON.stringify(orders));
       cart = []; save(); drawer.classList.remove("open");
-      modal.innerHTML = `<div class="sheet small center"><div class="ok">✓</div><h3>Shukriya ${d.name}!</h3>
+      modal.innerHTML = `<div class="sheet small center"><div class="ok">&#10003;</div><h3>Shukriya ${d.name}!</h3>
         <p>Aap ka order <b>${id}</b> mil gaya. ${C.whatsapp ? "WhatsApp khul raha hai, wahan Send dabayein." : ""}</p>
         <button class="btn primary" data-close>Shopping jari rakhein</button></div>`;
       if (C.whatsapp) wa(msg);

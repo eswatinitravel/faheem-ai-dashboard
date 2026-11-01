@@ -49,8 +49,8 @@ function RoomCard({ room, onStatus }) {
     setKmsg("Save + check ho raha…");
     const r = await fetch("/api/brains", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "save", id: room.id, keys: k, mode: addMode ? "add" : "replace" }) }).then((x) => x.json()).catch((e) => ({ ok: false, error: e.message }));
     setKeyIn("");
-    if (r.ok) { setKmsg(`Save ✓ (${r.keys.length} key) — ${r.status?.label || ""}`); onStatus(room.id, { status: r.status, keys: r.keys }); setAddMode(false); }
-    else setKmsg("✕ " + (r.error || "save nahi hua"));
+    if (r.ok) { setKmsg(`Save (${r.keys.length} key) — ${r.status?.label || ""}`); onStatus(room.id, { status: r.status, keys: r.keys }); setAddMode(false); }
+    else setKmsg("Ghalti: " + (r.error || "save nahi hua"));
   }
   async function removeKey(i) {
     const r = await fetch("/api/brains", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "removeKey", id: room.id, index: i }) }).then((x) => x.json()).catch(() => ({ ok: false }));
@@ -111,19 +111,19 @@ function RoomCard({ room, onStatus }) {
         <span className={"light " + st.light} title={st.label} data-light-dot={st.light} />
         <div className="rname"><b>{room.name}</b><small>{room.model}{room.vision ? " · tasveer dekh sakta" : ""}{room.slow ? " · bohat dheema" : ""}</small></div>
         <span className="rlabel" title={st.label}>{st.label || LIGHT_TXT[st.light]}</span>
-        {room.keyUrl && <a className="keylink" href={room.keyUrl} target="_blank" rel="noreferrer">{room.noKey ? "Site ↗" : "Key lein ↗"}</a>}
+        {room.keyUrl && <a className="keylink" href={room.keyUrl} target="_blank" rel="noreferrer">{room.noKey ? "Site" : "Key lein"}</a>}
         <button className="icon-btn" title="Key / status" aria-label="Key aur status" onClick={() => setShowKeys((v) => !v)}><Icon name="settings" size={14} /></button>
       </header>
-      {st.help && <div className="keyhelp" data-expiry-help>{st.help.text} — <a href={st.help.url} target="_blank" rel="noreferrer">key page ↗</a></div>}
+      {st.help && <div className="keyhelp" data-expiry-help>{st.help.text} — <a href={st.help.url} target="_blank" rel="noreferrer">key page <Icon name="external" size={13} /></a></div>}
       {showKeys && (
         <div className="keybox" data-keybox>
           {room.id === "puter" ? (
-            <div className="krow"><span className="muted" style={{ flex: 1 }}>{room.note}</span><button onClick={async () => { try { await puterSignIn(); } catch (err) { setKmsg("✕ " + err.message); } check(); }}>Puter sign-in</button></div>
+            <div className="krow"><span className="muted" style={{ flex: 1 }}>{room.note}</span><button onClick={async () => { try { await puterSignIn(); } catch (err) { setKmsg("Ghalti: " + err.message); } check(); }}>Puter sign-in</button></div>
           ) : room.noKey ? (
             <div className="krow"><span className="muted" style={{ flex: 1 }}>{room.note}</span><button onClick={check}>Check</button></div>
           ) : (
             <>
-              {room.keys?.length > 0 && <div className="keychips">{room.keys.map((k, i) => <span key={i} className="keychip" data-masked-key>{k}{room.pool?.[i]?.disabled ? " ✕" : room.pool?.[i]?.resting ? ` ⏳${room.pool[i].restMin}m` : ""}<button aria-label="Key hatayein" title="Hatayein" onClick={() => removeKey(i)}>×</button></span>)}</div>}
+              {room.keys?.length > 0 && <div className="keychips">{room.keys.map((k, i) => <span key={i} className="keychip" data-masked-key>{k}{room.pool?.[i]?.disabled ? " (band)" : room.pool?.[i]?.resting ? ` (${room.pool[i].restMin}m aaraam)` : ""}<button aria-label="Key hatayein" title="Hatayein" onClick={() => removeKey(i)}>×</button></span>)}</div>}
               <div className="krow">
                 <input type="password" autoComplete="off" spellCheck={false} placeholder={addMode ? "Aur key (pool) — comma se kai" : room.keys?.length ? "Nayi key (purani badal degi)" : "Key yahan paste karein"} value={keyIn} onChange={(e) => setKeyIn(e.target.value)} data-key-input />
                 <button onClick={saveKey} disabled={!keyIn.trim()} data-key-save>Save</button>
@@ -141,12 +141,12 @@ function RoomCard({ room, onStatus }) {
         {log.map((m, i) => (
           <div key={i} className={"rmsg" + (m.role === "user" ? " me" : "") + (m.err ? " err" : "") + (m.role === "note" ? " note" : "")}>
             {m.content}
-            {(m.files?.length || m.ms) ? <small>{m.files?.length ? "📎 " + m.files.join(", ") : ""}{m.ms ? ` ${(m.ms / 1000).toFixed(1)}s` : ""}{m.model && m.model !== room.model ? " · " + m.model : ""}</small> : null}
+            {(m.files?.length || m.ms) ? <small>{m.files?.length ? "" + m.files.join(", ") : ""}{m.ms ? ` ${(m.ms / 1000).toFixed(1)}s` : ""}{m.model && m.model !== room.model ? " · " + m.model : ""}</small> : null}
           </div>
         ))}
         {busy && <span className="muted">Soch raha hai…</span>}
       </div>
-      {files.length > 0 && <div className="rfiles">{files.map((f, i) => <span key={i}>{f.kind === "image" ? "🖼" : f.kind === "video" ? "🎬" : "📄"} {f.name} <button className="ghost" style={{ padding: "0 4px" }} onClick={() => setFiles((x) => x.filter((_, j) => j !== i))} aria-label="Hatayein">×</button></span>)}{files.some((f) => f.kind === "image") && !room.vision && <span className="warnline" data-vision-note>Yeh brain tasveer nahi dekh sakta — tasveer nahi jayegi.</span>}</div>}
+      {files.length > 0 && <div className="rfiles">{files.map((f, i) => <span key={i}>{f.kind === "image" ? <Icon name="image" size={14} /> : f.kind === "video" ? <Icon name="video" size={14} /> : <Icon name="file" size={14} />} {f.name} <button className="ghost" style={{ padding: "0 4px" }} onClick={() => setFiles((x) => x.filter((_, j) => j !== i))} aria-label="Hatayein">×</button></span>)}{files.some((f) => f.kind === "image") && !room.vision && <span className="warnline" data-vision-note>Yeh brain tasveer nahi dekh sakta — tasveer nahi jayegi.</span>}</div>}
       <form className="rform" onSubmit={send}>
         <input ref={fileRef} type="file" multiple hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
         <button type="button" className="ghost" title="Tasveer / video / file lagayein" aria-label="Attach" onClick={() => fileRef.current?.click()}><Icon name="clip" size={15} /></button>
@@ -181,7 +181,7 @@ export default function Brains() {
     setMsg("Sab brains check ho rahe hain (sasta /models ya 1-token)…");
     await fetch("/api/brains", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "checkAll" }) }).catch(() => {});
     await load();
-    setMsg("Check mukammal ✓");
+    setMsg("Check mukammal");
   }
   const view = rooms ? pageRooms(rooms, page, PER_PAGE) : null;
   const go = (p) => { setPage(p); try { sessionStorage.setItem("faheem-brains-page", String(p)); } catch {} };

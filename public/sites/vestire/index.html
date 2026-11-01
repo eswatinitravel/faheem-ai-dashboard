@@ -8,7 +8,7 @@
 </head>
 <body data-cat="home" class="home">
 <div id="announce"></div>
-<header><a href="index.html" class="brandname"></a><nav id="nav"></nav><button id="cartbtn">🛍 Cart <span id="count">0</span></button></header>
+<header><a href="index.html" class="brandname"></a><nav id="nav"></nav><button id="cartbtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg> Cart <span id="count">0</span></button></header>
 
 <!-- 1. Cougar-style: teen bare panels -->
 <section class="panels">
@@ -42,7 +42,7 @@
 <div class="strip reveal"><div><b>Shipping all across Pakistan</b>Gujrat se har shehar</div><div><b>Cash on Delivery</b>Ghar par paise dein</div><div><b>Exclusive discounts</b>Har hafte naya sale</div><div><b>7 din exchange</b>Size badalna asaan</div></div>
 
 <section class="club reveal"><div><small>VESTIRE CLUB</small><h2>Naye stock aur sale sab se pehle</h2><p>Apna number dein — nayi arrivals aur exclusive discount codes WhatsApp par.</p></div>
-<form id="clubform" onsubmit="event.preventDefault();var n=this.querySelector('input').value.trim();if(n.length<10){alert('Sahi number likhein');return;}try{localStorage.setItem('vestire-club',n)}catch(e){}this.innerHTML='<b class=ok>Shukriya! Aap club mein shamil ho gaye ✓</b>'"><input type="tel" placeholder="03xx xxxxxxx" required><button class="btn primary">Join</button></form></section>
+<form id="clubform" onsubmit="event.preventDefault();var n=this.querySelector('input').value.trim();if(n.length<10){alert('Sahi number likhein');return;}try{localStorage.setItem('vestire-club',n)}catch(e){}this.innerHTML='<b class=ok>Shukriya! Aap club mein shamil ho gaye</b>'"><input type="tel" placeholder="03xx xxxxxxx" required><button class="btn primary">Join</button></form></section>
 
 <button id="totop" aria-label="Top" onclick="scrollTo({top:0,behavior:'smooth'})">↑</button>
 <footer class="foot big">
@@ -52,10 +52,10 @@
   <div class="copy">© <span id="year"></span> Vestire Collection</div>
 </footer>
 
-<div id="cart"><aside><header><h3>Aap ki cart</h3><button class="x" style="position:static" data-closecart>✕</button></header><div id="cartbody"></div>
+<div id="cart"><aside><header><h3>Aap ki cart</h3><button class="x" style="position:static" data-closecart>&times;</button></header><div id="cartbody"></div>
 <footer><div><span>Subtotal</span><b id="subtotal"></b></div><button class="btn primary" id="checkout">Checkout</button></footer></aside></div>
 <div id="modal" class="modal"></div>
-<button id="wafloat" title="WhatsApp">✆</button><div id="toast"></div>
+<button id="wafloat" title="WhatsApp"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></button><div id="toast"></div>
 <script src="config.js"></script><script src="store.js"></script>
 <script>
 (function(){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});

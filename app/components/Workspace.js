@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import Icon from "./Icon";
 
 // Live workspace (left 25%): jo ban raha hai woh upar dikhta hai, neeche chhote harfon mein agents ki baat-cheet.
 const SITES = [
@@ -84,13 +85,13 @@ export default function Workspace({ job, log, onClose }) {
           <option value="">Kaam</option>
           {SITES.map((s) => <option key={s.url} value={s.url}>{s.label}</option>)}
         </select>
-        <button className="icon-btn" onClick={onClose} title="Band karein">✕</button>
+        <button className="icon-btn" onClick={onClose} title="Band karein"><Icon name="x" size={14} /> </button>
       </div>
 
       {html && job?.images && !site && (
         <div className="ws-tabs">
-          <button className={view === "html" ? "on" : ""} onClick={() => setTab("html")}>🌐 Website</button>
-          <button className={view === "image" ? "on" : ""} onClick={() => setTab("image")}>🖼 Pictures</button>
+          <button className={view === "html" ? "on" : ""} onClick={() => setTab("html")}>Website</button>
+          <button className={view === "image" ? "on" : ""} onClick={() => setTab("image")}>Pictures</button>
         </div>
       )}
       {big && <div className="ws-big" onClick={() => setBig(null)}><img src={big} alt="" /><small>Band karne ke liye click · <a href={big} download target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>Download</a></small></div>}

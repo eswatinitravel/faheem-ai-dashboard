@@ -9,7 +9,7 @@ function isLocal(req) {
   return ["localhost", "127.0.0.1", "[::1]"].includes(host);
 }
 
-// 🤖 Agent Mode: Cursor jaisa — agent khud files parhta/likhta, commands chalata, check karta, theek karta.
+// Agent Mode: Cursor jaisa — agent khud files parhta/likhta, commands chalata, check karta, theek karta.
 export async function POST(req) {
   if (!isLocal(req)) return Response.json({ error: "Agent sirf isi laptop par." }, { status: 403 });
   const body = await req.json().catch(() => ({}));

@@ -472,3 +472,56 @@ a, button, select, [role="button"] { cursor: pointer; }
 .guidecard .misaal { padding: 8px 10px; border-radius: 10px; background: var(--field); border: 1px solid var(--line); font-size: 13px; }
 .guidetoc { display: flex; flex-wrap: wrap; gap: 6px; max-width: 980px; margin: 0 auto 12px; }
 .guidetoc a { font-size: 12px; padding: 4px 10px; border-radius: 99px; background: var(--field); border: 1px solid var(--line); text-decoration: none; }
+
+/* ===== v3.15 Hallmark redesign layer (Hallmark MIT + Impeccable + UI UX Pro Max qawaid) =====
+   Ek type scale, 4/8px spacing, kam shor wali surfaces, saaf focus ring, 44px touch targets. Purani classes waisi hi. */
+:root {
+  --font-ui: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --fs-xs: 11px; --fs-sm: 12.5px; --fs-md: 14px; --fs-lg: 16px; --fs-xl: 20px;
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-6: 24px;
+  --r-sm: 8px; --r-md: 12px; --r-lg: 16px;
+  --shadow-1: 0 1px 2px rgba(0,0,0,.18), 0 8px 24px rgba(0,0,0,.14);
+  --ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+}
+html, body { font-family: var(--font-ui); letter-spacing: -.005em; }
+.panel { border-radius: var(--r-lg); box-shadow: var(--shadow-1); backdrop-filter: blur(18px) saturate(140%); }
+.card { padding: var(--sp-4); gap: var(--sp-3); }
+.card h3 { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-lg); font-weight: 600; letter-spacing: -.01em; }
+.card h3 .svgicon { color: var(--accent); flex: none; }
+.svgicon { display: inline-block; vertical-align: -0.18em; flex: none; }
+button { border-radius: var(--r-md); font-weight: 600; letter-spacing: -.005em; }
+button:hover { transform: none; filter: brightness(1.08); }
+button:active { transform: translateY(1px); }
+:where(button, a, input, select, textarea, summary, [tabindex]):focus-visible { outline: none; box-shadow: var(--ring); }
+.icon-btn { width: 36px; height: 36px; border-radius: var(--r-md); }
+.agentlink { width: auto; display: inline-flex; gap: 6px; padding: 0 var(--sp-3); font-size: var(--fs-sm); font-weight: 500; }
+.topbar { gap: var(--sp-3); padding: 0 var(--sp-4); }
+.brand { font-size: var(--fs-lg); letter-spacing: -.01em; }
+.hello h1 { font-weight: 650; letter-spacing: -.03em; line-height: 1.08; }
+.hello p { font-size: var(--fs-lg); }
+.chip { border-radius: 999px; padding: 8px 14px; font-size: var(--fs-sm); }
+.bubble { font-size: var(--fs-md); line-height: 1.65; }
+.composer { border-radius: 20px; padding: var(--sp-2); }
+.sendbtn .svgicon { margin-left: -1px; }
+.muted { font-size: var(--fs-sm); }
+.led.off { background: var(--muted); opacity: .5; }
+.led { display: inline-block; vertical-align: middle; }
+@media (max-width: 640px) {
+  .icon-btn, .attach, .mic, .sendbtn { min-width: 44px; min-height: 44px; }
+  .agentlink { font-size: var(--fs-xs); padding: 0 var(--sp-2); }
+  .topbar { overflow-x: auto; scrollbar-width: none; }
+}
+/* v3.15 Research card */
+.research .bubble { display: flex; flex-direction: column; gap: var(--sp-3); max-width: 640px; }
+.rc-head { display: flex; align-items: center; gap: var(--sp-2); }
+.rc-head .rc-x { margin-left: auto; width: 30px; height: 30px; }
+.rc-col { display: flex; flex-direction: column; gap: 6px; }
+.rc-col ul { padding-left: 18px; color: var(--muted); font-size: var(--fs-sm); }
+.rc-actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+.rc-actions button { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; }
+/* v3.15 Flowstate 3D background (getlayers.ai free templates se inspired) */
+.flowbg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: .85; image-rendering: auto; }
+.flowbg ~ .aura { opacity: .35; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+}

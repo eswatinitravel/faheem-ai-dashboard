@@ -10,6 +10,8 @@ import SearchOverlay from "./components/SearchOverlay";
 import Workspace from "./components/Workspace";
 import { loadPrefs } from "../lib/prefs";
 import { prepareFiles, forServer, forStorage } from "../lib/attach";
+import { isBuildRequest } from "../lib/research";
+import ResearchCard from "./components/ResearchCard";
 
 const STORE = "faheem-ai-chats-v2";
 
@@ -30,6 +32,7 @@ export default function Home() {
   const [log, setLog] = useState([]);
   const [files, setFiles] = useState([]);
   const [drag, setDrag] = useState(false);
+  const [research, setResearch] = useState(null); // v3.15 project research card
   const fileRef = useRef(null);
   const filesRef = useRef([]);
   filesRef.current = files;
@@ -111,6 +114,14 @@ export default function Home() {
       let text = (textArg ?? "").trim();
       if (!text && !attached.length) return;
       if (!text) text = attached.some((a) => a.kind === "image") ? "Is picture ke bare mein batao." : "Is file ko dekho.";
+      // v3.15: project/website banane se pehle chhoti research + suggestions card (Skip bhi).
+      if (!opts.skipResearch && !opts.voice && !attached.length && prefs.research !== false && isBuildRequest(text)) {
+        setInput(""); setResearch({ text, loading: true });
+        try { const r = await fetch("/api/research", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) }).then((x) => x.json()); setResearch({ text, data: r.research || null, loading: false }); }
+        catch { setResearch({ text, data: null, loading: false }); }
+        return;
+      }
+      setResearch(null);
       const userMsg = { role: "user", content: text, voice: !!opts.voice };
       if (attached.length) userMsg.attachments = attached;
       const next = [...messagesRef.current, userMsg];
@@ -152,11 +163,11 @@ export default function Home() {
         if (!done) throw new Error("Jawab adhoora reh gaya, dobara bhejein.");
         reply = done.reply;
         setJob((j) => ({ ...j, busy: false, reply, agent: done.agent }));
-        setMessages([...next, { role: "assistant", content: reply, meta: `${done.agent?.icon || ""} ${done.agent?.name || ""} · ${done.provider}` }]);
+        setMessages([...next, { role: "assistant", content: reply, meta: `${done.agent?.name || ""} · ${done.provider}` }]);
       } catch (err) {
         setJob((j) => ({ ...j, busy: false }));
         setLog((l) => [...l, { who: "Error", text: err.message.split("\n")[0] }]);
-        setMessages([...next, { role: "assistant", content: "⚠️ " + err.message, meta: "error" }]);
+        setMessages([...next, { role: "assistant", content: "Ghalti: " + err.message, meta: "error" }]);
         setMode("idle");
         return;
       }
@@ -275,6 +286,13 @@ export default function Home() {
     setMessages([]); setJob(null); setLog([]);
   }
 
+  // v3.15 (Open WebUI / LobeChat idea): chat ko Markdown file mein export.
+  function exportChat() {
+    if (!messages.length) { setNotice("Export ke liye chat khali hai."); return; }
+    const md = `# Faheem AI chat — ${new Date().toLocaleString()}\n\n` + messages.map((m) => `## ${m.role === "user" ? "Aap" : "Faheem AI"}${m.meta ? ` (${m.meta})` : ""}\n\n${m.content}\n`).join("\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([md], { type: "text/markdown" })); a.download = `faheem-chat-${Date.now()}.md`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+
   return (
     <main className={"front" + (wsOpen ? " ws-on" : "")}>
       <Background />
@@ -284,6 +302,7 @@ export default function Home() {
         <div className="top-actions">
           <button className="icon-btn" title="Search (Ctrl+K)" aria-label="Search" onClick={() => setShowSearch(true)}><Icon name="search" /></button>
           <button className="icon-btn" title="Naya chat" aria-label="Naya chat" onClick={newChat}><Icon name="plus" /></button>
+          <button className="icon-btn" title="Chat export (Markdown)" aria-label="Chat export" data-export-chat onClick={exportChat}><Icon name="download" /></button>
           <button className="icon-btn" title="Live workspace" aria-label="Live workspace" onClick={() => setWsOpen(!wsOpen)}><Icon name="panel" /></button>
           <ThemeBalls />
           <Link className="icon-btn agentlink" href="/agent" title="Agent Mode (Cursor jaisa coding agent)"><Icon name="bot" size={16} /> Agent</Link>
@@ -314,6 +333,7 @@ export default function Home() {
             </div>
           )}
           {messages.map((m, i) => <Message key={i} m={m} />)}
+          {research && <ResearchCard r={research} onBuild={(extra) => { const t = research.text; setResearch(null); send(extra ? `${t}\n\n${extra}` : t, { skipResearch: true }); }} onSkip={() => { const t = research.text; setResearch(null); send(t, { skipResearch: true }); }} onClose={() => setResearch(null)} />}
           {mode === "thinking" && <div className="msg assistant"><div className="bubble typing"><i /><i /><i /></div></div>}
           <div ref={endRef} />
         </div>
@@ -324,9 +344,9 @@ export default function Home() {
           <div className="pending">
             {files.map((a, i) => (
               <div key={i} className="pend">
-                {a.kind === "image" ? <img src={a.dataUrl} alt="" /> : a.kind === "video" ? <video src={a.url} muted /> : <span className="pend-ico">{a.kind === "text" ? "📄" : "📎"}</span>}
+                {a.kind === "image" ? <img src={a.dataUrl} alt="" /> : a.kind === "video" ? <video src={a.url} muted /> : <span className="pend-ico">{a.kind === "text" ? <Icon name="file" size={14} /> : <Icon name="clip" size={14} />}</span>}
                 <small>{a.name}</small>
-                <button type="button" onClick={() => setFiles(files.filter((_, j) => j !== i))} title="Hatao">✕</button>
+                <button type="button" onClick={() => setFiles(files.filter((_, j) => j !== i))} title="Hatao" aria-label="Hatao"><Icon name="x" size={12} /></button>
               </div>
             ))}
           </div>
@@ -344,13 +364,13 @@ export default function Home() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
             onPaste={async (e) => { const fl = Array.from(e.clipboardData?.files || []); if (fl.length) { e.preventDefault(); const add = await prepareFiles(fl); setFiles((f) => [...f, ...add].slice(0, 6)); } }}
-            placeholder="Faheem AI se kuch bhi kahein… (📎 se picture / video / file)"
+            placeholder="Faheem AI se kuch bhi kahein… (clip button se picture / video / file)"
             rows={1}
           />
           <button type="button" className={"mic " + (voiceOn || mode === "listening" ? "on" : "")} onClick={toggleVoice} title="Bol kar baat karein">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0 0 14 0M12 17v5M8 22h8" /></svg>
           </button>
-          <button type="submit" className="sendbtn" disabled={mode === "thinking" || (!input.trim() && !files.length)} title="Send">➤</button>
+          <button type="submit" className="sendbtn" disabled={mode === "thinking" || (!input.trim() && !files.length)} title="Send"><Icon name="send" size={14} /> </button>
         </form>
       </section>
 

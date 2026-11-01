@@ -1,0 +1,21 @@
+// v3.15 memory speed benchmark: node scripts/memory-bench.mjs <path-to-memory.js> [items]
+import fs from "fs"; import os from "os"; import path from "path";
+const file = path.resolve(process.argv[2] || "lib/memory.js"); const N = Number(process.argv[3] || 1000);
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), "membench-")); process.env.FAHEEM_MEMORY_DIR = dir;
+const words = "vestire store cart button checkout banner hero image flight emirates dubai lahore johannesburg design stitch font colour gold black red website agent brain groq gemini mistral memory lesson error fix pollinations kids women men jacket hoodie price pkr whatsapp".split(" ");
+const pick = (k) => Array.from({ length: k }, () => words[Math.floor(Math.random() * words.length)]).join(" ");
+const items = Array.from({ length: N }, (_, i) => ({ id: "b" + i.toString(36).padStart(5, "0"), type: ["note", "lesson", "project", "preference"][i % 4], title: pick(4), text: pick(60), tags: [pick(1), pick(1)], project: i % 7 ? "" : "vestire", at: new Date().toISOString(), updated: new Date().toISOString(), uses: 0, pinned: i < 3, source: "user" }));
+fs.writeFileSync(path.join(dir, "memories.jsonl"), items.map((x) => JSON.stringify(x)).join("\n") + "\n");
+fs.writeFileSync(path.join(dir, "settings.json"), JSON.stringify({ seeded: true }));
+const M = await import(file + "?v=" + Date.now());
+const qs = ["cart button error", "vestire hero banner", "flight dubai johannesburg", "design stitch font", "groq gemini brain", "kids jacket price pkr"];
+const time = (fn, reps) => { const t0 = performance.now(); for (let i = 0; i < reps; i++) fn(i); return (performance.now() - t0) / reps; };
+const first = time(() => M.memoryContext(qs[0]), 1);
+const ctx = time((i) => M.memoryContext(qs[i % qs.length]), 60);
+const search = time((i) => M.searchMemories(qs[i % qs.length], { n: 5 }), 60);
+const list = time(() => M.listMemories(), 30);
+const add = time((i) => M.addMemory({ type: "note", text: "bench add " + i + " " + pick(20) }), 20);
+const afterAdd = time((i) => M.memoryContext(qs[i % qs.length]), 20);
+M.flushUses?.();
+console.log(JSON.stringify({ file: path.basename(path.dirname(path.dirname(file))) + "/" + path.basename(file), items: N, firstContextMs: +first.toFixed(2), memoryContextMs: +ctx.toFixed(2), searchMs: +search.toFixed(2), listMs: +list.toFixed(2), addMs: +add.toFixed(2), contextAfterAddMs: +afterAdd.toFixed(2), perf: M.memPerf || null }));
+fs.rmSync(dir, { recursive: true, force: true });

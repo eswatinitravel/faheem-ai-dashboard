@@ -40,7 +40,7 @@ export default function Gallery({ onUse, useLabel = "Skill ko bhejein", chatProm
     setBusy(false);
     for (const r of d.rejected || []) notes.push(`${r.name}: ${r.error}`);
     if (d.error) notes.push(d.error);
-    setMsg(`${(d.saved || []).length} file upload ✓${notes.length ? " · " + notes.join(" · ") : ""}`);
+    setMsg(`${(d.saved || []).length} file upload${notes.length ? " · " + notes.join(" · ") : ""}`);
     load();
   }
   async function remove(f) {

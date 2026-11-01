@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import Icon from "./Icon";
 
 // Live screen: shows your websites live inside the dashboard (desktop / tablet / mobile).
 const PAGES = [
@@ -9,9 +10,9 @@ const PAGES = [
   { label: "Vestire · Juniors", url: "/sites/vestire/kids.html" },
 ];
 const DEVICES = [
-  { id: "desktop", label: "🖥", w: "100%" },
+  { id: "desktop", label: <Icon name="monitor" size={14} />, w: "100%" },
   { id: "tablet", label: "▭", w: "768px" },
-  { id: "mobile", label: "📱", w: "390px" },
+  { id: "mobile", label: <Icon name="phone" size={14} />, w: "390px" },
 ];
 
 export default function LiveScreen({ onClose }) {
@@ -43,8 +44,8 @@ export default function LiveScreen({ onClose }) {
           ))}
         </div>
         <button className="icon-btn" title="Reload" onClick={() => setKey((k) => k + 1)}>⟳</button>
-        <a className="icon-btn" title="Naye tab mein kholein" href={page} target="_blank" rel="noreferrer">↗</a>
-        <button className="icon-btn" title="Band karein" onClick={onClose}>✕</button>
+        <a className="icon-btn" title="Naye tab mein kholein" href={page} target="_blank" rel="noreferrer"><Icon name="external" size={14} /> </a>
+        <button className="icon-btn" title="Band karein" onClick={onClose}><Icon name="x" size={14} /> </button>
       </div>
       <div className="live-stage">
         <div className="live-device" style={{ width: w }}>

@@ -1,15 +1,16 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Scene3D from "./Scene3D";
+import FlowBackground from "./FlowBackground";
 import { loadPrefs, renderScale } from "../../lib/prefs";
 
 // Aura background with small glowing dots moving fast (colour follows the theme's --dot).
 export default function Background() {
   const ref = useRef(null);
-  const [disp, setDisp] = useState({ quality: "auto", fx3d: "off", uiScale: "100" });
+  const [disp, setDisp] = useState({ quality: "auto", fx3d: "off", uiScale: "100", bg3d: "off" });
   useEffect(() => {
     const apply = (p) => {
-      setDisp({ quality: p.quality || "auto", fx3d: p.fx3d || "off", uiScale: p.uiScale || "100" });
+      setDisp({ quality: p.quality || "auto", fx3d: p.fx3d || "off", uiScale: p.uiScale || "100", bg3d: p.bg3d || "off" });
       document.body.style.zoom = String(Number(p.uiScale || 100) / 100);
       document.documentElement.dataset.quality = p.quality || "auto";
     };
@@ -54,6 +55,7 @@ export default function Background() {
   }, [disp.quality]);
   return (
     <>
+      {disp.bg3d === "flow" && <FlowBackground />}
       <div className="aura" aria-hidden="true" />
       <canvas ref={ref} className="dots" aria-hidden="true" />
       {disp.fx3d !== "off" && <div className="fx3d"><Scene3D quality={disp.quality} detail={disp.fx3d} /></div>}

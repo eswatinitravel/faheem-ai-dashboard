@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import Icon from "./Icon";
 
 // v3.11 Auto Setup: har free brain ek pipeline mein. Key page kholein -> "Create key" -> copy ->
 // wapas aayein: clipboard se key khud uthti hai, brain khud pehchana jata hai, live test hota hai aur save.
@@ -31,8 +32,8 @@ export default function Settings({ onClose }) {
     setBusy("auto"); setMsg("Key pehchaan raha hoon aur test kar raha hoon…");
     const r = await fetch("/api/keys", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "auto", key: k, id: id || pick || undefined, needs: cfAcc ? { CLOUDFLARE_ACCOUNT_ID: cfAcc } : undefined }) }).then((x) => x.json()).catch((e) => ({ ok: false, error: e.message }));
     setBusy("");
-    if (r.ok) { setMsg(`✓ ${r.name} jur gaya (${r.preview}), model: ${r.model}. Pipeline mein shamil.`); setPaste(""); load(); }
-    else setMsg("✕ " + (r.error || "nahi chala"));
+    if (r.ok) { setMsg(`${r.name} jur gaya (${r.preview}), model: ${r.model}. Pipeline mein shamil.`); setPaste(""); load(); }
+    else setMsg("Ghalti: " + (r.error || "nahi chala"));
   }
 
   // Key page se wapas aane par clipboard khud parhein (sirf jab aap ne "Key banayein" dabaya ho).
@@ -53,13 +54,13 @@ export default function Settings({ onClose }) {
 
   async function nextMissing() {
     const b = (brains || []).find((x) => !x.set && !x.keyless);
-    if (b) openKey(b); else setMsg("Sab key wale brains jur chuke hain ✓");
+    if (b) openKey(b); else setMsg("Sab key wale brains jur chuke hain");
   }
 
   async function test(id) {
     setTests((t) => ({ ...t, [id]: "…" }));
     const r = await fetch("/api/keys", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "test", id }) }).then((x) => x.json()).catch((e) => ({ ok: false, error: e.message }));
-    setTests((t) => ({ ...t, [id]: r.ok ? `✓ ${(r.ms / 1000).toFixed(1)}s` : `✕ ${String(r.error).slice(0, 90)}` }));
+    setTests((t) => ({ ...t, [id]: r.ok ? `${(r.ms / 1000).toFixed(1)}s` : `${String(r.error).slice(0, 90)}` }));
   }
   async function testAll() { for (const b of brains.filter((x) => x.active)) await test(b.id); }
 
@@ -74,7 +75,7 @@ export default function Settings({ onClose }) {
     if (!String(body.TWENTYFIRST_API_KEY || "").trim()) delete body.TWENTYFIRST_API_KEY;
     for (const b of brains || []) if (form[`${b.id.toUpperCase()}_MODEL`] !== undefined) body[`${b.id.toUpperCase()}_MODEL`] = form[`${b.id.toUpperCase()}_MODEL`];
     await fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    setMsg("Save ho gaya ✓");
+    setMsg("Save ho gaya");
     setTimeout(onClose, 700);
   }
 
@@ -86,12 +87,12 @@ export default function Settings({ onClose }) {
       <div className="modal panel" onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
           <h2>Brains & Keys</h2>
-          <button className="x" onClick={onClose}>✕</button>
+          <button className="x" onClick={onClose}><Icon name="x" size={14} /> </button>
         </div>
         <p className="muted">Ek pipeline, {brains ? brains.length + 1 : "…"} free brains. Jo brain limit par ho, agla khud jawab deta hai. Keys sirf isi laptop par save hoti hain.</p>
 
         <div className="field">
-          <div className="field-head"><b>⚡ Auto Setup</b><small className="muted">{done}/{keyedCount} keys lagi hain</small></div>
+          <div className="field-head"><b><Icon name="zap" size={14} /> Auto Setup</b><small className="muted">{done}/{keyedCount} keys lagi hain</small></div>
           <small className="muted">Koi bhi key paste karein: brain khud pehchana jayega, test hoga aur save. Ya "Agla key page" dabayein, key copy karke wapas aayein.</small>
           <input type="password" autoComplete="new-password" data-lpignore="true" placeholder="Kisi bhi brain ki key yahan paste karein" value={paste} onChange={(e) => setPaste(e.target.value)} onPaste={(e) => { const t = e.clipboardData.getData("text"); setTimeout(() => auto(t), 50); }} />
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -100,20 +101,20 @@ export default function Settings({ onClose }) {
               {(brains || []).map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
             <button disabled={!!busy} onClick={() => auto(paste)}>{busy ? "Test ho raha…" : "Jorein"}</button>
-            <button onClick={nextMissing}>Agla key page ↗</button>
+            <button onClick={nextMissing}>Agla key page <Icon name="external" size={13} /></button>
             <button onClick={testAll}>Sab test karein</button>
           </div>
-          {msg && <small style={{ color: msg.startsWith("✕") ? "#f87171" : undefined }}>{msg}</small>}
+          {msg && <small style={{ color: msg.startsWith("Ghalti") ? "#f87171" : undefined }}>{msg}</small>}
         </div>
 
         {!brains && <p className="muted">Loading…</p>}
         {brains && brains.map((b) => (
           <div key={b.id} className="field">
             <div className="field-head">
-              <b>{b.active ? "🟢" : b.keyless ? "⚪" : "⚫"} {b.name}</b>
-              <a href={b.keyUrl} target="_blank" rel="noreferrer" onClick={(e) => { e.preventDefault(); openKey(b); }}>{b.keyless ? "Key (optional) ↗" : "Key banayein ↗"}</a>
+              <b><i className={"led " + (b.active ? "ok" : b.keyless ? "warn" : "off")} aria-hidden="true" /> {b.name}</b>
+              <a href={b.keyUrl} target="_blank" rel="noreferrer" onClick={(e) => { e.preventDefault(); openKey(b); }}>{b.keyless ? "Key (optional)" : "Key banayein"}</a>
             </div>
-            <small className="muted">{b.note}{b.signup ? ` Signup: ${b.signup}.` : ""} {b.set ? `Lagi hui: ${b.preview}` : b.keyless ? "Bina key chal raha." : "Abhi key nahi."} {b.cooling ? "⏳ limit par, thori der baad." : ""}</small>
+            <small className="muted">{b.note}{b.signup ? ` Signup: ${b.signup}.` : ""} {b.set ? `Lagi hui: ${b.preview}` : b.keyless ? "Bina key chal raha." : "Abhi key nahi."} {b.cooling ? "limit par, thori der baad." : ""}</small>
             {b.needs && <input placeholder="Cloudflare Account ID (dashboard ke right side par)" value={cfAcc} onChange={(e) => setCfAcc(e.target.value)} />}
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               <input style={{ flex: 1, minWidth: 160 }} placeholder={`Model: ${b.model}`} value={form[`${b.id.toUpperCase()}_MODEL`] ?? ""} onChange={(e) => setForm({ ...form, [`${b.id.toUpperCase()}_MODEL`]: e.target.value })} />
@@ -136,7 +137,7 @@ export default function Settings({ onClose }) {
         )}
         {cfg && (
           <div className="field" data-live-option>
-            <div className="field-head"><b>Live free list (har ghanta)</b><a href="https://stillworks.supercapybara.com/api/llm/up" target="_blank" rel="noreferrer">List ↗</a></div>
+            <div className="field-head"><b>Live free list (har ghanta)</b><a href="https://stillworks.supercapybara.com/api/llm/up" target="_blank" rel="noreferrer">List <Icon name="external" size={13} /></a></div>
             <small className="muted">stillworks se abhi jawab dene wale bina-key brains khud Ollama se pehle jur jate hain (zyada se zyada 6). Service band ho to purani list chalti hai. Brains Rooms (/brains) mein status lights.</small>
             <select value={form.LIVE_FREE_ENABLED || "true"} onChange={(e) => setForm({ ...form, LIVE_FREE_ENABLED: e.target.value })}>
               <option value="true">On</option>
@@ -146,7 +147,7 @@ export default function Settings({ onClose }) {
         )}
         {cfg && (
           <div className="field">
-            <div className="field-head"><b>Ollama (laptop, bina limit)</b><a href="https://ollama.com/download" target="_blank" rel="noreferrer">Download ↗</a></div>
+            <div className="field-head"><b>Ollama (laptop, bina limit)</b><a href="https://ollama.com/download" target="_blank" rel="noreferrer">Download <Icon name="external" size={13} /></a></div>
             <select value={form.OLLAMA_ENABLED || "true"} onChange={(e) => setForm({ ...form, OLLAMA_ENABLED: e.target.value })}>
               <option value="true">On</option>
               <option value="false">Off</option>
@@ -156,7 +157,7 @@ export default function Settings({ onClose }) {
         )}
         {cfg && (
           <div className="field" data-tool-keys>
-            <div className="field-head"><b>Tool keys (brain nahi)</b><a href="https://21st.dev/mcp" target="_blank" rel="noreferrer">21st key ↗</a></div>
+            <div className="field-head"><b>Tool keys (brain nahi)</b><a href="https://21st.dev/mcp" target="_blank" rel="noreferrer">21st key <Icon name="external" size={13} /></a></div>
             <small className="muted">21st MCP (UI components): optional. {cfg.TWENTYFIRST_API_KEY?.set ? `Lagi hui: ${cfg.TWENTYFIRST_API_KEY.preview}` : "Abhi key nahi."} Test: Skills → 21st MCP.</small>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               <label htmlFor="k21" className="sr">21st API key</label>

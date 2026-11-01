@@ -4,9 +4,20 @@ Free 3D AI assistant for Windows: likh kar ya bol kar baat karein. Jab ek free A
 
 **Order (v3.14):** pehle aap ke key wale brains (Groq, Gemini, OpenRouter, Z.ai, Mistral, Cohere, NVIDIA, SambaNova, Cloudflare, Hugging Face, Hetzner, Nous, Requesty, Pollinations) → bina-key free brains (Kilo, OVHcloud, LLM7, Pollinations purana host, Free.ai) → live free list (stillworks, har ghanta) → AI Horde (dheema, aakhri sahara) → Ollama (laptop, bina limit). Puter.js browser mein backup brain hai (Brains Rooms / Meta page).
 
+## Naya v3.15
+
+- **Naya saaf design (Hallmark):** ek type scale, 4/8px spacing, saaf focus ring, phone par 44px buttons. Saare emoji hata kar SVG icons.
+- **Flowstate 3D background:** Options > Display > "3D background" mein Off / Flowstate. Halka WebGL, Windows animations off par ruka hua.
+- **UI/UX Specialist:** website ka kaam ab designer specialist ke qawaid se banta hai; har bani site ka design audit score (100 ka) log mein.
+- **Tez yaad-dasht:** memory RAM cache + ek dafa ka index; 1000 yaadon par jawab ~60ms se ~2ms.
+- **Seekha hua:** har kaam ke baad sabaq (kaun sa brain chala, ghalti → hal, aap ki tasheeh, design score). /memory par dekhein ya mitayein.
+- **Research card:** "website banao / project banao" likhein to pehle milte-julte products, extra features aur stack dikhte hain. Tick karein aur Build dabayein, ya Skip.
+- **Chat export:** oopar download button se chat Markdown file mein.
+- Top AI assistants se ideas: `docs/IDEAS-FROM-TOP-ASSISTANTS.md`.
+
 ## Brains Rooms (v3.14) — localhost:3000/brains
 
-Har brain ka apna card + chat room, ek screen par 4 (2x2), Page 1..6. Card par "Key lein" link, chhupi key + Save, status light (🟢 chal rahi · 🔴 ghalat/expire · 🟡 limit, X min baad · ⚪ key nahi), key pool (+ se 2-3 keys, limit par agli). Har room ki history `~/.faheem-ai/rooms/`. Attach: tasveer sirf dekhne wale brains ko.
+Har brain ka apna card + chat room, ek screen par 4 (2x2), Page 1..6. Card par "Key lein" link, chhupi key + Save, status light (chal rahi · ghalat/expire · limit, X min baad · key nahi), key pool (+ se 2-3 keys, limit par agli). Har room ki history `~/.faheem-ai/rooms/`. Attach: tasveer sirf dekhne wale brains ko.
 Brain kaam kare to room ke kinare aur oopar patli patti par laal dots.
 
 ## Meta page (v3.14) — localhost:3000/meta
@@ -25,15 +36,15 @@ Meta AI (Muse Image) se tasveer edit: tayyar prompts + Copy, "Meta AI mein kholo
 
 ## Master Agent
 
-Har sawal Master Agent dekhta hai aur sahi expert ko deta hai: 💻 Code, 🌐 Website, ✍️ Urdu & Content, 📈 Business, ✈️ Travel, 🔎 Research. Har expert apna behtareen free AI istemal karta hai. Sidebar se khud bhi chun sakte hain. Bade kaam (browser, booking, email) ke liye **Hark se karwao** button.
+Har sawal Master Agent dekhta hai aur sahi expert ko deta hai: Code, Website, Urdu & Content, Business, Travel, Research. Har expert apna behtareen free AI istemal karta hai. Sidebar se khud bhi chun sakte hain. Bade kaam (browser, booking, email) ke liye **Hark se karwao** button.
 
 ## Self-update
 
-App khulte hi GitHub (`eswatinitravel/faheem-ai-dashboard`) par naya version check karti hai. Naya ho to sidebar mein **⬆ Abhi update karein** aata hai. Keys aur chats mehfooz rehti hain. Haath se: **UPDATE.bat**.
+App khulte hi GitHub (`eswatinitravel/faheem-ai-dashboard`) par naya version check karti hai. Naya ho to sidebar mein **Abhi update karein** aata hai. Keys aur chats mehfooz rehti hain. Haath se: **UPDATE.bat**.
 
 ## Keys
 
-App mein **⚙ Settings / Keys** dabayein aur free keys paste karein (koi card nahi):
+App mein **Settings / Keys** dabayein aur free keys paste karein (koi card nahi):
 - Groq (chat + voice): https://console.groq.com/keys
 - Gemini: https://aistudio.google.com/apikey
 - OpenRouter: https://openrouter.ai/keys
@@ -44,7 +55,7 @@ Keys sirf isi laptop par `data/keys.json` mein rehti hain. Purani `.env.local` b
 
 ## Voice
 
-🎙 dabayein, bolein, chup ho jayein: app sun kar jawab dega aur bol kar sunaye ga, phir dobara sune gi. Band karne ke liye 🎙 dobara dabayein. Pehli dafa mic **Allow** karein. Voice ke liye Groq key zaroori hai.
+dabayein, bolein, chup ho jayein: app sun kar jawab dega aur bol kar sunaye ga, phir dobara sune gi. Band karne ke liye dobara dabayein. Pehli dafa mic **Allow** karein. Voice ke liye Groq key zaroori hai.
 
 ## Rozana
 

@@ -8,7 +8,7 @@ import Gallery from "./Gallery";
 import { loadAgentation, saveAgentation } from "./AgentationDock";
 
 // v3.11: ek skill ka page — upar kaam karne wala live panel, saath mein side panel (Kaise kaam karta hai + Setup).
-const SAMPLE = '<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>body{font-family:Inter;color:#999;background:#fff}.hero{background:linear-gradient(90deg,#6366f1,#a855f7)}.card{border-left:4px solid #6366f1;border-radius:12px;transition:all .3s}</style></head><body><div class="hero"><h1>Welcome to our store</h1></div><div class="card">Card text here for testing</div><img src="a.png"><button onclick="addToCart()">🛒</button></body></html>';
+const SAMPLE = '<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>body{font-family:Inter;color:#999;background:#fff}.hero{background:linear-gradient(90deg,#6366f1,#a855f7)}.card{border-left:4px solid #6366f1;border-radius:12px;transition:all .3s}</style></head><body><div class="hero"><h1>Welcome to our store</h1></div><div class="card">Card text here for testing</div><img src="a.png"><button onclick="addToCart()">\uD83D\uDED2</button></body></html>';
 const PROMPTS = {
   impeccable: "Is screenshot ka design audit karo (Impeccable qawaid): AI-slop gradient, side-tab border, kam contrast, overused font, spacing. Har masla aur uska CSS fix batao.",
   hallmark: "Is screenshot ko Hallmark design rules se jaancho: rang/font, gradient, focus style, emoji icons, nakli reviews. Masle aur fix batao.",
@@ -32,7 +32,7 @@ function AuditResult({ d }) {
     if (r.skipped) return <p className="warnline">Tester nahi chala: {r.reason}</p>;
     return (
       <div className="auditres" data-audit>
-        <p><b>{r.ok ? "Pass ✓" : "Ghaltiyan mili ✗"}</b> · buttons {r.buttons ?? "?"}, dabaye {r.clicked ?? 0}</p>
+        <p><b>{r.ok ? "Pass" : "Ghaltiyan mili"}</b> · buttons {r.buttons ?? "?"}, dabaye {r.clicked ?? 0}</p>
         {(r.errors || []).slice(0, 20).map((e, i) => <div key={i} className="tmsg sev-error">{e}</div>)}
       </div>
     );
@@ -47,7 +47,7 @@ function AuditResult({ d }) {
   }
   return (
     <div className="auditres" data-audit>
-      <p><b>{d.clean ? "Saaf ✓ koi masla nahi" : `${d.notes.length} masle`}</b></p>
+      <p><b>{d.clean ? "Saaf koi masla nahi" : `${d.notes.length} masle`}</b></p>
       {d.notes?.map((n, i) => <div key={i} className="tmsg">{n}</div>)}
     </div>
   );
@@ -146,7 +146,7 @@ function AgentationPanel() {
       <label htmlFor="agep" className="muted">MCP endpoint (khali = sirf copy, server ke baghair)</label>
       <input id="agep" value={cfg.endpoint} onChange={(e) => set({ endpoint: e.target.value.trim() })} placeholder="http://localhost:4747" />
       {!epOk && <p className="warnline">Sirf localhost endpoint chalega (jaise http://localhost:4747).</p>}
-      <p className="muted">{cfg.on ? "Chalu ✓ — neeche daayen kone mein Agentation icon dabayein, phir kisi element par click." : "Band. Dev mode (npm run dev) mein yeh khud chalu hota hai."}</p>
+      <p className="muted">{cfg.on ? "Chalu — neeche daayen kone mein Agentation icon dabayein, phir kisi element par click." : "Band. Dev mode (npm run dev) mein yeh khud chalu hota hai."}</p>
       <h3>Agent se jorein (MCP)</h3>
       <Copy text="npx -y agentation-mcp server" />
       <Copy text={'npx add-mcp "npx -y agentation-mcp server"'} />
@@ -171,9 +171,9 @@ function LinkPanel({ skill }) {
   const [info, setInfo] = useState("");
   useEffect(() => {
     if (skill.id === "tools-board") fetch("/api/tools").then((r) => r.json()).then((d) => setInfo(`${d.providers?.length || 0} brains abhi tayyar: ${(d.providers || []).map((p) => p.id).join(", ")}`)).catch(() => {});
-    if (skill.id === "memory") fetch("/api/memory").then((r) => r.json()).then((d) => setInfo(`Memory ${d.settings?.enabled !== false ? "on ✓" : "band"} · ${d.stats?.total || 0} yaadein · max ${d.settings?.maxTokens || 300} tokens`)).catch(() => {});
+    if (skill.id === "memory") fetch("/api/memory").then((r) => r.json()).then((d) => setInfo(`Memory ${d.settings?.enabled !== false ? "on" : "band"} · ${d.stats?.total || 0} yaadein · max ${d.settings?.maxTokens || 300} tokens`)).catch(() => {});
     if (skill.id === "agent-team") setInfo("Agent Mode → 'Team' toggle. Designer → Coder → Tester → Reviewer · max 3 rounds · budget guard · fallback single agent.");
-    if (skill.id === "design-studio") fetch("/api/design?rules=impeccable").then((r) => r.json()).then((d) => setInfo(`Impeccable ${d.count} rules · engine ${d.available ? "tayyar ✓" : "nahi mila"}`)).catch(() => {});
+    if (skill.id === "design-studio") fetch("/api/design?rules=impeccable").then((r) => r.json()).then((d) => setInfo(`Impeccable ${d.count} rules · engine ${d.available ? "tayyar" : "nahi mila"}`)).catch(() => {});
   }, [skill.id]);
   return (
     <section className="card panel" data-skill-panel="link">
@@ -212,7 +212,7 @@ function PlaywrightPanel({ gallery = true }) {
         {res && (
           <div className="auditres" data-audit data-pw>
             {res.error && <p className="warnline">{res.error}</p>}
-            {res.available !== false && !res.error && <p><b>{res.ok ? "Pass ✓" : "Masle mile ✗"}</b> · {res.browser} · {res.title ? `"${res.title}" · ` : ""}buttons {res.buttons}, dabaye {res.clicked} · {(res.ms / 1000).toFixed(1)}s</p>}
+            {res.available !== false && !res.error && <p><b>{res.ok ? "Pass" : "Masle mile"}</b> · {res.browser} · {res.title ? `"${res.title}" · ` : ""}buttons {res.buttons}, dabaye {res.clicked} · {(res.ms / 1000).toFixed(1)}s</p>}
             {(res.errors || []).map((e, i) => <div key={"e" + i} className="tmsg sev-error">JS: {e}</div>)}
             {(res.failed || []).map((e, i) => <div key={"f" + i} className="tmsg sev-warning">Request: {e}</div>)}
             {res.screenshot && <a href={res.screenshot.url} target="_blank" rel="noreferrer"><img className="pwshot" src={res.screenshot.url} alt="Playwright screenshot" /></a>}
@@ -252,7 +252,7 @@ function CompoundPanel() {
   async function add(e) {
     e.preventDefault();
     const r = await fetch("/api/skills", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: "compound-engineering", action: "add", project, ...form }) }).then((x) => x.json()).catch((er) => ({ ok: false, error: er.message }));
-    setMsg(r.ok ? "Save ✓" : r.error); if (r.ok) setForm({ ...form, title: "", text: "" }); load();
+    setMsg(r.ok ? "Save" : r.error); if (r.ok) setForm({ ...form, title: "", text: "" }); load();
   }
   async function del(id) { await fetch("/api/skills", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: "compound-engineering", action: "delete", noteId: id }) }); load(); }
   return (

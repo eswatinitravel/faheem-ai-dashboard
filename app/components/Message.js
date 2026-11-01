@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Icon from "./Icon";
 
 // Renders text with ``` code blocks as copyable cards and **bold** inline.
 function Inline({ text }) {
@@ -18,7 +19,7 @@ function Code({ lang, code }) {
       <div className="code-head">
         <span>{lang || "code"}</span>
         <button type="button" onClick={() => { navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 1500); }}>
-          {copied ? "Copied ✓" : "Copy"}
+          {copied ? "Copied" : "Copy"}
         </button>
       </div>
       <pre>{code}</pre>
@@ -41,12 +42,12 @@ export default function Message({ m }) {
           {att.map((a, i) =>
             a.kind === "image" && a.dataUrl ? <a key={i} href={a.dataUrl} target="_blank" rel="noreferrer" className="att-img"><img src={a.dataUrl} alt={a.name} /></a>
             : a.kind === "video" && a.url ? <video key={i} className="att-vid" src={a.url} controls />
-            : <span key={i} className="att-file">{a.kind === "image" ? "🖼" : a.kind === "video" ? "🎬" : a.kind === "text" ? "📄" : "📎"} {a.name}</span>
+            : <span key={i} className="att-file">{a.kind === "image" ? <Icon name="image" size={14} /> : a.kind === "video" ? <Icon name="video" size={14} /> : a.kind === "text" ? <Icon name="file" size={14} /> : <Icon name="clip" size={14} />} {a.name}</span>
           )}
         </div>
       )}
       <div className="bubble">{out}</div>
-      <small className="meta">{m.role === "user" ? (m.voice ? "🎙 voice" : "") : m.meta}</small>
+      <small className="meta">{m.role === "user" ? (m.voice ? "voice" : "") : m.meta}</small>
     </div>
   );
 }

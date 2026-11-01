@@ -1,4 +1,4 @@
-// Faheem AI full test suite (v3.11: ek pipeline mein saare free brains + Auto Setup; v3.13: Agent Team + Persistent Memory; v3.14: Brains Rooms + bina-jhanjhat free brains)
+// Faheem AI full test suite (v3.15: emoji-free, wiring guard, UI/UX Specialist, Seekha hua, Research card, Flowstate, fast memory; v3.11: ek pipeline mein saare free brains + Auto Setup; v3.13: Agent Team + Persistent Memory; v3.14: Brains Rooms + bina-jhanjhat free brains)
 import fs from "fs"; import path from "path"; import os from "os"; import { execSync, spawn } from "child_process";
 const ROOT = process.env.FAHEEM_ROOT || process.cwd();
 const R = []; let cur = "";
@@ -169,7 +169,7 @@ await t("Settings: brains /api/keys se (har key page)", () => must(/fetch\("\/ap
 await t("Settings: Auto Setup paste + clipboard", () => must(/onPaste/.test(st) && /clipboard\.readText/.test(st)));
 await t("Ghalat key (email/space) pehchaan mein rad", () => must(CAT.detectKey("abc def@x.com").error));
 await t("Agent order mein zai + mistral", () => must(/"groq", "zai", "mistral"/.test(rd("lib/agent/loop.js"))));
-await t("Chat agents order mein zai + mistral", () => must((rd("lib/agents.js").match(/"zai", "mistral"/g) || []).length === 7));
+await t("Chat agents order mein zai + mistral", () => must((rd("lib/agents.js").match(/"zai", "mistral"/g) || []).length === 8) && "8 (v3.15: + UI/UX Specialist)");
 await t("/v1 API order mein zai + mistral", () => must(/"zai", "mistral"/.test(rd("app/api/v1/chat/completions/route.js"))));
 
 
@@ -314,7 +314,8 @@ await t("Home par Skills + Gallery links", () => { const h = rd("app/page.js"); 
 await t("Home: Gallery se chat handoff (sirf /api/gallery url)", () => must(/faheem-handoff/.test(rd("app/page.js")) && /startsWith\("\/api\/gallery\?file="\)/.test(rd("app/page.js"))));
 await t("Skill page: side panel 'Kaise kaam karta hai' + 'Setup'", () => { const v = rd("app/components/SkillView.js"); return must(/Kaise kaam karta hai/.test(v) && /<h3>Setup<\/h3>/.test(v) && /<aside/.test(v)); });
 await t("README + PROGRESS mein v3.11 Skills/Gallery", () => must(/## Skills \(v3\.11\)/.test(rd("README.md")) && /## Gallery \(v3\.11\)/.test(rd("README.md")) && /v3\.11\.0 \(Skills/.test(rd("PROGRESS.md"))));
-await t("Version 3.14.0", () => must(JSON.parse(rd("package.json")).version === "3.14.0"));
+const verGte = (v, min) => { const a = v.split(".").map(Number), b = min.split(".").map(Number); for (let i = 0; i < 3; i++) { if (a[i] !== b[i]) return a[i] > b[i]; } return true; };
+await t("Version 3.14.0", () => must(verGte(JSON.parse(rd("package.json")).version, "3.14.0")) && "v" + JSON.parse(rd("package.json")).version + " (3.14.0 ya naya)");
 
 // ================= v3.13 Agent Team + Persistent Memory =================
 sec("19. v3.13 Persistent Memory (lib/memory.js)");
@@ -563,12 +564,75 @@ await t("Skills guide: sab 16 skills (kya/kab/steps/misaal)", () => { const miss
 await t("Nav: Home par Brains + Meta + Guide; /skills se Guide", () => { const h = rd("app/page.js"); return must(/href="\/brains"/.test(h) && /href="\/meta"/.test(h) && /href="\/skills\/guide"/.test(h) && /href="\/skills\/guide"/.test(rd("app/skills/page.js"))); });
 await t("Puter.js sirf zaroorat par load (layout mein script nahi)", () => must(/js\.puter\.com\/v2/.test(rd("lib/puter-client.js")) && !/puter/.test(rd("app/layout.js")) && /had likhi nahi/.test(rd("lib/catalog.js"))));
 await t("NOTICE.md credits: freelm (MIT), stillworks, Puter.js, Meta", () => { const n = rd("NOTICE.md"); return must(/shihabshahrier\/freelm/.test(n) && /stillworks/.test(n) && /Puter/.test(n) && /Meta/.test(n)); });
-await t("Version 3.14.0 + PROGRESS.md v3.14 hissa", () => must(JSON.parse(rd("package.json")).version === "3.14.0" && /v3\.14\.0/.test(rd("PROGRESS.md")) && /3\.14/.test(rd("README.md"))));
+await t("Version 3.14.0 + PROGRESS.md v3.14 hissa", () => must(verGte(JSON.parse(rd("package.json")).version, "3.14.0") && /v3\.14\.0/.test(rd("PROGRESS.md")) && /3\.14/.test(rd("README.md"))));
 delete process.env.FAHEEM_ROOMS_DIR; delete process.env.FAHEEM_LIVE_DIR; // live server apne HOME mein likhe
 await t("Purana /tools waisa hi mojood (additions only)", () => must(/har brain ka chat board/.test(rd("app/tools/page.js")) && /export async function POST/.test(rd("app/api/tools/route.js"))));
 globalThis.fetch = mockFetch;
 
 // ---------- live server ----------
+// ---- v3.15 (unit) ----
+sec("29. v3.15 Emoji-free + wiring guard + design");
+const EMO = await import(path.join(ROOT, "scripts/emoji-scan.mjs"));
+for (const d of ["app", "lib", "public"]) await t(`Emoji: ${d}/ mein koi emoji codepoint nahi`, () => { const h = EMO.scan(ROOT, [d]); return must(!h.length, h.slice(0, 3).map((x) => x.file + " " + x.sample).join(" | ")); });
+for (const f of ["README.md", "PROGRESS.md", "NOTICE.md", "docs/IDEAS-FROM-TOP-ASSISTANTS.md"]) await t(`Emoji: ${f} saaf`, () => must(!EMO.scan(ROOT, [f]).length));
+await t("Emoji scanner khud emoji pakarta hai (🛒, ✅, flags)", () => must(EMO.EMOJI_RE.test("a 🛒") && EMO.EMOJI_RE.test("✅") && EMO.EMOJI_RE.test("🇵🇰") && !EMO.EMOJI_RE.test("Roman Urdu → arrow • dot ×")));
+const WG = await import(path.join(ROOT, "scripts/wiring-check.mjs"));
+const WB = JSON.parse(rd("scripts/wiring-baseline.json")); const WN = WG.inventory();
+for (const k of Object.keys(WB)) await t(`Wiring guard: ${k} (${WB[k].length}) sab mojood`, () => { const m = WG.compare({ [k]: WB[k] }, WN); return must(!m.length, m.slice(0, 4).join(" | ")) && `${WN[k].length}/${WB[k].length}`; });
+await t("Wiring guard: kuch hata do to fail karta hai", () => { const fake = JSON.parse(JSON.stringify(WN)); fake.api = fake.api.slice(1); fake.buttons = fake.buttons.map((b) => b.replace(/x(\d+)$/, (m, n) => "x" + (n - 1))); return must(WG.compare(WN, fake).length >= 2); });
+const ICON_SRC = rd("app/components/Icon.js");
+const usedIcons = new Set(); for (const f of fs.readdirSync(path.join(ROOT, "app"), { recursive: true })) { if (!/\.js$/.test(f)) continue; for (const m of rd("app/" + f).matchAll(/<Icon name="([a-z]+)"/g)) usedIcons.add(m[1]); }
+for (const n of [...usedIcons].sort()) await t(`Icon "${n}" Icon.js mein mojood (SVG)`, () => must(new RegExp(`\\n  ${n}: <`).test(ICON_SRC)));
+await t("Redesign: Hallmark layer tokens (type scale, spacing, focus ring)", () => { const c = rd("app/globals.css"); return must(/v3\.15 Hallmark redesign layer/.test(c) && /--fs-md/.test(c) && /--sp-4/.test(c) && /--ring/.test(c) && /:focus-visible/.test(c)); });
+await t("Redesign: 'transition: all' naye layer mein nahi", () => must(!/transition\s*:\s*all/.test(rd("app/globals.css").split("v3.15 Hallmark")[1])));
+await t("Redesign: phone par 44px touch targets", () => must(/min-height: 44px/.test(rd("app/globals.css").split("v3.15 Hallmark")[1])));
+
+sec("30. v3.15 Flowstate 3D background + Settings picker");
+await t("Prefs: bg3d default off, research default on", () => must(PR.DEFAULT_PREFS.bg3d === "off" && PR.DEFAULT_PREFS.research === true));
+await t("FlowBackground: WebGL, half-resolution, 30fps had, tab chhupa = ruk", () => { const s = rd("app/components/FlowBackground.js"); return must(/getContext\("webgl"/.test(s) && /scale = 0\.5/.test(s) && /now - last < 33/.test(s) && /document\.hidden/.test(s)); });
+await t("FlowBackground: reduced-motion par sirf ek frame", () => must(/prefers-reduced-motion: reduce/.test(rd("app/components/FlowBackground.js")) && /if \(reduce\) draw/.test(rd("app/components/FlowBackground.js"))));
+await t("Background: sirf bg3d=flow par Flowstate (off = purana aura)", () => must(/disp\.bg3d === "flow" && <FlowBackground/.test(rd("app/components/Background.js"))));
+await t("Options: 3D section mein picker (Off + Flowstate, sirf ek theme)", () => { const s = rd("app/options/page.js"); const opts = (s.split("data-bg3d-picker")[1] || "").split("</select>")[0].match(/<option/g) || []; return must(opts.length === 2 && /Flowstate/.test(s)); });
+await t("NOTICE: 'inspired by getlayers.ai free templates', prompts copy nahi", () => must(/inspired by getlayers\.ai free templates/.test(rd("NOTICE.md")) && !/getlayers/i.test(rd("app/components/FlowBackground.js").replace(/getlayers\.ai ke free templates se inspired/i, ""))));
+
+sec("31. v3.15 UI/UX Specialist + Seekha hua + Research");
+const UX = await import(path.join(ROOT, "lib/uiux-specialist.js"));
+await t("UI/UX Specialist prompt: Hallmark + Impeccable + UUPM qawaid", () => must(/UI\/UX Specialist/.test(UX.UIUX_PROMPT) && /DESIGN RULES/.test(UX.UIUX_PROMPT) && /44px/.test(UX.UIUX_PROMPT) && /4\.5:1/.test(UX.UIUX_PROMPT)));
+await t("UI/UX audit: kharab page ka score kam, notes ke sath", async () => { const bad = '<html><head><style>body{color:#999;background:#fff}.a{transition:all .3s;background:linear-gradient(90deg,#6366f1,#a855f7)}</style></head><body><button onclick="x()">\uD83D\uDED2</button>' + "x".repeat(300) + "</body></html>"; const r = await UX.uiuxAudit(bad); return must(r.score < 100 && r.notes.length > 0) && `score ${r.score}`; });
+await t("Specialist routing mein (agents.js: uiux)", () => must(/id: "uiux", name: "UI\/UX Specialist"/.test(rd("lib/agents.js"))));
+await t("Team Designer UI/UX Specialist prompt istemal karta hai", () => must(/specialist: "uiux"/.test(rd("lib/agent/team.js")) && /UIUX_PROMPT/.test(rd("lib/agent/team.js"))));
+await t("Website pipeline: UI/UX prompt + audit score yaad (learned)", () => { const s = rd("app/api/chat/route.js"); return must(/system\.push\(\{ role: "system", content: UIUX_PROMPT \}\)/.test(s) && /uiuxAudit\(fin\)/.test(s) && /kind: "audit"/.test(s)); });
+await t("Agent Mode: finish se pehle design_audit", () => must(/run design_audit \(UI\/UX Specialist\)/.test(rd("lib/agent/loop.js"))));
+process.env.FAHEEM_MEMORY_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "learn-"));
+const LR = await import(path.join(ROOT, "lib/learned.js"));
+await t("Seekha hua: brain nateeja save + bestBrains", () => { LR.clearLearned(); for (let i = 0; i < 3; i++) LR.addLearned({ kind: "brain", task: "web", brain: "Groq", ok: true }); LR.addLearned({ kind: "brain", task: "web", brain: "Mistral", ok: false }); LR.addLearned({ kind: "brain", task: "web", brain: "Mistral", ok: false }); return must(LR.bestBrains("web")[0] === "Groq"); });
+await t("Seekha hua: reorderByLearned kamyab brain aage", () => { const r = LR.reorderByLearned([{ id: "mistral", name: "Mistral" }, { id: "groq", name: "Groq" }], "web"); return must(r[0].id === "groq"); });
+await t("Seekha hua: ghalat kind rad, had 200", () => { const bad = LR.addLearned({ kind: "xyz" }); for (let i = 0; i < 210; i++) LR.addLearned({ kind: "fix", text: "f" + i }); return must(!bad.ok && LR.readLearned().length === LR.MAX_LEARNED); });
+await t("Seekha hua: prompt context (fix + tasheeh + audit)", () => { LR.addLearned({ kind: "correction", text: "nahi, rang safed rakho" }); LR.addLearned({ kind: "audit", task: "web", score: 82 }); const c = LR.learnedContext("web"); return must(/SEEKHA HUA/.test(c) && /tasheeh/.test(c) && /82/.test(c)); });
+await t("Seekha hua: delete + clear", () => { const id = LR.readLearned().at(-1).id; const a = LR.deleteLearned(id), b = LR.deleteLearned(id); LR.clearLearned(); return must(a.ok && !b.ok && LR.readLearned().length === 0); });
+await t("Seekha hua: user tasheeh pehchaan ('nahi ...', 'ghalat')", () => must(LR.isCorrection("nahi, yeh ghalat hai") && LR.isCorrection("ghalat rang") && !LR.isCorrection("website banao")));
+await t("Seekha hua file ~/.faheem-ai/memory/learned.json (ZIP se bahar)", () => must(/"\.faheem-ai", "memory"/.test(rd("lib/learned.js"))));
+const RS = await import(path.join(ROOT, "lib/research.js"));
+for (const [q, yes] of [["Vestire ka store website banao", true], ["project banao travel ka", true], ["ye banao: portfolio site", true], ["build me a website for my cafe", true], ["leather jacket ki picture banao", false], ["logo banao", false], ["aaj ka mausam kaisa hai", false]]) await t(`Build intent: "${q}" = ${yes}`, () => must(RS.isBuildRequest(q) === yes));
+await t("Research (offline): store = features + stack + similar", async () => { const r = await RS.researchProject("clothing store website banao", { online: false }); return must(r.kind === "Online store" && r.features.length >= 4 && r.stack.length >= 2 && r.similar.length >= 2); });
+await t("Research: anjaan kaam par general suggestions", () => must(RS.localIdeas("kuch naya banao").features.length >= 3));
+await t("Research LIVE (GitHub/DDG, 5s timeout, fail = offline)", async () => { const r = await RS.researchProject("restaurant menu website banao"); return must(r.features.length >= 3) && r.sources.join("+"); });
+await t("Front: research card + Skip + Build wired (page.js)", () => { const s = rd("app/page.js"), c = rd("app/components/ResearchCard.js"); return must(/isBuildRequest\(text\)/.test(s) && /skipResearch: true/.test(s) && /data-research-skip/.test(c) && /data-research-build/.test(c) && /data-research-feature/.test(c)); });
+await t("Chat export (Open WebUI/LobeHub idea) button", () => must(/data-export-chat/.test(rd("app/page.js")) && /text\/markdown/.test(rd("app/page.js"))));
+await t("Version 3.15.0 (package.json) + README/PROGRESS v3.15", () => must(JSON.parse(rd("package.json")).version === "3.15.0" && /v3\.15\.0/.test(rd("PROGRESS.md")) && /v3\.15/.test(rd("README.md"))));
+await t("Ideas doc: 8 assistants + stars", () => { const d = rd("docs/IDEAS-FROM-TOP-ASSISTANTS.md"); return must((d.match(/^\| \d \|/gm) || []).length === 8 && /Hermes Agent/.test(d) && /Cline/.test(d)); });
+
+sec("32. v3.15 Fast memory (cache + index + debounce)");
+const MBASE = fs.mkdtempSync(path.join(os.tmpdir(), "memfast-")); process.env.FAHEEM_MEMORY_DIR = MBASE;
+const MF = await import(path.join(ROOT, "lib/memory.js") + "?fast");
+MF.clearMemories(); for (let i = 0; i < 400; i++) MF.addMemory({ type: "note", title: "Item " + i, text: `cart checkout banner ${i} vestire ` + "word".repeat(i % 7) });
+await t("Memory cache: dobara parhna file nahi kholta (cacheHits badhe)", () => { const a = MF.memPerf.reads, h = MF.memPerf.cacheHits; MF.listMemories(); MF.listMemories(); return must(MF.memPerf.reads === a && MF.memPerf.cacheHits >= h + 2); });
+await t("Memory cache: bahar se file badli to taaza parhta hai", async () => { await new Promise((r) => setTimeout(r, 20)); const f = path.join(MBASE, "memories.jsonl"); fs.appendFileSync(f, JSON.stringify({ id: "ext12345", type: "note", title: "Bahar", text: "bahar se likhi yaad" }) + "\n"); return must(MF.listMemories().some((x) => x.id === "ext12345")); });
+await t("Memory index: search ek dafa index banata hai, baar baar nahi", () => { MF.searchMemories("cart"); const b = MF.memPerf.indexBuilds; for (let i = 0; i < 10; i++) MF.searchMemories("banner vestire " + i); return must(MF.memPerf.indexBuilds === b); });
+await t("Memory speed: 400 yaadon par memoryContext < 15ms (avg)", () => { const t0 = performance.now(); for (let i = 0; i < 30; i++) MF.memoryContext("cart checkout " + i); const ms = (performance.now() - t0) / 30; return must(ms < 15, ms.toFixed(2)) && `${ms.toFixed(2)} ms`; });
+await t("Memory: uses ginti debounce (flushUses se file mein)", () => { const w = MF.memPerf.writes; MF.memoryContext("cart"); const noWrite = MF.memPerf.writes === w; MF.flushUses(); const f = fs.readFileSync(path.join(MBASE, "memories.jsonl"), "utf8"); return must(noWrite && /"uses":[1-9]/.test(f)); });
+await t("Memory: warmMemory (startup par load)", () => must(MF.warmMemory() >= 400 && /warmMemory\(\)/.test(rd("app/api/chat/route.js"))));
+
 sec("10. Live server (next start)");
 const PORT = 3177; const GDIR = path.join(tmp, "gallery"); const LMEM = path.join(tmp, "memory-live"); const env = { ...process.env, PORT: String(PORT), HOME: tmp, NODE_ENV: "production", FAHEEM_GALLERY_DIR: GDIR, FAHEEM_MEMORY_DIR: LMEM };
 const srv = spawn("npx", ["next", "start", "-p", String(PORT)], { cwd: ROOT, env, stdio: "ignore", detached: true });
@@ -584,7 +648,7 @@ await t("/api/tools POST: khali message = 400", async () => { const r = await re
 await t("/api/tools POST: ghalat JSON se crash nahi", async () => { const r = await realFetch(base + "/api/tools", { method: "POST", headers: { "content-type": "application/json" }, body: "{bad" }); return must(r.status === 404 || r.status === 400); });
 await t("Tools chat board: Kilo se asli baat (1 by 1)", async () => { const d = await (await realFetch(base + "/api/tools", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ provider: "kilo", messages: [{ role: "user", content: "Say hi in 3 words" }] }) })).json(); return must(d.ok, d.error) && `${(d.ms / 1000).toFixed(1)}s: ${d.text.slice(0, 40)}`; });
 await t("Tools chat board: Ollama band ho to saaf error (crash nahi)", async () => { const d = await (await realFetch(base + "/api/tools", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ provider: "ollama", messages: [{ role: "user", content: "hi" }] }) })).json(); return must(d.ok === false && d.error) && d.error.slice(0, 60); });
-await t("/api/chat GET: agents + brains", async () => { const d = await (await get("/api/chat")).json(); return must(d.agents.length === 7 && d.providers.length >= 3); });
+await t("/api/chat GET: agents + brains", async () => { const d = await (await get("/api/chat")).json(); return must(d.agents.length === 8 && d.agents.some((a) => a.id === "uiux") && d.providers.length >= 3); });
 await t("/api/keys GET: 20 brains ki list (v3.14: +3)", async () => { const d = await (await get("/api/keys")).json(); return must(d.brains.length === 20) && `${d.brains.filter((b) => b.active).length} active`; });
 await t("/api/keys auto: ghalat key rad", async () => { const d = await (await realFetch(base + "/api/keys", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "auto", key: "gsk_" + "x".repeat(48) }) })).json(); return must(!d.ok && /Groq/.test(d.error), d.error); });
 await t("/api/keys auto: bina prefix ghalat key kisi ne qubool nahi ki", async () => { const d = await (await realFetch(base + "/api/keys", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "auto", key: "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz" }) })).json(); return must(!d.ok, JSON.stringify(d)); });
@@ -725,6 +789,16 @@ await t("Browser: key input password type + Save ke baad masked chip", () => pag
 await t("Browser: /meta paid switch default OFF, Paid button band", () => pageErrors("/meta", async (pg) => { await pg.waitForSelector("[data-paid-toggle]"); const on = await pg.isChecked("[data-paid-toggle]"); const dis = await pg.isDisabled("[data-paid-run]"); const warn = await pg.textContent("[data-paid-warning]"); must(!on && dis && /\$0\.01 har tasveer/.test(warn), [on, dis, warn].join()); return "OFF + disabled + warning"; }));
 await t("Browser: /meta 5 templates + 'Meta AI mein kholo' button", () => pageErrors("/meta", async (pg) => { const n = await pg.$$eval("[data-template]", (e) => e.length); const b = await pg.textContent("[data-open-meta]"); must(n === 5 && /Meta AI mein kholo/.test(b)); return n + " templates"; }));
 await t("Browser: /skills/guide 16 cards + /skills par Guide link", () => pageErrors("/skills", async (pg) => { const has = await pg.$("[data-guide-link]"); await pg.goto(base + "/skills/guide", { waitUntil: "networkidle" }); const n = await pg.$$eval("[data-guide]", (e) => e.length); must(has && n === 16, String(n)); return n + " cards"; }));
+
+// ---- v3.15 live ----
+sec("33. v3.15 Live server: research, learned, pages");
+await t("/api/research: build intent + suggestions", async () => { const d = await (await postJ("/api/research", { text: "Vestire store website banao", online: false })).json(); return must(d.ok && d.isBuild && d.research.features.length >= 4); });
+await t("/api/research: khali text 400, bahar se 403", async () => { const a = await postJ("/api/research", { text: "" }); const http = await import("http"); const c = await new Promise((res) => { const q = http.request({ host: "127.0.0.1", port: PORT, path: "/api/research", method: "POST", headers: { Host: "evil.example.com", "content-type": "application/json" } }, (r) => { r.resume(); res(r.statusCode); }); q.on("error", () => res(0)); q.end("{}"); }); return must(a.status === 400 && c === 403, a.status + " " + c); });
+await t("/api/memory?learned=1 + learnedClear tasdeeq", async () => { const d = await (await get("/api/memory?learned=1")).json(); const c = await postJ("/api/memory", { action: "learnedClear" }); return must(d.ok && Array.isArray(d.items) && c.status === 400); });
+await t("Browser: front page par research card (Build + Skip + checkboxes)", () => pageErrors("/", async (pg) => { await pg.route("**/api/research", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, isBuild: true, research: { kind: "Online store", similar: ["A"], features: ["Wishlist", "Size chart"], stack: ["HTML"], sources: ["x"] } }) })); await pg.fill(".composer textarea", "Vestire store website banao"); await pg.keyboard.press("Enter"); await pg.waitForSelector("[data-research-card] [data-research-build]", { timeout: 8000 }); const n = await pg.$$eval("[data-research-feature]", (e) => e.length); const sk = await pg.$("[data-research-skip]"); must(n === 2 && sk, String(n)); return "card + 2 features + skip"; }));
+await t("Browser: /options 3D background picker → Flowstate canvas front par", () => pageErrors("/options", async (pg) => { await pg.selectOption("[data-bg3d-picker]", "flow"); const v = await pg.evaluate(() => JSON.parse(localStorage.getItem("faheem-ai-prefs") || "{}").bg3d); await pg.goto(base + "/", { waitUntil: "networkidle" }); await pg.waitForTimeout(600); const c = await pg.$("[data-flowbg]"); await pg.evaluate(() => { const p = JSON.parse(localStorage.getItem("faheem-ai-prefs") || "{}"); p.bg3d = "off"; localStorage.setItem("faheem-ai-prefs", JSON.stringify(p)); }); must(v === "flow" && c, v); return "flow canvas on"; }));
+await t("Browser: /memory 'Seekha hua' section", () => pageErrors("/memory", async (pg) => { await pg.waitForSelector("[data-learned]"); return "section dikha"; }));
+await t("Browser: front page par koi emoji text nahi (DOM)", () => pageErrors("/", async (pg) => { const txt = await pg.evaluate(() => document.body.innerText); must(!EMO.EMOJI_RE.test(txt), txt.match(EMO.EMOJI_RE_G)?.join("")); return "0 emoji"; }));
 
 try { await PWB?.close(); } catch {}
 try { process.kill(-srv.pid); } catch {}

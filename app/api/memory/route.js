@@ -1,5 +1,7 @@
 import { listMemories, searchMemories, addMemory, updateMemory, deleteMemory, clearMemories, getSettings, setSettings, exportMemories, importMemories, memoryStats, memoryContext, TYPES, TYPE_LABEL } from "../../../lib/memory.js";
 
+import { readLearned, deleteLearned, clearLearned, bestBrains } from "../../../lib/learned.js";
+
 export const dynamic = "force-dynamic";
 
 function isLocal(req) {
@@ -15,6 +17,7 @@ export async function GET(req) {
   if (u.searchParams.get("export")) {
     return new Response(JSON.stringify(exportMemories(), null, 2), { headers: { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": `attachment; filename="faheem-memory-${new Date().toISOString().slice(0, 10)}.json"` } });
   }
+  if (u.searchParams.get("learned")) return Response.json({ ok: true, items: readLearned(), best: { web: bestBrains("web"), text: bestBrains("text") } });
   const preview = u.searchParams.get("preview");
   if (preview !== null) return Response.json({ ok: true, context: memoryContext(preview, { project: u.searchParams.get("project") || "" }) });
   const q = (u.searchParams.get("q") || "").trim(), type = u.searchParams.get("type") || "";
@@ -31,6 +34,8 @@ export async function POST(req) {
   if (a === "add") r = addMemory(b.item || b);
   else if (a === "update") r = updateMemory(String(b.id || ""), b.item || b);
   else if (a === "delete") r = deleteMemory(String(b.id || ""));
+  else if (a === "learnedDelete") r = deleteLearned(String(b.id || ""));
+  else if (a === "learnedClear") r = b.confirm === "haan" ? clearLearned() : { ok: false, error: "Tasdeeq chahiye (confirm: haan)" };
   else if (a === "settings") r = { ok: true, settings: setSettings(b.settings || b) };
   else if (a === "import") r = importMemories(b.data, { mode: b.mode === "replace" ? "replace" : "merge" });
   else if (a === "clear") r = b.confirm === "haan" ? clearMemories() : { ok: false, error: "Tasdeeq chahiye (confirm: haan)" };

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ur">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; media-src 'self' blob: data:; connect-src 'self'">
+<title>Hey Puppy</title>
+<link rel="stylesheet" href="chat.css">
+</head>
+<body>
+<header>
+  <b id="title">Puppy</b><span id="moodchip" class="chip">happy</span>
+  <nav>
+    <button class="tab on" data-tab="chat">Chat</button>
+    <button class="tab" data-tab="log">Kaam ka log</button>
+    <button class="tab" data-tab="memory">Yaad</button>
+    <button class="tab" data-tab="settings">Settings</button>
+  </nav>
+</header>
+<main>
+  <section id="chat" class="pane on">
+    <div id="msgs" aria-live="polite"></div>
+    <div id="cards"></div>
+    <div id="status" class="muted"></div>
+    <form id="composer">
+      <button type="button" id="mic" title="Bolein (Ctrl+Shift+Space)" aria-label="Bolein">Mic</button>
+      <input id="input" aria-label="Message" placeholder="Urdu ya English mein likhein..." autocomplete="off">
+      <button type="submit" id="send">Bhejo</button>
+    </form>
+  </section>
+  <section id="log" class="pane"><div id="loglist"></div></section>
+  <section id="memory" class="pane"><div id="memlist"></div></section>
+  <section id="settings" class="pane">
+    <form id="setform">
+      <label>Groq free key (console.groq.com/keys)<input name="GROQ_API_KEY" type="password" autocomplete="off"></label>
+      <label>Groq model<input name="GROQ_MODEL" placeholder="openai/gpt-oss-20b"></label>
+      <label>Ollama model (laptop par, 2B-4B)<input name="OLLAMA_MODEL" placeholder="qwen2.5:3b"></label>
+      <label>Avatar<select name="avatar"><option value="puppy">Safed 3D puppy</option><option value="orb">Glowing orb (Meta AI jaisa)</option></select></label>
+      <label>Zabaan<select name="lang"><option value="auto">Auto (Urdu / English)</option><option value="ur">Urdu</option><option value="roman-ur">Roman Urdu</option><option value="en">English</option></select></label>
+      <label class="row"><input type="checkbox" name="roam"> Puppy screen par ghoome</label>
+      <label class="row"><input type="checkbox" name="wake"> "Hey Puppy" wake word (hamesha sunta hai - Groq free limit zyada lagti hai)</label>
+      <p class="muted">Chrome extension token: <code id="token"></code> (port <span id="port"></span>)</p>
+      <button type="submit">Save</button> <span id="saved" class="muted"></span>
+    </form>
+  </section>
+</main>
+<script src="chat.js"></script>
+</body>
+</html>

@@ -4,10 +4,17 @@ Free 3D AI assistant for Windows: likh kar ya bol kar baat karein. Jab ek free A
 
 **Order (v3.14):** pehle aap ke key wale brains (Groq, Gemini, OpenRouter, Z.ai, Mistral, Cohere, NVIDIA, SambaNova, Cloudflare, Hugging Face, Hetzner, Nous, Requesty, Pollinations) → bina-key free brains (Kilo, OVHcloud, LLM7, Pollinations purana host, Free.ai) → live free list (stillworks, har ghanta) → AI Horde (dheema, aakhri sahara) → Ollama (laptop, bina limit). Puter.js browser mein backup brain hai (Brains Rooms / Meta page).
 
+## Naya v3.16
+
+- **Project Builder ZIP:** main chat mein likhein "todo website bana kar zip do" (ya "project bana do zip", "zip folder do"). Planner file list banata hai, Builder har file likhta hai, Tester bina AI jaanchta hai (node --check, JSON, HTML, Python syntax, browser test), Fixer had ke andar theek karta hai, phir ZIP: project + README.md (Roman Urdu) + INSTALL.bat + START.bat + setup.sh + .env.example. Chat mein download card (size, files, sachcha test result: tests fail hon to "Tayyar" nahi likhta). Agent Mode mein har project ke liye **ZIP** button + **ZIP history** (dobara download / hatao). ZIP files: `C:\Users\<naam>\.faheem-ai\zips`.
+- **Private Assistant Builder (Hey Puppy):** main chat mein likhein "mere laptop ke liye free AI assistant banao" (ya "hey puppy assistant bana do"). Pehle research card: is hafte ka GitHub trending + top assistants (OpenClaw, Hermes Agent, nanobot, QwenPaw, AstrBot, Orkas) ke sab se zyada maange gaye features, tick karein, phir Build. Natija ek ZIP: **Hey Puppy** - Electron desktop app jis mein safed 3D puppy (9 jazbaat: khush, excited, udaas, neend, curious, sun raha, soch raha, playful, pyar) screen ke neeche ghoomta hai, ya "Glowing orb" avatar. Urdu / English awaz (Groq Whisper free key + Edge ki free ur-PK Uzma awaz), Ctrl+Shift+Space push-to-talk, Chrome extension (page parhna; fill / click sirf Allow par), har kaam se pehle Allow / Deny, yaad + "seekha hua" sabaq, skills folder, Telegram ikhtiyari. Dimagh sirf free: Groq key ya Ollama (qwen2.5:3b). AI sirf naam / shakhsiyat aur 3 skills likhta hai; brain band ho to bhi default Puppy chalne wala ZIP milta hai. Code: `templates/hey-puppy`, `lib/agent/assistant-zip.js`, `lib/assistant-research.js`.
+- **Poora naya design "Linear Ink" (Linear/Vercel 2026 andaaz + Hallmark qawaid):** near-black base, patli 1px lines, baayen sidebar jo sirf icons tak chhota hota hai, version chip (v3.16.0), AI jawab apni surface par, dense tables, docked composer. Rang purane hi: laal-coral buttons, violet/blue/teal/pink chips, green/amber/red status. Design audit score har page par ~55 se ~90-96.
+- **Background:** main chatboard par "Purple Desert" video (getlayers.ai free layer) default; Options > Display > Background: Purple Desert / DNA (apna 3D helix) / Off. Windows animations off par ruki hui tasveer. Purana 3D orb waisa hi.
+- v3.15 ka Flowstate background hata diya gaya.
+
 ## Naya v3.15
 
 - **Naya saaf design (Hallmark):** ek type scale, 4/8px spacing, saaf focus ring, phone par 44px buttons. Saare emoji hata kar SVG icons.
-- **Flowstate 3D background:** Options > Display > "3D background" mein Off / Flowstate. Halka WebGL, Windows animations off par ruka hua.
 - **UI/UX Specialist:** website ka kaam ab designer specialist ke qawaid se banta hai; har bani site ka design audit score (100 ka) log mein.
 - **Tez yaad-dasht:** memory RAM cache + ek dafa ka index; 1000 yaadon par jawab ~60ms se ~2ms.
 - **Seekha hua:** har kaam ke baad sabaq (kaun sa brain chala, ghalti → hal, aap ki tasheeh, design score). /memory par dekhein ya mitayein.

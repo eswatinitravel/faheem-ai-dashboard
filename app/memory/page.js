@@ -84,7 +84,7 @@ export default function MemoryPage() {
           <div className="memactions">
             <a className="ghost linkbtn" href="/api/memory?export=1" download><Icon name="download" size={14} /> Export (JSON)</a>
             <button className="ghost" onClick={() => fileRef.current?.click()}><Icon name="upload" size={14} /> Import</button>
-            <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={(e) => { importFile(e.target.files?.[0]); e.target.value = ""; }} />
+            <input ref={fileRef} aria-label="File chunein" type="file" accept="application/json,.json" hidden onChange={(e) => { importFile(e.target.files?.[0]); e.target.value = ""; }} />
           </div>
           <p className="muted small">Jagah: <code>{stats?.dir || "~/.faheem-ai/memory"}</code> — ZIP update se nahi mitti (keys.json ki tarah).</p>
         </section>

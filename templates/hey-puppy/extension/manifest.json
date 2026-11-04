@@ -1,0 +1,9 @@
+{
+  "manifest_version": 3,
+  "name": "Hey Puppy - Browser Helper",
+  "version": "1.0.0",
+  "description": "Current page Hey Puppy ko bhejein: khulasa, sawal, aur fill/click sirf aap ke Allow ke baad.",
+  "action": { "default_popup": "popup.html", "default_title": "Hey Puppy" },
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["http://127.0.0.1:7341/*"]
+}

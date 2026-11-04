@@ -1,4 +1,4 @@
-# NOTICE — Third-party credits (Faheem AI Dashboard v3.15.0)
+# NOTICE — Third-party credits (Faheem AI Dashboard v3.16.0)
 
 Yeh dashboard in open-source projects ko istemal karta hai. Har ek ka license aur notice yahan mehfooz hai.
 
@@ -79,10 +79,22 @@ For more information, see https://polyformproject.org/licenses/shield/1.0.0
 
 ---
 
-## v3.15 — Hallmark redesign, UI/UX Specialist, Seekha hua, Research card, Flowstate background (sab apna code)
+## v3.15 — Hallmark redesign, UI/UX Specialist, Seekha hua, Research card (sab apna code)
 
 - **Lucide icons (lucide.dev), ISC License** — `app/components/Icon.js` ki SVG shapes (v3.15 mein emoji ki jagah poora set). Copyright (c) Lucide Contributors.
-- **Flowstate 3D background** (`app/components/FlowBackground.js`) — *inspired by getlayers.ai free templates* (Flowstate/Soda/Gravity jaisa andaaz). Apna WebGL shader likha; GetLayers ka koi prompt, code ya tasveer shamil nahi (un ki terms prompts dobara baantne se mana karti hain).
+- Background video "Purple Desert" from getlayers.ai (free layer) — `public/backgrounds/purple-desert.mp4` + poster, main chatboard ka default background (v3.16). "DNA" option apna Three.js code hai (GetLayers ka premium DNA istemal nahi hua).
+- v3.16: v3.15 ka "Flowstate" 3D background (getlayers.ai se inspired) poori tarah hata diya gaya; us ka koi code ab shamil nahi.
 - **UI/UX Specialist** (`lib/uiux-specialist.js`) — Hallmark (MIT), Impeccable (Apache-2.0), UI UX Pro Max (MIT) ke qawaid par mabni apna prompt. plugin87/ux-ui-agent-skills ka code istemal nahi kiya.
 - **Ideas (code nahi):** NousResearch Hermes Agent (MIT) — self-improvement; Open WebUI aur LobeHub — chat export; Cline (Apache-2.0) — plan pehle, act baad mein; OpenHands (MIT), AnythingLLM (MIT), Jan, Continue (Apache-2.0) — `docs/IDEAS-FROM-TOP-ASSISTANTS.md`.
 - **Research card** free public APIs parhta hai: GitHub search API (bina key) aur DuckDuckGo Instant Answer API (bina key), apni terms ke tehat.
+
+## v3.16 — Private Assistant Builder: Hey Puppy template (`templates/hey-puppy`, apna code)
+
+Dashboard sirf template ki files ZIP mein daalta hai; neeche wali dependencies user ke laptop par `npm install` se aati hain (dashboard mein bundle nahi).
+- **3D puppy aur glowing orb** — is project ka apna Three.js code (procedural shapes). Koi bahar ka 3D model, Live2D ya premium asset nahi.
+- **three.js** — MIT License, Copyright (c) 2010-2026 three.js authors (https://threejs.org).
+- **Electron** — MIT License, Copyright (c) Electron contributors / OpenJS Foundation (https://www.electronjs.org).
+- **msedge-tts** (npm) — MIT License. Microsoft Edge "Read aloud" ki free online awazein (jaise ur-PK-UzmaNeural) istemal karta hai; yeh Microsoft ki official public API nahi, kabhi band ho sakti hai, is liye Windows ki apni awaz fallback hai.
+- **Groq** (user ki apni free key, Whisper STT + chat) aur **Ollama** (MIT, laptop par local) — services, code shamil nahi.
+- **Telegram Bot API** — ikhtiyari bridge, user ka apna bot token. WhatsApp abhi shamil nahi.
+- **Ideas (code nahi):** OpenClaw, NousResearch Hermes Agent (MIT), nanobot, QwenPaw, AstrBot, Orkas — features ki list aur "pehle ijazat" andaaz. Research ke liye github.com/trending (public page) aur GitHub search API (bina key) parhe jate hain.

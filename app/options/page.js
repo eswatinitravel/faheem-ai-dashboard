@@ -7,6 +7,8 @@ import Background from "../components/Background";
 import ThemeBalls from "../components/ThemeBalls";
 import VersionBadge from "../components/VersionBadge";
 import { loadPrefs, savePrefs } from "../../lib/prefs";
+import pkg from "../../package.json";
+const APP_VERSION = pkg.version;
 
 // Doosra page: saare options yahan, front page sirf chat ke liye saaf.
 export default function Options() {
@@ -52,6 +54,7 @@ export default function Options() {
       <header className="topbar">
         <Link href="/" className="icon-btn" title="Wapas chat" aria-label="Wapas chat"><Icon name="back" /></Link>
         <div className="brand"><img src="/icon.png" alt="" className="logo" /> Options</div>
+        <span className="verchip" data-version-chip title="Installed version">v{APP_VERSION}</span>
         <div className="top-actions"><span className="ok-text">{saved}</span><Link href="/brains" className="icon-btn" title="Brains Rooms (status lights)" aria-label="Brains"><Icon name="users" /></Link><Link href="/skills" className="icon-btn" title="Skills" aria-label="Skills"><Icon name="grid" /></Link><Link href="/memory" className="icon-btn" title="Yaad-dasht (Memory)" aria-label="Memory"><Icon name="brain" /></Link><Link href="/gallery" className="icon-btn" title="Gallery" aria-label="Gallery"><Icon name="image" /></Link><Link href="/flights" className="icon-btn" title="Flights" aria-label="Flights"><Icon name="globe" /></Link><ThemeBalls /></div>
       </header>
 
@@ -84,6 +87,7 @@ export default function Options() {
             <h3><Icon name="users" size={15} /> Agent Team (Team mode)</h3>
             <label className="toggle"><input type="checkbox" checked={!!prefs.teamMode} onChange={(e) => set("teamMode", e.target.checked)} data-team-option /><span>Agent Mode mein bare kaam team se: Designer → Coder → Tester → Reviewer</span></label>
             <label className="toggle"><input type="checkbox" checked={prefs.research !== false} onChange={(e) => set("research", e.target.checked)} data-research-option /><span>Project/website banane se pehle research card (milte-julte products, extra features, stack)</span></label>
+            <label className="toggle"><input type="checkbox" checked={prefs.projectZip !== false} onChange={(e) => set("projectZip", e.target.checked)} data-projectzip-option /><span>Project Builder ZIP: chat mein "bana kar zip do" likhein to poora project ZIP (INSTALL.bat + README) ban kar aata hai</span></label>
             <small className="muted">Default band. Sirf website/store/kai files wale kaam. Har role apna free brain; max 3 rounds, ~60k token aur 10 calls ki had (free limit bachat). Brains limit par hon to khud purana single Agent Mode chalta hai. Board: project folder mein team.json.</small>
           </section>
 
@@ -103,12 +107,13 @@ export default function Options() {
               <option value="4k">4K Ultra (3840px saaf render)</option>
               <option value="8k">8K Extreme (7680px, sirf taqatwar GPU)</option>
             </select>
-            <label className="muted">3D background (chatboard)</label>
-            <select value={prefs.bg3d || "off"} onChange={(e) => set("bg3d", e.target.value)} data-bg3d-picker>
-              <option value="off">Off (purana aura + dots)</option>
-              <option value="flow">Flowstate — behti 3D rang lehren (halka WebGL)</option>
+            <label className="muted" htmlFor="bgscene-picker">Background (main chatboard)</label>
+            <select id="bgscene-picker" value={prefs.bgScene || "desert"} onChange={(e) => set("bgScene", e.target.value)} data-bgscene-picker>
+              <option value="desert">Purple Desert (GetLayers free video)</option>
+              <option value="dna">DNA (apna 3D helix, halka)</option>
+              <option value="off">Off</option>
             </select>
-            <small className="muted">Windows "animations off" (reduced motion) par ruka hua frame. getlayers.ai free templates se inspired, apna code.</small>
+            <small className="muted">Windows "animations off" (reduced motion) par ruki hui tasveer. Tab chhupa ho to background ruk jata hai.</small>
             <label className="muted">3D orb (Three.js)</label>
             <select value={prefs.fx3d} onChange={(e) => set("fx3d", e.target.value)}>
               <option value="off">Band</option>

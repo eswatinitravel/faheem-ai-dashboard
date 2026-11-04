@@ -1,0 +1,6 @@
+{
+  "_note": "MCP-ready: tools/registry ki list MCP 'tools/list' jaisi hai. Baad mein yahan MCP servers likhein (sirf free / local). Abhi Hey Puppy khud MCP client nahi chalata.",
+  "servers": {
+    "filesystem": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem", "C:/Users/YOU/Documents"], "enabled": false }
+  }
+}

@@ -110,7 +110,7 @@ export default function MetaPage() {
               onPaste={(e) => { if (e.clipboardData?.files?.length) pick(e.clipboardData.files); }}>
               {img ? <img src={img} alt={imgName || "chuni hui tasveer"} /> : <span className="muted">Click, drag-drop ya Ctrl+V — PNG/JPG/WEBP</span>}
             </div>
-            <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => { pick(e.target.files); e.target.value = ""; }} />
+            <input ref={fileRef} aria-label="File chunein" type="file" accept="image/*" hidden onChange={(e) => { pick(e.target.files); e.target.value = ""; }} />
             {gallery.length > 0 && <><small className="muted">Gallery se:</small><div className="gthumbs">{gallery.map((f) => <img key={f.name} src={f.url} alt={f.original || f.name} title={f.original || f.name} onClick={() => fromGallery(f)} />)}</div></>}
             <b>2. Prompt (tayyar templates)</b>
             {META_TEMPLATES.map((t) => (
@@ -149,7 +149,7 @@ export default function MetaPage() {
 
             <b style={{ marginTop: 6 }}>4. Natija</b>
             <div className="metaout">{out ? <img src={out} alt="Edit ki hui tasveer" /> : <span className="muted">Meta AI se download ki hui tasveer yahan daalein, ya Puter/Paid ka natija yahan aayega.</span>}</div>
-            <label className="ghost linkbtn" style={{ cursor: "pointer", width: "fit-content" }}>Natija ki tasveer chunein<input type="file" accept="image/*" hidden data-result-input onChange={async (e) => { const f = e.target.files?.[0]; if (f) setOut(await readFileAsDataUrl(f)); e.target.value = ""; }} /></label>
+            <label className="ghost linkbtn" style={{ cursor: "pointer", width: "fit-content" }}>Natija ki tasveer chunein<input type="file" aria-label="Natija ki tasveer" accept="image/*" hidden data-result-input onChange={async (e) => { const f = e.target.files?.[0]; if (f) setOut(await readFileAsDataUrl(f)); e.target.value = ""; }} /></label>
             {out && <div className="btnrow"><button onClick={saveToGallery}><Icon name="download" size={14} /> Gallery mein save</button><a className="linkbtn ghost" href={out} download={`meta-edit-${Date.now()}.png`}>Download</a></div>}
             {msg && <small data-meta-msg>{msg}</small>}
           </section>

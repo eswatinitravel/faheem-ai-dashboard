@@ -6,6 +6,7 @@ import Background from "../components/Background";
 import VersionBadge from "../components/VersionBadge";
 import { prepareFiles } from "../../lib/attach";
 import { loadPrefs, savePrefs } from "../../lib/prefs";
+import ZipCard, { ZipHistory } from "../components/ZipCard";
 
 const ICON = { list_files: <Icon name="folder" size={14} />, read_file: <Icon name="file" size={14} />, write_file: <Icon name="edit" size={14} />, edit_file: <Icon name="edit" size={14} />, delete_file: <Icon name="trash" size={14} />, search: <Icon name="search" size={14} />, run_command: <Icon name="play" size={14} />, check: <Icon name="dot" size={14} />, test: <Icon name="dot" size={14} />, web_fetch: <Icon name="globe" size={14} />, image_url: <Icon name="palette" size={14} /> };
 
@@ -24,6 +25,8 @@ export default function AgentPage() {
   const [imgs, setImgs] = useState([]);
   const [stamp, setStamp] = useState(Date.now());
   const [team, setTeam] = useState(false); // v3.13 Team mode (default band)
+  const [zipCard, setZipCard] = useState(null); // v3.16 ZIP button ka card
+  const [zipBusy, setZipBusy] = useState(false);
   const ctrlRef = useRef(null);
   const endRef = useRef(null);
   const fileRef = useRef(null);
@@ -99,6 +102,17 @@ export default function AgentPage() {
     setBusy(false); loadFiles(); setStamp(Date.now());
   }
 
+  // v3.16: is project ka ZIP (README + INSTALL.bat + setup.sh + .env.example ke sath; tests bina AI).
+  async function makeZip() {
+    if (!project) return;
+    setZipBusy(true); setZipCard(null);
+    try {
+      const d = await fetch("/api/agent/zip", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "package", project }) }).then((r) => r.json());
+      if (d.ok) { setZipCard(d.card); window.dispatchEvent(new Event("faheem-zip-changed")); } else alert(d.error || "ZIP nahi bana.");
+    } catch (e) { alert(e.message); }
+    setZipBusy(false);
+  }
+
   async function undo() {
     const d = await fetch("/api/agent/undo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project }) }).then((r) => r.json());
     setEvents((e) => [...e, { type: "thought", text: "" + d.message }]);
@@ -127,6 +141,7 @@ export default function AgentPage() {
           <label className="teamtoggle" title="Team mode: Designer → Coder → Tester → Reviewer (sirf bare kaam: website/store). Brains limit par hon to khud single agent."><input type="checkbox" checked={team} onChange={(e) => toggleTeam(e.target.checked)} disabled={busy} data-team-toggle /><Icon name="users" size={15} /> Team</label>
           <button className="icon-btn" title="Naya project" aria-label="Naya project" onClick={newProject} disabled={busy}><Icon name="plus" /></button>
           <button className="icon-btn" title="Aakhri run wapas (Undo)" aria-label="Undo" onClick={undo} disabled={busy}><Icon name="undo" /></button>
+          <button className="icon-btn agentlink" title="Is project ka ZIP (INSTALL.bat + README ke sath)" aria-label="Project ZIP" onClick={makeZip} disabled={busy || zipBusy || !project} data-agent-zip><Icon name="box" size={15} /> {zipBusy ? "ZIP..." : "ZIP"}</button>
           <Link className="icon-btn" href="/options" title="Options" aria-label="Options"><Icon name="more" /></Link>
         </div>
       </header>
@@ -144,6 +159,8 @@ export default function AgentPage() {
             <div className="ag-h" style={{ marginTop: 12 }}>{team ? "Team board" : "Plan"}</div>
             {todo.map((t, i) => <div key={i} className={"ag-todo" + (/^\s*\[x\]/i.test(t) ? " done" : "")}>{t.replace(/^\s*\[[ x]\]\s*/i, /^\s*\[x\]/i.test(t) ? "" : "○ ")}</div>)}
           </>)}
+          {zipCard && <ZipCard card={zipCard} />}
+          <ZipHistory />
         </aside>
 
         <section className="ag-chat panel">
@@ -179,11 +196,11 @@ export default function AgentPage() {
           {imgs.length > 0 && <div className="ag-imgs pending">{imgs.map((im, k) => <span key={k}><img src={im.dataUrl} alt="" /><button onClick={() => setImgs(imgs.filter((_, j) => j !== k))} aria-label="Hatao"><Icon name="x" size={12} /></button></span>)}</div>}
           <div className="ag-input" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); addImages(e.dataTransfer.files); }}>
             <button className="icon-btn" title="Picture lagayein (design reference)" aria-label="Picture lagayein" onClick={() => fileRef.current?.click()} disabled={busy}><Icon name="clip" /></button>
-            <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={(e) => { addImages(e.target.files); e.target.value = ""; }} />
+            <input ref={fileRef} aria-label="File chunein" type="file" accept="image/*" multiple hidden onChange={(e) => { addImages(e.target.files); e.target.value = ""; }} />
             <textarea value={task} placeholder={busy ? "Agent kaam kar raha hai…" : "Kaam likhein… (Enter = chalao, Shift+Enter = nayi line)"} onChange={(e) => setTask(e.target.value)}
               onPaste={(e) => { const f = [...e.clipboardData.files]; if (f.length) { e.preventDefault(); addImages(f); } }}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); run(); } }} disabled={busy} rows={2} />
-            {busy ? <button className="stopbtn" onClick={() => ctrlRef.current?.abort()}>■ Roko</button> : <button onClick={() => run()} disabled={!task.trim()}>Chalao <Icon name="send" size={13} /></button>}
+            {busy ? <button className="stopbtn" onClick={() => ctrlRef.current?.abort()}><Icon name="pause" size={13} /> Roko</button> : <button onClick={() => run()} disabled={!task.trim()}>Chalao <Icon name="send" size={13} /></button>}
           </div>
         </section>
 

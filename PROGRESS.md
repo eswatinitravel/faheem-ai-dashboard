@@ -130,3 +130,13 @@
 - Research card: build intent par GitHub search + DuckDuckGo (bina key) + andar ka gyaan; features tick, stack chunein, Build ya Skip. Options mein on/off.
 - Chat export (Markdown). Ideas doc (8 assistants).
 - Wiring guard: scripts/wiring-check.mjs (routes, API, links, buttons, forms, hooks, tests). GitHub par push NAHI kiya (aap ki ijazat ka intezar).
+
+## 1 Nov 2026 — v3.16.0
+- Project Builder ZIP: chat mein "bana kar zip do" -> Planner -> Builder -> Tester -> Fixer -> ZIP (README Roman Urdu, INSTALL.bat, START.bat, setup.sh, .env.example). /api/agent/zip, ZIP history, Agent Mode ZIP button. Apna chhota ZIP writer (lib/zip.js), koi nayi dependency nahi.
+- Poora redesign "Linear Ink" (Linear/Vercel andaaz, purane accent rang): collapse hone wala icon sidebar, header version chip, AI jawab surface, dense tables, empty/loading/error states, mobile patti. Design audit: pehle ~52-60, ab ~90-96 har page.
+- Background: Purple Desert (getlayers.ai free) default, DNA (apna Three.js), Off. Flowstate aur Metal Human hata diye (user ki marzi).
+- Private Assistant Builder (Hey Puppy): chat mein "free AI assistant banao" -> research card (GitHub trending is hafta + top assistants ke features) -> Planner (naam + shakhsiyat) -> Builder (3 skills) -> Tester (syntax, JSON, Electron window transparent/always-on-top, contextIsolation, extension sirf activeTab/scripting/storage + 127.0.0.1, persona) -> ZIP. Template: templates/hey-puppy (Electron + Three.js safed puppy, 9 moods, orb, Groq Whisper + Edge ur-PK awaz, Chrome extension Allow ke sath, yaad + seekha hua, Telegram ikhtiyari).
+- Asli sandbox run (bina key free brains Kilo + OVH): 3 skills bani, 27 checks pass, ZIP 32 files (sample-hey-puppy.zip).
+- Naye tests (section 37): assistant intent (haan/nahi), trending HTML parsing (mock), research offline/online/GitHub band, template checks, ZIP structure, brains band = default Puppy, puppy render headless Chromium (9 moods + orb, 0 console errors), API detect/research, chat research card.
+- Baaki: asli Windows laptop par INSTALL.bat wali ZIP chala kar dekhna; free brain se lambi ZIP run. Hey Puppy kabhi asli Windows par nahi chala: Electron ghoomna / drag / hotkeys / tray, asli mic (Whisper) aur Edge awaz, "Hey Puppy" wake word, asli Chrome extension, Telegram - sab abhi untested.
+

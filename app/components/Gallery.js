@@ -59,7 +59,7 @@ export default function Gallery({ onUse, useLabel = "Skill ko bhejein", chatProm
         <Icon name="upload" size={22} />
         <b>{busy ? "Upload ho raha hai…" : "Pictures ya files yahan chhoren, ya click karein"}</b>
         <small className="muted">png, jpg, webp, gif, html, css, txt, md, json, pdf · har file 10MB tak · ek dafa 12 files</small>
-        <input ref={input} type="file" hidden multiple accept={EXT.map((e) => "." + e).join(",")} onChange={(e) => { upload(e.target.files); e.target.value = ""; }} />
+        <input ref={input} aria-label="File chunein" type="file" hidden multiple accept={EXT.map((e) => "." + e).join(",")} onChange={(e) => { upload(e.target.files); e.target.value = ""; }} />
       </div>
       {msg && <p className="muted small" aria-live="polite">{msg}</p>}
       {files === null && <p className="muted">Load ho raha hai…</p>}

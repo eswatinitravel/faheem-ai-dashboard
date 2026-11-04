@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ur">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
+<title>Hey Puppy</title>
+<style>
+  html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; user-select: none; }
+  #stage { position: fixed; inset: 0; cursor: grab; }
+  #stage:active { cursor: grabbing; }
+  #bubble { position: fixed; left: 50%; top: 8px; transform: translateX(-50%); max-width: 200px; padding: 4px 10px; border-radius: 12px; background: rgba(15,15,20,.86); color: #fff; font: 600 12px "Segoe UI", sans-serif; opacity: 0; transition: opacity .25s; pointer-events: none; white-space: nowrap; }
+  #bubble.on { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { #bubble { transition: none; } }
+</style>
+</head>
+<body>
+<div id="stage" aria-label="Hey Puppy" title="Double-click: chat kholo. Kheench kar hilao."></div>
+<div id="bubble" aria-live="polite"></div>
+<script type="module" src="puppy.js"></script>
+</body>
+</html>

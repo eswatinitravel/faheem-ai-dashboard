@@ -1,0 +1,19 @@
+{
+  "name": "hey-puppy",
+  "version": "1.0.0",
+  "description": "Hey Puppy - Faheem ka private, free desktop AI assistant (Windows, 8GB RAM friendly)",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "check": "node scripts/check.js"
+  },
+  "dependencies": {
+    "msedge-tts": "^2.1.1",
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0"
+  },
+  "license": "MIT"
+}

@@ -148,7 +148,7 @@ function RoomCard({ room, onStatus }) {
       </div>
       {files.length > 0 && <div className="rfiles">{files.map((f, i) => <span key={i}>{f.kind === "image" ? <Icon name="image" size={14} /> : f.kind === "video" ? <Icon name="video" size={14} /> : <Icon name="file" size={14} />} {f.name} <button className="ghost" style={{ padding: "0 4px" }} onClick={() => setFiles((x) => x.filter((_, j) => j !== i))} aria-label="Hatayein">×</button></span>)}{files.some((f) => f.kind === "image") && !room.vision && <span className="warnline" data-vision-note>Yeh brain tasveer nahi dekh sakta — tasveer nahi jayegi.</span>}</div>}
       <form className="rform" onSubmit={send}>
-        <input ref={fileRef} type="file" multiple hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
+        <input ref={fileRef} aria-label="File chunein" type="file" multiple hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
         <button type="button" className="ghost" title="Tasveer / video / file lagayein" aria-label="Attach" onClick={() => fileRef.current?.click()}><Icon name="clip" size={15} /></button>
         <input type="text" value={text} onChange={(e) => setText(e.target.value)} placeholder={`${room.name} se poochein…`}
           onPaste={(e) => { const fl = e.clipboardData?.files; if (fl?.length) { e.preventDefault(); addFiles(fl); } }} />

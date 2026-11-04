@@ -36,7 +36,7 @@ export default function Message({ m }) {
   }
   const att = m.attachments || [];
   return (
-    <div className={"msg " + m.role}>
+    <div className={"msg " + m.role + (m.meta === "error" ? " error" : "")}>
       {att.length > 0 && (
         <div className="atts">
           {att.map((a, i) =>

@@ -1,0 +1,8 @@
+body { width: 320px; margin: 0; padding: 12px; background: #0b0b0f; color: #eeeef2; font: 13px "Segoe UI", system-ui, sans-serif; display: grid; gap: 8px; }
+h1 { font-size: 16px; margin: 0; } h2 { font-size: 13px; margin: 6px 0 0; }
+label { display: grid; gap: 4px; color: #a0a0ad; }
+input { background: #14141a; color: #eee; border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: 7px; }
+button { background: linear-gradient(135deg, #e11d48, #ff5a36); color: #fff; border: 0; border-radius: 8px; padding: 8px; cursor: pointer; }
+button.deny { background: transparent; border: 1px solid rgba(255,255,255,.2); }
+.box { white-space: pre-wrap; background: #14141a; border-radius: 8px; padding: 8px; min-height: 20px; }
+.muted { color: #a0a0ad; } .act { border: 1px solid rgba(167,139,250,.45); border-radius: 8px; padding: 8px; display: grid; gap: 6px; }

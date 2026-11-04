@@ -12,6 +12,10 @@ import { loadPrefs } from "../lib/prefs";
 import { prepareFiles, forServer, forStorage } from "../lib/attach";
 import { isBuildRequest } from "../lib/research";
 import ResearchCard from "./components/ResearchCard";
+import ZipCard from "./components/ZipCard";
+import pkg from "../package.json";
+const APP_VERSION = pkg.version;
+import { isZipRequest, isAssistantRequest } from "../lib/zip-intent";
 
 const STORE = "faheem-ai-chats-v2";
 
@@ -33,6 +37,10 @@ export default function Home() {
   const [files, setFiles] = useState([]);
   const [drag, setDrag] = useState(false);
   const [research, setResearch] = useState(null); // v3.15 project research card
+  const [zipLive, setZipLive] = useState(null); // v3.16 Project Builder ZIP ka live step
+  const [navMin, setNavMin] = useState(false); // v3.16 sidebar sirf icons
+  useEffect(() => { try { setNavMin(localStorage.getItem("faheem-nav-min") === "1"); } catch {} }, []);
+  const toggleNav = () => setNavMin((v) => { try { localStorage.setItem("faheem-nav-min", v ? "0" : "1"); } catch {} return !v; });
   const fileRef = useRef(null);
   const filesRef = useRef([]);
   filesRef.current = files;
@@ -107,6 +115,46 @@ export default function Home() {
     });
   }, [voiceChoice]);
 
+  // ---------- v3.16 Project Builder ZIP: Planner -> Builder -> Tester -> Fixer -> ZIP (live steps) ----------
+  async function runZip(text, next, extra = {}) {
+    setJob((j) => ({ ...j, agent: { name: "Project Builder ZIP" }, task: text }));
+    setZipLive({ text: "Planner: project ka plan bana raha hoon..." });
+    let card = null; const warns = [];
+    try {
+      const res = await fetch("/api/agent/zip", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ task: text, ...extra }) });
+      if (!res.ok || !res.body) throw new Error("Server se jawab nahi aaya (" + res.status + ")");
+      const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = "";
+      for (;;) {
+        const { value, done: end } = await reader.read();
+        if (end) break;
+        buf += dec.decode(value, { stream: true });
+        let nl;
+        while ((nl = buf.indexOf("\n")) >= 0) {
+          const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
+          if (!line) continue;
+          const ev = JSON.parse(line);
+          if (ev.type === "step") { setLog((l) => [...l, { who: ev.who, text: ev.text }]); setZipLive({ text: `${ev.who}: ${ev.text}` }); }
+          else if (ev.type === "warn") { warns.push(ev.text); setLog((l) => [...l, { who: "Dhyan", text: ev.text }]); }
+          else if (ev.type === "zip") card = ev.card;
+          else if (ev.type === "error") throw new Error(ev.text);
+        }
+      }
+      if (!card) throw new Error("ZIP nahi bana - kaam adhoora reh gaya.");
+      const ok = card.tests?.ok === true;
+      const content = ok
+        ? `**${card.name}.zip** tayyar hai: ${card.files} files, sab tests pass. Download karein, khol kar INSTALL.bat par double-click karein. README.md mein aasaan tareeqa likha hai.`
+        : `**${card.name}.zip** bana, magar tests pass NAHI hue (${card.label}). ZIP download ho sakta hai, README.md mein masle likhe hain. Agent Mode mein "Jaari rakho" likh kar theek karwa sakte hain.`;
+      setMessages([...next, { role: "assistant", content: content + (warns.length ? `\n\nDhyan: ${warns.join(" | ")}` : ""), meta: "Project Builder ZIP", zip: card }]);
+      window.dispatchEvent(new Event("faheem-zip-changed"));
+    } catch (err) {
+      setLog((l) => [...l, { who: "Error", text: err.message.split("\n")[0] }]);
+      setMessages([...next, { role: "assistant", content: "Ghalti (Project ZIP): " + err.message, meta: "error" }]);
+    }
+    setZipLive(null);
+    setJob((j) => ({ ...j, busy: false }));
+    setMode("idle");
+  }
+
   // ---------- Send: server streams agent steps live ----------
   const send = useCallback(
     async (textArg, opts = {}) => {
@@ -115,10 +163,12 @@ export default function Home() {
       if (!text && !attached.length) return;
       if (!text) text = attached.some((a) => a.kind === "image") ? "Is picture ke bare mein batao." : "Is file ko dekho.";
       // v3.15: project/website banane se pehle chhoti research + suggestions card (Skip bhi).
-      if (!opts.skipResearch && !opts.voice && !attached.length && prefs.research !== false && isBuildRequest(text)) {
-        setInput(""); setResearch({ text, loading: true });
-        try { const r = await fetch("/api/research", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) }).then((x) => x.json()); setResearch({ text, data: r.research || null, loading: false }); }
-        catch { setResearch({ text, data: null, loading: false }); }
+      // v3.16: Private Assistant Builder ki research hamesha (trending + top assistants), phir Build = Hey Puppy ZIP.
+      const wantsAssistant = !attached.length && !opts.voice && isAssistantRequest(text);
+      if (!opts.skipResearch && !opts.voice && !attached.length && (wantsAssistant || (prefs.research !== false && isBuildRequest(text)))) {
+        setInput(""); setResearch({ text, loading: true, assistant: wantsAssistant });
+        try { const r = await fetch("/api/research", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, kind: wantsAssistant ? "assistant" : undefined }) }).then((x) => x.json()); setResearch({ text, data: r.research || null, loading: false, assistant: wantsAssistant }); }
+        catch { setResearch({ text, data: null, loading: false, assistant: wantsAssistant }); }
         return;
       }
       setResearch(null);
@@ -132,6 +182,9 @@ export default function Home() {
       setWsOpen(true);
       setJob({ busy: true, attached });
       setLog([{ who: "Aap", text: text.length > 90 ? text.slice(0, 90) + "…" : text }]);
+      // v3.16: "project bana kar zip do" -> Project Builder ZIP pipeline (research card ke Build ke baad bhi).
+      if (!attached.length && !opts.voice && isAssistantRequest(text)) { await runZip(text, next, { mode: "assistant", features: opts.features }); return; }
+      if (!attached.length && !opts.voice && prefs.projectZip !== false && isZipRequest(text)) { await runZip(text, next); return; }
       let reply = "";
       try {
         const res = await fetch("/api/chat", {
@@ -294,28 +347,39 @@ export default function Home() {
   }
 
   return (
-    <main className={"front" + (wsOpen ? " ws-on" : "")}>
-      <Background />
+    <main className={"front" + (wsOpen ? " ws-on" : "") + (navMin ? " nav-min" : "")}>
+      <Background scene />
 
       <header className="topbar">
         <div className="brand"><img src="/icon.png" alt="" className="logo" /> Faheem AI <span className={"stat " + mode} /></div>
+        <span className="verchip" data-version-chip title="Installed version">v{APP_VERSION}</span>
         <div className="top-actions">
           <button className="icon-btn" title="Search (Ctrl+K)" aria-label="Search" onClick={() => setShowSearch(true)}><Icon name="search" /></button>
           <button className="icon-btn" title="Naya chat" aria-label="Naya chat" onClick={newChat}><Icon name="plus" /></button>
           <button className="icon-btn" title="Chat export (Markdown)" aria-label="Chat export" data-export-chat onClick={exportChat}><Icon name="download" /></button>
           <button className="icon-btn" title="Live workspace" aria-label="Live workspace" onClick={() => setWsOpen(!wsOpen)}><Icon name="panel" /></button>
           <ThemeBalls />
-          <Link className="icon-btn agentlink" href="/agent" title="Agent Mode (Cursor jaisa coding agent)"><Icon name="bot" size={16} /> Agent</Link>
-          <Link className="icon-btn agentlink" href="/brains" title="Brains Rooms: har brain ka apna kamra + status light"><Icon name="brain" size={16} /> Brains</Link>
-          <Link className="icon-btn agentlink" href="/tools" title="Har brain ka apna chat board"><Icon name="flask" size={16} /> Tools</Link>
-          <Link className="icon-btn agentlink" href="/design" title="Design Studio (UI UX Pro Max)"><Icon name="palette" size={16} /> Design</Link>
-          <Link className="icon-btn agentlink" href="/skills" title="Saari skills: Hallmark, UI UX Pro Max, Impeccable, Agentation, Hermes"><Icon name="grid" size={16} /> Skills</Link>
-          <Link className="icon-btn" href="/meta" title="Meta AI tasveer edit" aria-label="Meta AI tasveer edit"><Icon name="sparkle" /></Link>
-          <Link className="icon-btn" href="/skills/guide" title="Skills guide (aasaan Roman Urdu)" aria-label="Skills guide"><Icon name="check" /></Link>
-          <Link className="icon-btn" href="/gallery" title="Gallery (pictures/files)" aria-label="Gallery"><Icon name="image" /></Link>
-          <Link className="icon-btn" href="/options" title="Options" aria-label="Options"><Icon name="more" /></Link>
         </div>
       </header>
+
+      {/* v3.16 Hallmark redesign: baayen sidebar navigation (mobile par upar patti) */}
+      <nav className={"sidenav" + (navMin ? " min" : "")} aria-label="Pages" data-sidenav>
+        <button type="button" className="sn-new" onClick={newChat} data-sidenav-new><Icon name="plus" size={16} /> Naya chat</button>
+        <div className="sn-group">Kaam</div>
+        <Link className="icon-btn agentlink" href="/agent" title="Agent Mode (Cursor jaisa coding agent)"><Icon name="bot" size={16} /> Agent</Link>
+        <Link className="icon-btn agentlink" href="/brains" title="Brains Rooms: har brain ka apna kamra + status light"><Icon name="brain" size={16} /> Brains</Link>
+        <Link className="icon-btn agentlink" href="/tools" title="Har brain ka apna chat board"><Icon name="flask" size={16} /> Tools</Link>
+        <Link className="icon-btn agentlink" href="/design" title="Design Studio (UI UX Pro Max)"><Icon name="palette" size={16} /> Design</Link>
+        <Link className="icon-btn agentlink" href="/skills" title="Saari skills: Hallmark, UI UX Pro Max, Impeccable, Agentation, Hermes"><Icon name="grid" size={16} /> Skills</Link>
+        <div className="sn-group">Aur</div>
+        <Link className="icon-btn agentlink" href="/meta" title="Meta AI tasveer edit" aria-label="Meta AI tasveer edit"><Icon name="sparkle" /> Meta AI</Link>
+        <Link className="icon-btn agentlink" href="/skills/guide" title="Skills guide (aasaan Roman Urdu)" aria-label="Skills guide"><Icon name="check" /> Guide</Link>
+        <Link className="icon-btn agentlink" href="/gallery" title="Gallery (pictures/files)" aria-label="Gallery"><Icon name="image" /> Gallery</Link>
+        <Link className="icon-btn agentlink" href="/memory" title="Yaad-dasht (Memory)"><Icon name="book" size={16} /> Memory</Link>
+        <Link className="icon-btn agentlink" href="/options" title="Options" aria-label="Options"><Icon name="more" /> Options</Link>
+        <button type="button" className="icon-btn sn-toggle" onClick={toggleNav} aria-label={navMin ? "Sidebar bara karein" : "Sidebar chhota karein"} title={navMin ? "Sidebar bara karein" : "Sidebar sirf icons"} data-sidenav-toggle><Icon name={navMin ? "panel" : "back"} size={16} /></button>
+        <div className="sn-foot muted">Faheem AI v{APP_VERSION}</div>
+      </nav>
 
       {wsOpen && <Workspace job={job} log={log} onClose={() => setWsOpen(false)} />}
 
@@ -323,7 +387,7 @@ export default function Home() {
         <div className="msgs">
           {messages.length === 0 && (
             <div className="hello">
-              <h1>Assalam o Alaikum, Faheem</h1>
+              <h1>Assalam o Alaikum, <span className="hl">Faheem</span></h1>
               <p>Kya banayein aaj? Likhein ya bol kar batayein.</p>
               <div className="chips">
                 {["Vestire ke liye leather jacket ki picture banao", "Vestire ka hero section website bana do", "Mera aaj ka kaam plan karo"].map((c) => (
@@ -332,8 +396,9 @@ export default function Home() {
               </div>
             </div>
           )}
-          {messages.map((m, i) => <Message key={i} m={m} />)}
-          {research && <ResearchCard r={research} onBuild={(extra) => { const t = research.text; setResearch(null); send(extra ? `${t}\n\n${extra}` : t, { skipResearch: true }); }} onSkip={() => { const t = research.text; setResearch(null); send(t, { skipResearch: true }); }} onClose={() => setResearch(null)} />}
+          {messages.map((m, i) => m.zip ? <div key={i}><Message m={m} /><ZipCard card={m.zip} /></div> : <Message key={i} m={m} />)}
+          {zipLive && <div className="msg assistant zipprogress" data-zip-progress><div className="bubble"><Icon name="box" size={14} /> {zipLive.text}</div></div>}
+          {research && <ResearchCard r={research} onBuild={(extra, picked) => { const t = research.text; setResearch(null); send(extra ? `${t}\n\n${extra}` : t, { skipResearch: true, features: picked }); }} onSkip={() => { const t = research.text; setResearch(null); send(t, { skipResearch: true }); }} onClose={() => setResearch(null)} />}
           {mode === "thinking" && <div className="msg assistant"><div className="bubble typing"><i /><i /><i /></div></div>}
           <div ref={endRef} />
         </div>
@@ -354,7 +419,7 @@ export default function Home() {
         <form className={"composer" + (drag ? " drag" : "")} onSubmit={(e) => { e.preventDefault(); send(input); }}
           onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)}
           onDrop={async (e) => { e.preventDefault(); setDrag(false); const add = await prepareFiles(e.dataTransfer.files); setFiles((f) => [...f, ...add].slice(0, 6)); }}>
-          <input ref={fileRef} type="file" hidden multiple accept="image/*,video/*,.txt,.md,.csv,.json,.html,.css,.js,.jsx,.ts,.tsx,.py,.xml,.yml,.yaml,.log,.sql,.pdf,.doc,.docx,.xls,.xlsx,.zip"
+          <input ref={fileRef} aria-label="File chunein" type="file" hidden multiple accept="image/*,video/*,.txt,.md,.csv,.json,.html,.css,.js,.jsx,.ts,.tsx,.py,.xml,.yml,.yaml,.log,.sql,.pdf,.doc,.docx,.xls,.xlsx,.zip"
             onChange={async (e) => { const add = await prepareFiles(e.target.files); setFiles((f) => [...f, ...add].slice(0, 6)); e.target.value = ""; }} />
           <button type="button" className="attach" onClick={() => fileRef.current?.click()} title="Gallery se picture, video ya file">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
@@ -364,6 +429,7 @@ export default function Home() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
             onPaste={async (e) => { const fl = Array.from(e.clipboardData?.files || []); if (fl.length) { e.preventDefault(); const add = await prepareFiles(fl); setFiles((f) => [...f, ...add].slice(0, 6)); } }}
+            aria-label="Message likhein"
             placeholder="Faheem AI se kuch bhi kahein… (clip button se picture / video / file)"
             rows={1}
           />

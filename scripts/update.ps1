@@ -38,6 +38,7 @@ try {
   }
 
   Set-Location $root
+  $env:CI = "1"; $env:NEXT_TELEMETRY_DISABLED = "1"
   Write-Host "Packages..."
   cmd /c "npm install --no-audit --no-fund"
   if ($LASTEXITCODE -ne 0) { throw "npm install fail" }

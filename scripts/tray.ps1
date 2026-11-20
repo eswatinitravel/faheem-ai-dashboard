@@ -2,6 +2,8 @@
 param([switch]$NoOpen)
 $root = Split-Path -Parent $PSScriptRoot
 $url = "http://localhost:3000"
+# v3.17.2: Next.js build ka "upgrade / coding agent" sawal chhupi window mein atak jata tha. CI=1 = koi sawal nahi.
+$env:CI = "1"; $env:NEXT_TELEMETRY_DISABLED = "1"
 
 # Sirf ek tray chale.
 $created = $false

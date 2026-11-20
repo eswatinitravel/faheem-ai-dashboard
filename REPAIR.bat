@@ -1,6 +1,8 @@
 @echo off
 REM v3.17.1: Dashboard na khule to is file par double-click. Sab kuch dikhne wali window mein + log Desktop par.
 cd /d "%~dp0"
+set CI=1
+set NEXT_TELEMETRY_DISABLED=1
 set LOG=%USERPROFILE%\Desktop\faheem-ai-repair-log.txt
 echo Faheem AI repair %date% %time% > "%LOG%"
 echo Purana server band...

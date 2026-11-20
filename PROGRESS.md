@@ -153,3 +153,6 @@
 ## 20 Nov 2026 — v3.17.1
 - Windows par update ke baad app na khulne ka fix: instrumentation.js hataya, ops ab /workflows khulne par shuru; brain order fail ho to purana order.
 - REPAIR.bat: double-click = purana build saaf, npm install, build, app start; log Desktop par.
+
+## 20 Nov 2026 — v3.17.2
+- Asli wajah mili: next build "Upgrade Next.js / coding agent" sawal poochhta tha aur chhupi window mein atak jata tha. Ab tray, update aur REPAIR mein CI=1 (koi sawal nahi).

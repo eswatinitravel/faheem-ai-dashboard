@@ -4,6 +4,15 @@ Free 3D AI assistant for Windows: likh kar ya bol kar baat karein. Jab ek free A
 
 **Order (v3.14, v3.17 mein har kaam ka apna order: /workflows > Brains ki tarteeb):** pehle aap ke key wale brains (Groq, Gemini, OpenRouter, Z.ai, Mistral, Cohere, NVIDIA, SambaNova, Cloudflare, Hugging Face, Hetzner, Nous, Requesty, Pollinations) → bina-key free brains (Kilo, OVHcloud, LLM7, Pollinations purana host, Free.ai) → live free list (stillworks, har ghanta) → AI Horde (dheema, aakhri sahara) → Ollama (laptop, bina limit). Puter.js browser mein backup brain hai (Brains Rooms / Meta page).
 
+## Naya v3.18 (front dashboard, 2 screen)
+
+ - **Front page ab do hisson mein:** baayen aap ki chat, daayen **Live panel** (hamesha khula; oopar panel button se band/khol).
+ - **Brains tab:** har sawal par us kaam ke brains ki line number ke saath. Peeli roshni = kaam kar raha, hari = jawab diya, laal = ruk gaya (wajah ke saath), agla khud try.
+ - **Har kaam ki tarteeb front par hi:** Code, Website, UI/UX, Urdu & Content, Business, Travel, Research, General. Oopar/neeche se badlein, Default se wapas.
+ - **Ijazat tab:** Agent file hatana ya package install karna chahe to yahin Approve / Reject.
+ - **Pause All** panel ke oopar: sab foran rukta hai. Resume se wapas.
+ - **Live kaam tab:** website preview, tasveeren, aur agents ki baat-cheet.
+
 ## Naya v3.17
 
 - **v3.17.1:** dashboard na khule to folder mein **REPAIR.bat** par double-click (log: Desktop\faheem-ai-repair-log.txt).

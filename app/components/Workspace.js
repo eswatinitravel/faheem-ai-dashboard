@@ -52,7 +52,7 @@ function Storyboard({ urls }) {
   );
 }
 
-export default function Workspace({ job, log, onClose }) {
+export default function Workspace({ job, log, onClose, embedded }) {
   const [site, setSite] = useState(null);
   const [typed, setTyped] = useState("");
   const logRef = useRef(null);
@@ -77,7 +77,7 @@ export default function Workspace({ job, log, onClose }) {
   const view = tab && ((tab === "html" && html) || (tab === "image" && job?.images)) ? tab : auto;
 
   return (
-    <section className="ws panel">
+    <section className={"ws" + (embedded ? " ws-embed" : " panel")}>
       <div className="ws-head">
         <span className="live-badge"><i /> LIVE</span>
         <b className="ws-title">{job?.agent ? `${job.agent.icon} ${job.agent.name}` : "Workspace"}</b>
@@ -85,7 +85,7 @@ export default function Workspace({ job, log, onClose }) {
           <option value="">Kaam</option>
           {SITES.map((s) => <option key={s.url} value={s.url}>{s.label}</option>)}
         </select>
-        <button className="icon-btn" onClick={onClose} title="Band karein"><Icon name="x" size={14} /> </button>
+        {onClose && <button className="icon-btn" onClick={onClose} title="Band karein"><Icon name="x" size={14} /> </button>}
       </div>
 
       {html && job?.images && !site && (

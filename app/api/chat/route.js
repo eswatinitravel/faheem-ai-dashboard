@@ -1,5 +1,6 @@
 import vm from "vm";
 import { getProviders, callProvider, isCooling, visionProviders } from "../../../lib/providers";
+import { isPaused } from "../../../lib/ops/control";
 import { ensureLive } from "../../../lib/free-live";
 import { AGENTS, BASE, routeAgent } from "../../../lib/agents";
 import { DESIGN_RULES, designCheckFull } from "../../../lib/design";
@@ -136,6 +137,11 @@ export async function POST(req) {
       step("Master Agent", "Request padhi — kaam samajh raha hoon.");
       step("Master Agent", `Yeh kaam ${agent.name} ko diya.`);
       emit({ type: "task", task, agent: { id: agent.id, name: agent.name, icon: agent.icon } });
+      // v3.18 front dashboard: is kaam ke brains ki line (daayen panel par live lights).
+      emit({ type: "lineup", task, brains: providers.slice(0, 14).map((p, i) => ({ id: p.id, name: p.name, model: p.model, n: i + 1, keyless: !!p.keyless, state: isCooling(p.id) ? "cooling" : "wait" })) });
+      const bstate = (p, state, note) => emit({ type: "brain", id: p.id, name: p.name, state, note: note ? String(note).slice(0, 90) : undefined });
+      let pausedNow = false; try { pausedNow = isPaused(); } catch {}
+      if (pausedNow) { emit({ type: "error", error: "Pause All chalu hai. Daayen panel par Resume dabayein." }); ctrl.close(); return; }
 
       if (images.length) step("Vision Agent", visionProviders(providers).length ? `${images.length} picture mili — ${visionProviders(providers).map((v) => v.name).join(" / ")} dekhega.` : `${images.length} picture mili — dekhne ke liye Gemini ya Groq key chahiye (Options > Keys).`);
       if (task === "image") {
@@ -157,6 +163,7 @@ export async function POST(req) {
       const ask = async (msgs, label) => {
         for (const p of providers) {
           if (isCooling(p.id)) continue;
+          bstate(p, "trying", label);
           try {
             let r;
             const withImg = (m) => (images.length && p.vision ? m.map((x, i) => (i === m.length - 1 && x.role === "user" && typeof x.content === "string") ? { role: "user", content: [{ type: "text", text: x.content }, ...images.map((a) => ({ type: "image_url", image_url: { url: a.dataUrl } }))] } : x) : m);
@@ -169,9 +176,11 @@ export async function POST(req) {
               r = await callProvider(p, mm, 120000);
             }
             if (!r || !String(r).trim()) throw new Error("empty reply");
+            bstate(p, "ok", label);
             return { reply: r, p };
           } catch (err) {
             skipped.push(`${p.name}: ${err.message}`);
+            bstate(p, "fail", err.message);
           try { addLearned({ kind: "brain", task, brain: p.name, ok: false }); } catch {}
             step("Brain", `${label}: ${p.name} — ${err.message.slice(0, 60)}`);
           }
@@ -292,18 +301,21 @@ ${designBrief(String(rawText || ""))}`;
       }
 
       for (const p of providers) {
-        if (isCooling(p.id)) { skipped.push(`${p.name}: cooling down`); step("Brain", `${p.name} abhi aaraam par — agla.`); continue; }
+        if (isCooling(p.id)) { skipped.push(`${p.name}: cooling down`); bstate(p, "cooling"); step("Brain", `${p.name} abhi aaraam par — agla.`); continue; }
         step("Brain", `${p.name} se jawab maang raha hoon…`);
+        bstate(p, "trying");
         try {
           const vpp = images.length && !p.vision && p.visionModel ? { ...p, model: p.visionModel } : p;
           const reply = await callProvider(vpp, images.length ? (vpp.vision || vpp.visionModel === vpp.model ? visionMessages : blindMessages) : messages);
           step(agent.name, "Jawab tayyar.");
+          bstate(p, "ok");
           try { addLearned({ kind: "brain", task, brain: p.name, ok: true }); } catch {}
           emit({ type: "done", reply, provider: p.name, model: p.model, agent: { id: agent.id, name: agent.name, icon: agent.icon }, skipped, task });
           ctrl.close();
           return;
         } catch (err) {
           skipped.push(`${p.name}: ${err.message}`);
+          bstate(p, "fail", err.message);
           step("Brain", `${p.name}: ${err.message.slice(0, 80)} — agla try.`);
         }
       }

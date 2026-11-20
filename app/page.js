@@ -7,7 +7,7 @@ import Background from "./components/Background";
 import ThemeBalls from "./components/ThemeBalls";
 import VersionBadge from "./components/VersionBadge";
 import SearchOverlay from "./components/SearchOverlay";
-import Workspace from "./components/Workspace";
+import LivePanel from "./components/LivePanel";
 import { loadPrefs } from "../lib/prefs";
 import { prepareFiles, forServer, forStorage } from "../lib/attach";
 import { isBuildRequest } from "../lib/research";
@@ -31,7 +31,10 @@ export default function Home() {
   const [voiceOn, setVoiceOn] = useState(false);
   const [notice, setNotice] = useState("");
   const [showSearch, setShowSearch] = useState(false);
-  const [wsOpen, setWsOpen] = useState(false);
+  const [wsOpen, setWsOpen] = useState(true); // v3.18: front par daayen live panel hamesha (band karein to yaad)
+  const [lineup, setLineup] = useState(null); // v3.18: is kaam ke brains ki line + live state
+  useEffect(() => { try { if (localStorage.getItem("faheem-panel-off") === "1") setWsOpen(false); } catch {} }, []);
+  const setPanel = (v) => { setWsOpen(v); try { localStorage.setItem("faheem-panel-off", v ? "0" : "1"); } catch {} };
   const [job, setJob] = useState(null);
   const [log, setLog] = useState([]);
   const [files, setFiles] = useState([]);
@@ -179,6 +182,7 @@ export default function Home() {
       setMessages(next);
       setInput("");
       setMode("thinking");
+      setLineup(null);
       setWsOpen(true);
       setJob({ busy: true, attached });
       setLog([{ who: "Aap", text: text.length > 90 ? text.slice(0, 90) + "…" : text }]);
@@ -207,6 +211,8 @@ export default function Home() {
             const ev = JSON.parse(line);
             if (ev.type === "step") setLog((l) => [...l, ev]);
             else if (ev.type === "task") setJob((j) => ({ ...j, agent: ev.agent, task: ev.task }));
+            else if (ev.type === "lineup") setLineup({ task: ev.task, brains: ev.brains });
+            else if (ev.type === "brain") setLineup((L) => L ? { ...L, brains: L.brains.map((b) => b.id === ev.id ? { ...b, state: ev.state, note: ev.note } : b) } : L);
             else if (ev.type === "image") setJob((j) => ({ ...j, images: ev.urls }));
             else if (ev.type === "video") setJob((j) => ({ ...j, video: ev.urls }));
             else if (ev.type === "done") done = ev;
@@ -357,7 +363,7 @@ export default function Home() {
           <button className="icon-btn" title="Search (Ctrl+K)" aria-label="Search" onClick={() => setShowSearch(true)}><Icon name="search" /></button>
           <button className="icon-btn" title="Naya chat" aria-label="Naya chat" onClick={newChat}><Icon name="plus" /></button>
           <button className="icon-btn" title="Chat export (Markdown)" aria-label="Chat export" data-export-chat onClick={exportChat}><Icon name="download" /></button>
-          <button className="icon-btn" title="Live workspace" aria-label="Live workspace" onClick={() => setWsOpen(!wsOpen)}><Icon name="panel" /></button>
+          <button className="icon-btn" title="Live panel (brains ka kaam)" aria-label="Live panel" onClick={() => setPanel(!wsOpen)}><Icon name="panel" /></button>
           <ThemeBalls />
         </div>
       </header>
@@ -381,8 +387,6 @@ export default function Home() {
         <button type="button" className="icon-btn sn-toggle" onClick={toggleNav} aria-label={navMin ? "Sidebar bara karein" : "Sidebar chhota karein"} title={navMin ? "Sidebar bara karein" : "Sidebar sirf icons"} data-sidenav-toggle><Icon name={navMin ? "panel" : "back"} size={16} /></button>
         <div className="sn-foot muted">Faheem AI v{APP_VERSION}</div>
       </nav>
-
-      {wsOpen && <Workspace job={job} log={log} onClose={() => setWsOpen(false)} />}
 
       <section className="chatboard">
         <div className="msgs">
@@ -440,6 +444,8 @@ export default function Home() {
           <button type="submit" className="sendbtn" disabled={mode === "thinking" || (!input.trim() && !files.length)} title="Send"><Icon name="send" size={14} /> </button>
         </form>
       </section>
+
+      {wsOpen && <LivePanel job={job} log={log} lineup={lineup} onClose={() => setPanel(false)} notify={setNotice} />}
 
       <VersionBadge />
       {showSearch && <SearchOverlay messages={messages} onClose={() => setShowSearch(false)} onAsk={(q) => send(q)} />}

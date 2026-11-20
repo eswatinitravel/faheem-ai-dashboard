@@ -1,4 +1,6 @@
-import { boot } from "../../../lib/ops/boot";
+import { boot as realBoot } from "../../../lib/ops/boot";
+// v3.17.1: server start par kuch nahi chalta; ops pehli dafa /workflows khulne par shuru (Windows par safe).
+const boot = () => { try { realBoot(); } catch (e) { console.error("[ops]", e?.message); } };
 import { listJobs, counts, enqueue, retryJob, cancelJob, resumeAfterApproval } from "../../../lib/ops/queue";
 import { listApprovals, decide } from "../../../lib/ops/approvals";
 import { listAudit, audit } from "../../../lib/ops/audit";

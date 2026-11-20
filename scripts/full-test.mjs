@@ -617,7 +617,7 @@ await t("Research: anjaan kaam par general suggestions", () => must(RS.localIdea
 await t("Research LIVE (GitHub/DDG, 5s timeout, fail = offline)", async () => { const r = await RS.researchProject("restaurant menu website banao"); return must(r.features.length >= 3) && r.sources.join("+"); });
 await t("Front: research card + Skip + Build wired (page.js)", () => { const s = rd("app/page.js"), c = rd("app/components/ResearchCard.js"); return must(/isBuildRequest\(text\)/.test(s) && /skipResearch: true/.test(s) && /data-research-skip/.test(c) && /data-research-build/.test(c) && /data-research-feature/.test(c)); });
 await t("Chat export (Open WebUI/LobeHub idea) button", () => must(/data-export-chat/.test(rd("app/page.js")) && /text\/markdown/.test(rd("app/page.js"))));
-await t("Version 3.15.0 (package.json) + README/PROGRESS v3.15", () => must(["3.15.0", "3.16.0", "3.17.0"].includes(JSON.parse(rd("package.json")).version) && /v3\.15\.0/.test(rd("PROGRESS.md")) && /v3\.15/.test(rd("README.md"))));
+await t("Version 3.15.0 (package.json) + README/PROGRESS v3.15", () => must(["3.15.0", "3.16.0", "3.17.0", "3.17.1"].includes(JSON.parse(rd("package.json")).version) && /v3\.15\.0/.test(rd("PROGRESS.md")) && /v3\.15/.test(rd("README.md"))));
 await t("Ideas doc: 8 assistants + stars", () => { const d = rd("docs/IDEAS-FROM-TOP-ASSISTANTS.md"); return must((d.match(/^\| \d \|/gm) || []).length === 8 && /Hermes Agent/.test(d) && /Cline/.test(d)); });
 
 sec("32. v3.15 Fast memory (cache + index + debounce)");
@@ -704,7 +704,7 @@ await t("Options picker: Purple Desert (default) / DNA / Off", () => { const s =
 await t("Sirf main chatboard par scene (<Background scene />)", () => must(/<Background scene \/>/.test(rd("app/page.js")) && !/<Background scene/.test(rd("app/options/page.js"))));
 await t("NOTICE: Purple Desert credit (getlayers.ai free layer)", () => must(/Background video "Purple Desert" from getlayers\.ai \(free layer\)/.test(rd("NOTICE.md"))));
 await t("Readable overlay: shade gradient var(--bg) se (AA)", () => must(/\.bgscene-shade \{[^}]*color-mix\(in srgb, var\(--bg\) 90%/.test(rd("app/globals.css"))));
-await t("Version 3.16.0 + README/PROGRESS v3.16", () => must(["3.16.0", "3.17.0"].includes(JSON.parse(rd("package.json")).version) && /v3\.16\.0/.test(rd("PROGRESS.md")) && /v3\.16/.test(rd("README.md"))));
+await t("Version 3.16.0 + README/PROGRESS v3.16", () => must(["3.16.0", "3.17.0", "3.17.1"].includes(JSON.parse(rd("package.json")).version) && /v3\.16\.0/.test(rd("PROGRESS.md")) && /v3\.16/.test(rd("README.md"))));
 await t("Design audit script: har page score (Impeccable + Hallmark/UX)", async () => { const A = await import(path.join(ROOT, "scripts/design-audit.mjs")); return must(A.AUDIT_PAGES.length >= 10 && A.scoreOf({ warning: 2 }, 1) === 89); });
 
 sec("10. Live server (next start)");

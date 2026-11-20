@@ -6,6 +6,8 @@ Free 3D AI assistant for Windows: likh kar ya bol kar baat karein. Jab ek free A
 
 ## Naya v3.17
 
+- **v3.17.1:** dashboard na khule to folder mein **REPAIR.bat** par double-click (log: Desktop\faheem-ai-repair-log.txt).
+
 - **Workflows page (localhost:3000/workflows, chat ke oopar "Workflows" button):** har kaam ki timeline, Kaam / Ijazat / Schedule / Brains ki tarteeb / Audit log tabs.
 - **Pakki kaam-queue:** har background kaam pehle save, phir chalta hai. Ghalti par 1s, 2s, 5s, 10s, 30s baad 5 dafa tak dobara, phir "fail (list)" jahan se Retry. App band ho kar khule to adhoore kaam khud wapas line mein. Files: `C:\Users\<naam>\.faheem-ai\ops`.
 - **Ijazat (Approve / Reject):** Agent file hatana chahe, ya internet se package install (npm/pip install) kare, to pehle ijazat. Ijazat exact kaam + exact arguments par bandhi (SHA-256), 10 minute mein expire, sirf ek dafa. Kuch badla to nayi ijazat.

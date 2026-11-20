@@ -149,3 +149,7 @@
 - instrumentation.js: server start par queue worker + schedule tick.
 - Test: npm run test:ops (25/25).
 - Baaki: asli Windows par /workflows ka visual check.
+
+## 20 Nov 2026 — v3.17.1
+- Windows par update ke baad app na khulne ka fix: instrumentation.js hataya, ops ab /workflows khulne par shuru; brain order fail ho to purana order.
+- REPAIR.bat: double-click = purana build saaf, npm install, build, app start; log Desktop par.

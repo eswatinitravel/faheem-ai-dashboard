@@ -156,3 +156,6 @@
 
 ## 20 Nov 2026 — v3.17.2
 - Asli wajah mili: next build "Upgrade Next.js / coding agent" sawal poochhta tha aur chhupi window mein atak jata tha. Ab tray, update aur REPAIR mein CI=1 (koi sawal nahi).
+
+## 21 Nov 2026 — v3.17.3
+- Asal fix: next.config.mjs mein experimental.agentUpgrade = false. Next.js 16.4 ka default "security" har build par upgrade/agent sawal poochhta tha; ab kabhi nahi.

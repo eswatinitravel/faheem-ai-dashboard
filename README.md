@@ -4,6 +4,14 @@ Free 3D AI assistant for Windows: likh kar ya bol kar baat karein. Jab ek free A
 
 **Order (v3.14, v3.17 mein har kaam ka apna order: /workflows > Brains ki tarteeb):** pehle aap ke key wale brains (Groq, Gemini, OpenRouter, Z.ai, Mistral, Cohere, NVIDIA, SambaNova, Cloudflare, Hugging Face, Hetzner, Nous, Requesty, Pollinations) → bina-key free brains (Kilo, OVHcloud, LLM7, Pollinations purana host, Free.ai) → live free list (stillworks, har ghanta) → AI Horde (dheema, aakhri sahara) → Ollama (laptop, bina limit). Puter.js browser mein backup brain hai (Brains Rooms / Meta page).
 
+## Naya v3.19 (GitHub)
+
+ - **GitHub page (sidebar > GitHub, localhost:3000/github):** account juda (default **eswatinitravel**). Token ikhtiyari: private repos aur zyada limit ke liye.
+ - **Meri repos:** apni saari repos, har ek par Download aur Skills.
+ - **Repo download:** koi bhi GitHub link ya `owner/repo` likhein, ya talaash karein. Files: `C:\Users\<naam>\.faheem-ai\repos`. "Folder kholo" se Explorer khulta hai.
+ - **Skill download:** repo ya folder ka link; jahan SKILL.md mile woh skill install. Files: `C:\Users\<naam>\.faheem-ai\skills`. Chat mein skill ka naam likhein to brain usay parh kar kaam karta hai.
+ - Pause All chalu ho to download nahi hota; har download audit log mein.
+
 ## Naya v3.18 (front dashboard, 2 screen)
 
  - **Front page ab do hisson mein:** baayen aap ki chat, daayen **Live panel** (hamesha khula; oopar panel button se band/khol).

@@ -1,6 +1,7 @@
 import vm from "vm";
 import { getProviders, callProvider, isCooling, visionProviders } from "../../../lib/providers";
 import { isPaused } from "../../../lib/ops/control";
+import { skillsContext, skillFor } from "../../../lib/github";
 import { ensureLive } from "../../../lib/free-live";
 import { AGENTS, BASE, routeAgent } from "../../../lib/agents";
 import { DESIGN_RULES, designCheckFull } from "../../../lib/design";
@@ -105,6 +106,8 @@ export async function POST(req) {
   const learnedMem = (() => { try { return learnedContext(task); } catch { return ""; } })();
   if (learnedMem) system.push({ role: "system", content: learnedMem });
   if (task === "web") system.push({ role: "system", content: UIUX_PROMPT });
+  // v3.19: GitHub se download hui skills.
+  try { const sc = skillsContext(); if (sc) system.push({ role: "system", content: sc }); const sk = skillFor(lastUser); if (sk) system.push({ role: "system", content: sk }); } catch {}
   try { if (isCorrection(lastUser)) addLearned({ kind: "correction", task, text: lastUser }); } catch {}
   const messages = [...system, ...clean];
   // Vision brain ke liye aakhri message mein pictures jor dein.

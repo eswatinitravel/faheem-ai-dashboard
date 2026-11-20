@@ -107,7 +107,7 @@ export async function POST(req) {
   if (learnedMem) system.push({ role: "system", content: learnedMem });
   if (task === "web") system.push({ role: "system", content: UIUX_PROMPT });
   // v3.19: GitHub se download hui skills.
-  try { const sc = skillsContext(); if (sc) system.push({ role: "system", content: sc }); const sk = skillFor(lastUser); if (sk) system.push({ role: "system", content: sk }); } catch {}
+  let usedSkills = []; try { const sc = skillsContext(); if (sc) system.push({ role: "system", content: sc }); const sk = skillFor(lastUser); if (sk) { system.push({ role: "system", content: sk }); usedSkills = [...sk.matchAll(/installed skill "([^"]+)"/g)].map((m) => m[1]); } } catch {}
   try { if (isCorrection(lastUser)) addLearned({ kind: "correction", task, text: lastUser }); } catch {}
   const messages = [...system, ...clean];
   // Vision brain ke liye aakhri message mein pictures jor dein.
@@ -139,6 +139,7 @@ export async function POST(req) {
 
       step("Master Agent", "Request padhi — kaam samajh raha hoon.");
       step("Master Agent", `Yeh kaam ${agent.name} ko diya.`);
+      if (usedSkills.length) step("Skill", `Istemal: ${usedSkills.join(", ")}`);
       emit({ type: "task", task, agent: { id: agent.id, name: agent.name, icon: agent.icon } });
       // v3.18 front dashboard: is kaam ke brains ki line (daayen panel par live lights).
       emit({ type: "lineup", task, brains: providers.slice(0, 14).map((p, i) => ({ id: p.id, name: p.name, model: p.model, n: i + 1, keyless: !!p.keyless, state: isCooling(p.id) ? "cooling" : "wait" })) });

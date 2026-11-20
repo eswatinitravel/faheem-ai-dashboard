@@ -6,6 +6,8 @@ Free 3D AI assistant for Windows: likh kar ya bol kar baat karein. Jab ek free A
 
 ## Naya v3.19 (GitHub)
 
+ - **v3.19.1 Superpowers (obra/superpowers):** GitHub > Skill download > "Superpowers" chip se 15 skills install. Phir chat khud sahi skill chunti hai: "bug/error/fix" = systematic-debugging, "plan" = writing-plans, "test" = TDD, "idea/naya feature" = brainstorming, "review" = code review. "superpowers" likhein to poora tareeqa.
+
  - **GitHub page (sidebar > GitHub, localhost:3000/github):** account juda (default **eswatinitravel**). Token ikhtiyari: private repos aur zyada limit ke liye.
  - **Meri repos:** apni saari repos, har ek par Download aur Skills.
  - **Repo download:** koi bhi GitHub link ya `owner/repo` likhein, ya talaash karein. Files: `C:\Users\<naam>\.faheem-ai\repos`. "Folder kholo" se Explorer khulta hai.

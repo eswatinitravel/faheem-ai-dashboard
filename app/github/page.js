@@ -8,6 +8,7 @@ import ThemeBalls from "../components/ThemeBalls";
 // v3.19 GitHub: account juda, apni repos, koi bhi repo download, skills (SKILL.md) install.
 const TABS = [["mine", "Meri repos"], ["download", "Repo download"], ["skills", "Skill download"], ["local", "Laptop par"]];
 const SKILL_IDEAS = [
+  ["obra/superpowers", "Superpowers (brainstorm, plan, TDD, debugging, review)"],
   ["anthropics/skills", "Anthropic ki official skills (docx, pdf, pptx, xlsx, design)"],
   ["https://github.com/Nutlope/hallmark/tree/main/skills/hallmark", "Hallmark design rules"],
   ["nextlevelbuilder/ui-ux-pro-max-skill", "UI UX Pro Max"],

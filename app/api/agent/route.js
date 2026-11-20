@@ -1,5 +1,7 @@
 import { runAgent } from "../../../lib/agent/loop";
 import { runTeamMode } from "../../../lib/agent/team-run";
+import { isPaused } from "../../../lib/ops/control";
+import { audit } from "../../../lib/ops/audit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 1800;
@@ -15,6 +17,8 @@ export async function POST(req) {
   const body = await req.json().catch(() => ({}));
   const task = String(body?.task || "").trim();
   if (!task) return Response.json({ error: "Kaam likhein." }, { status: 400 });
+  if (isPaused()) return Response.json({ error: "Pause All chalu hai. /workflows par Resume dabayein." }, { status: 423 });
+  audit("agent_run", `${body.project || "naya"}: ${task.slice(0, 160)}`, { team: body.team === true });
   const images = (Array.isArray(body?.images) ? body.images : []).filter((a) => typeof a?.dataUrl === "string" && a.dataUrl.startsWith("data:image/")).slice(0, 3);
   const enc = new TextEncoder();
   const stream = new ReadableStream({

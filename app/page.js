@@ -368,6 +368,7 @@ export default function Home() {
         <div className="sn-group">Kaam</div>
         <Link className="icon-btn agentlink" href="/agent" title="Agent Mode (Cursor jaisa coding agent)"><Icon name="bot" size={16} /> Agent</Link>
         <Link className="icon-btn agentlink" href="/brains" title="Brains Rooms: har brain ka apna kamra + status light"><Icon name="brain" size={16} /> Brains</Link>
+        <Link className="icon-btn agentlink" href="/workflows" title="Kaam, ijazat, audit, brains ki tarteeb, Pause All"><Icon name="layers" size={16} /> Workflows</Link>
         <Link className="icon-btn agentlink" href="/tools" title="Har brain ka apna chat board"><Icon name="flask" size={16} /> Tools</Link>
         <Link className="icon-btn agentlink" href="/design" title="Design Studio (UI UX Pro Max)"><Icon name="palette" size={16} /> Design</Link>
         <Link className="icon-btn agentlink" href="/skills" title="Saari skills: Hallmark, UI UX Pro Max, Impeccable, Agentation, Hermes"><Icon name="grid" size={16} /> Skills</Link>

@@ -1,4 +1,4 @@
-# NOTICE — Third-party credits (Faheem AI Dashboard v3.16.0)
+# NOTICE — Third-party credits (Faheem AI Dashboard v3.17.0)
 
 Yeh dashboard in open-source projects ko istemal karta hai. Har ek ka license aur notice yahan mehfooz hai.
 
@@ -98,3 +98,5 @@ Dashboard sirf template ki files ZIP mein daalta hai; neeche wali dependencies u
 - **Groq** (user ki apni free key, Whisper STT + chat) aur **Ollama** (MIT, laptop par local) — services, code shamil nahi.
 - **Telegram Bot API** — ikhtiyari bridge, user ka apna bot token. WhatsApp abhi shamil nahi.
 - **Ideas (code nahi):** OpenClaw, NousResearch Hermes Agent (MIT), nanobot, QwenPaw, AstrBot, Orkas — features ki list aur "pehle ijazat" andaaz. Research ke liye github.com/trending (public page) aur GitHub search API (bina key) parhe jate hain.
+
+- v3.17 Workflows / queue / approvals: ideas from "Arena Assistant" (user's own project) and the "Nexa" build prompt; code written fresh for this app.

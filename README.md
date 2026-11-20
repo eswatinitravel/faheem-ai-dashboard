@@ -2,7 +2,19 @@
 
 Free 3D AI assistant for Windows: likh kar ya bol kar baat karein. Jab ek free AI ki limit khatam ho, agla khud jawab deta hai.
 
-**Order (v3.14):** pehle aap ke key wale brains (Groq, Gemini, OpenRouter, Z.ai, Mistral, Cohere, NVIDIA, SambaNova, Cloudflare, Hugging Face, Hetzner, Nous, Requesty, Pollinations) → bina-key free brains (Kilo, OVHcloud, LLM7, Pollinations purana host, Free.ai) → live free list (stillworks, har ghanta) → AI Horde (dheema, aakhri sahara) → Ollama (laptop, bina limit). Puter.js browser mein backup brain hai (Brains Rooms / Meta page).
+**Order (v3.14, v3.17 mein har kaam ka apna order: /workflows > Brains ki tarteeb):** pehle aap ke key wale brains (Groq, Gemini, OpenRouter, Z.ai, Mistral, Cohere, NVIDIA, SambaNova, Cloudflare, Hugging Face, Hetzner, Nous, Requesty, Pollinations) → bina-key free brains (Kilo, OVHcloud, LLM7, Pollinations purana host, Free.ai) → live free list (stillworks, har ghanta) → AI Horde (dheema, aakhri sahara) → Ollama (laptop, bina limit). Puter.js browser mein backup brain hai (Brains Rooms / Meta page).
+
+## Naya v3.17
+
+- **Workflows page (localhost:3000/workflows, chat ke oopar "Workflows" button):** har kaam ki timeline, Kaam / Ijazat / Schedule / Brains ki tarteeb / Audit log tabs.
+- **Pakki kaam-queue:** har background kaam pehle save, phir chalta hai. Ghalti par 1s, 2s, 5s, 10s, 30s baad 5 dafa tak dobara, phir "fail (list)" jahan se Retry. App band ho kar khule to adhoore kaam khud wapas line mein. Files: `C:\Users\<naam>\.faheem-ai\ops`.
+- **Ijazat (Approve / Reject):** Agent file hatana chahe, ya internet se package install (npm/pip install) kare, to pehle ijazat. Ijazat exact kaam + exact arguments par bandhi (SHA-256), 10 minute mein expire, sirf ek dafa. Kuch badla to nayi ijazat.
+- **Pause All:** ek button se Agent, queue aur schedules foran ruk jaate hain; Resume se wapas.
+- **Audit log:** har agent run, command, ijazat, file hatana, export ka record. Keys/tokens kabhi nahi likhe jaate.
+- **Brains ki tarteeb:** har kaam (Code, Website, UI/UX, Urdu & Content, Business, Travel, Research, General) ke liye key wale brains ka apna order, misaal: Code = Gemini > NVIDIA (DeepSeek) > SambaNova > Groq; Research = SambaNova > NVIDIA > Gemini; General = Groq pehle (sab se tez). ↑ ↓ se badlein, "Default" se wapas. Bina-key brains, live list, AI Horde aur Ollama hamesha aakhir. Order: `C:\Users\<naam>\.faheem-ai\brain-order.json`.
+- **Schedules + yaad-dihani:** "15m", "2h", "daily@09:00" ya "once". Run Now, Roko/Chalu, har chalne ki history, taaza natije.
+- **Data export:** Workflows par download button, saara data ek JSON mein (API keys ke baghair).
+- Test: `npm run test:ops` (25 checks).
 
 ## Naya v3.16
 

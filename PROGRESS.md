@@ -140,3 +140,12 @@
 - Naye tests (section 37): assistant intent (haan/nahi), trending HTML parsing (mock), research offline/online/GitHub band, template checks, ZIP structure, brains band = default Puppy, puppy render headless Chromium (9 moods + orb, 0 console errors), API detect/research, chat research card.
 - Baaki: asli Windows laptop par INSTALL.bat wali ZIP chala kar dekhna; free brain se lambi ZIP run. Hey Puppy kabhi asli Windows par nahi chala: Electron ghoomna / drag / hotkeys / tray, asli mic (Whisper) aur Edge awaz, "Hey Puppy" wake word, asli Chrome extension, Telegram - sab abhi untested.
 
+
+## 20 Nov 2026 — v3.17.0 (Workflows + queue + approvals + brains ki tarteeb)
+- Naya /workflows page: Kaam, Ijazat, Schedule, Brains ki tarteeb, Audit log; Pause All; data export.
+- lib/ops: pakki JSON queue (retry 1/2/5/10/30s, dead-letter, crash recovery, idempotency), hash-bound ek-dafa ijazat (10 min), audit log (secret chhupe), Pause All, schedules (15m/2h/daily@HH:MM/once, Run Now, history).
+- Agent: delete_file aur npm/pip install ab ijazat se; har command aur run audit mein; Pause All par agent nahi chalta.
+- lib/brain-roles.js: 8 kaamon ke liye alag brain order (andaza, model dekh kar), user ↑↓ se badal sakta hai.
+- instrumentation.js: server start par queue worker + schedule tick.
+- Test: npm run test:ops (25/25).
+- Baaki: asli Windows par /workflows ka visual check.

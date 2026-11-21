@@ -1,7 +1,7 @@
 import vm from "vm";
 import { getProviders, callProvider, isCooling, visionProviders } from "../../../lib/providers";
 import { isPaused } from "../../../lib/ops/control";
-import { skillsContext, skillFor } from "../../../lib/github";
+import { decide, copilotPrompt, allSkillsCatalog } from "../../../lib/copilot";
 import { ensureLive } from "../../../lib/free-live";
 import { AGENTS, BASE, routeAgent } from "../../../lib/agents";
 import { DESIGN_RULES, designCheckFull } from "../../../lib/design";
@@ -91,7 +91,10 @@ export async function POST(req) {
   const rawText = typeof lastMsg?.content === "string" ? lastMsg.content : lastUser;
   const task = detectTask(rawText, images.length > 0);
   // Website ka kaam hamesha Website Master ko (warna "Vestire" jaisa lafz Business Master ko bhej deta tha).
-  const agent = task === "web" && (!body?.agent || body.agent === "auto") ? routeAgent("", "web") : routeAgent(lastUser, body?.agent);
+  // v3.21 Copilot: specialist + skills + brains ka faisla ek jagah.
+  const providersAll = getProviders();
+  const cp = await decide({ text: rawText || lastUser, forced: body?.agent, task, hasImage: images.length > 0, providers: providersAll });
+  const agent = cp.agent;
 
   const system = [{ role: "system", content: `${BASE}\n\n${agent.prompt}` }];
   if (task === "web") system.push({ role: "system", content: "When you build a page or section, include ONE complete self-contained ```html code block (inline CSS/JS, no external build) so it can be previewed live." });
@@ -107,14 +110,23 @@ export async function POST(req) {
   if (learnedMem) system.push({ role: "system", content: learnedMem });
   if (task === "web") system.push({ role: "system", content: UIUX_PROMPT });
   // v3.19: GitHub se download hui skills.
-  let usedSkills = []; try { const sc = skillsContext(); if (sc) system.push({ role: "system", content: sc }); const sk = skillFor(lastUser); if (sk) { system.push({ role: "system", content: sk }); usedSkills = [...sk.matchAll(/installed skill "([^"]+)"/g)].map((m) => m[1]); } } catch {}
+  // v3.21: saari skills (dashboard + GitHub) front chat mein; Copilot jo chune us ka tareeqa prompt mein.
+  let usedSkills = [];
+  try {
+    system.push({ role: "system", content: copilotPrompt(cp) });
+    if (/skill|kya kya|kia kia|kaun si|tools|features/i.test(rawText)) system.push({ role: "system", content: allSkillsCatalog() });
+    for (const sk of cp.skills) {
+      if (sk.text && !(task === "web" && sk.id === "hallmark")) system.push({ role: "system", content: sk.id === "_gh" ? sk.text : `Skill "${sk.name}": ${sk.text}` });
+      if (sk.name) usedSkills.push(sk.name);
+    }
+  } catch {}
   try { if (isCorrection(lastUser)) addLearned({ kind: "correction", task, text: lastUser }); } catch {}
   const messages = [...system, ...clean];
   // Vision brain ke liye aakhri message mein pictures jor dein.
   const visionMessages = images.length ? messages.map((m, i) => (i === messages.length - 1 && m.role === "user") ? { role: "user", content: [{ type: "text", text: m.content }, ...images.map((a) => ({ type: "image_url", image_url: { url: a.dataUrl } }))] } : m) : messages;
   const blindMessages = images.length ? [...messages.slice(0, -1), { role: "system", content: "The user attached a picture, but this AI brain cannot see images. Say so in one short line and suggest adding a free Gemini key in Options > Keys so pictures can be understood; still help with their text." }, messages.at(-1)] : messages;
 
-  const providers = getProviders();
+  const providers = providersAll;
   const order = agent.prefer;
   const rank = (id) => {
     if (body?.provider && body.provider !== "auto" && id === body.provider) return -1;
@@ -137,8 +149,8 @@ export async function POST(req) {
       const emit = (o) => ctrl.enqueue(enc.encode(JSON.stringify(o) + "\n"));
       const step = (who, text) => emit({ type: "step", who, text, at: Date.now() });
 
-      step("Master Agent", "Request padhi — kaam samajh raha hoon.");
-      step("Master Agent", `Yeh kaam ${agent.name} ko diya.`);
+      step("Copilot", "Request padhi — kaam samajh raha hoon.");
+      step("Copilot", `Yeh kaam ${agent.name} ko diya (${cp.why}). Brains: ${providers.filter((p) => !isCooling(p.id)).slice(0, 3).map((p) => p.name).join(" > ")}${cp.need ? ` · chahiye: ${cp.need}` : ""}.`);
       if (usedSkills.length) step("Skill", `Istemal: ${usedSkills.join(", ")}`);
       emit({ type: "task", task, agent: { id: agent.id, name: agent.name, icon: agent.icon } });
       // v3.18 front dashboard: is kaam ke brains ki line (daayen panel par live lights).

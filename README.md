@@ -152,3 +152,8 @@ Sirf us computer/server par jahan Docker chal sake: `docker compose up -d`
 - Skill auto-pick: naam poore lafz se, aur description se milaan (bina naam likhe sahi skill).
 - Model Autopilot (Linger se idea): Brains page par laptop ka RAM/GPU dekh kar Ollama model ka mashwara, Install aur Use karo.
 - Agent Inbox (TUIOS se idea): LIVE panel mein Inbox tab, ruke/ijazat wale kaam oopar, Dobara/Cancel, aur kaam khatam par desktop notification.
+
+## v3.21.0
+- Copilot (front chat): har message par khud faisla, kaun sa specialist, kaun se brains kis tarteeb mein, aur kaun si skills. Saaf na ho to sab se tez brain se 1 chhota sawal.
+- Dashboard ki purani skills (Hallmark, UI UX Pro Max, Impeccable, Browser Tester, Playwright, Compound Engineering, Graphify, Agent Team, Memory) ab front chat mein khud lagti hain.
+- LIVE panel mein naya Skills tab: Model Autopilot + saari dashboard aur GitHub skills ki list.

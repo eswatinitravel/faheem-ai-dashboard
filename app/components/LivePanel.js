@@ -3,6 +3,8 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Icon from "./Icon";
 import Workspace from "./Workspace";
+import AutopilotCard from "./AutopilotCard";
+import { SKILLS } from "../../lib/skills";
 
 // v3.18 Front dashboard (Arena jaisa): daayen hissa hamesha nazar aata hai.
 // Tabs: Live kaam (preview + agents ki baat-cheet), Brains (is kaam ki line + live lights), Ijazat. Oopar Pause All.
@@ -13,6 +15,8 @@ export default function LivePanel({ job, log, lineup, onClose, notify }) {
   const [tab, setTab] = useState("live");
   const [ops, setOps] = useState(null);
   const [roleOpen, setRoleOpen] = useState(null);
+  const [ghSkills, setGhSkills] = useState(null);
+  useEffect(() => { if (tab === "skills" && !ghSkills) fetch("/api/github?what=local", { cache: "no-store" }).then((x) => x.json()).then((r) => setGhSkills(r?.local?.skills || r?.skills || [])).catch(() => setGhSkills([])); }, [tab, ghSkills]);
 
   const load = useCallback(async () => {
     try { const r = await fetch("/api/ops", { cache: "no-store" }).then((x) => x.json()); if (r.ok) setOps(r); } catch {}
@@ -75,6 +79,7 @@ export default function LivePanel({ job, log, lineup, onClose, notify }) {
         <button role="tab" aria-selected={tab === "live"} className={tab === "live" ? "on" : ""} onClick={() => setTab("live")}>Live kaam</button>
         <button role="tab" aria-selected={tab === "brains"} className={tab === "brains" ? "on" : ""} onClick={() => setTab("brains")}>Brains{job?.busy ? " •" : ""}</button>
         <button role="tab" aria-selected={tab === "inbox"} className={tab === "inbox" ? "on" : ""} onClick={() => setTab("inbox")} data-inbox-tab>Inbox{attn ? ` (${attn})` : ""}</button>
+        <button role="tab" aria-selected={tab === "skills"} className={tab === "skills" ? "on" : ""} onClick={() => setTab("skills")} data-skills-tab>Skills</button>
         <button role="tab" aria-selected={tab === "approvals"} className={tab === "approvals" ? "on" : ""} onClick={() => setTab("approvals")}>Ijazat{pend.length ? ` (${pend.length})` : ""}</button>
       </div>
 
@@ -136,6 +141,18 @@ export default function LivePanel({ job, log, lineup, onClose, notify }) {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {tab === "skills" && (
+          <div className="lp-scroll" data-skills>
+            <p className="muted lp-empty">Copilot har message par sahi skill khud lagata hai. Naam likh kar bhi keh sakte hain, jaise "a11y-audit skill se check karo".</p>
+            <AutopilotCard />
+            <div className="lp-sec">Dashboard ki skills ({SKILLS.length})</div>
+            {SKILLS.map((s) => <Link key={s.id} href={`/skills/${s.id}`} className="lp-orow"><span className="lp-oname"><b>{s.name}</b> <small className="muted">{s.tag}</small></span></Link>)}
+            <div className="lp-sec">GitHub se installed ({ghSkills?.length ?? "…"})</div>
+            {ghSkills && !ghSkills.length && <p className="muted">Abhi koi nahi. <Link href="/github">GitHub page</Link> se Superpowers ya Claude-Skills lagayein.</p>}
+            {(ghSkills || []).slice(0, 200).map((s) => <div key={s.name} className="lp-orow" title={s.description}><span className="lp-oname"><b>{s.name}</b> <small className="muted">{s.source}</small></span></div>)}
           </div>
         )}
 

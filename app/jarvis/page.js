@@ -27,6 +27,12 @@ export default function Jarvis() {
   const [imp, setImp] = useState(null); // Self-Improve panel
   const [engine, setEngine] = useState("auto"); // auto (Whisper) | browser
   const [level, setLevel] = useState(0);
+  const [role, setRole] = useState("assistant");
+  const [tone, setToneSel] = useState("friendly");
+  const [aname, setAname] = useState("");
+  const [saved, setSaved] = useState(false);
+  const mouthRef = useRef(null);
+  const talkRef = useRef({ speaking: false, words: [], started: 0, lastBoundary: 0, m: 0 });
 
   const onRef = useRef(false); onRef.current = on;
   const modeRef = useRef("idle"); modeRef.current = mode;
@@ -38,19 +44,37 @@ export default function Jarvis() {
   const recRef = useRef(null);
   const bargeRef = useRef(0);
   const engineRef = useRef("auto"); engineRef.current = engine;
-  const settingsRef = useRef({}); settingsRef.current = { gender, lang, voiceName };
+  const settingsRef = useRef({}); settingsRef.current = { gender, lang, voiceName, role, tone, aname };
   const endRef = useRef(null);
 
   // Pasand yaad rakhein.
   useEffect(() => {
-    try { const s = JSON.parse(localStorage.getItem("faheem-jarvis") || "{}"); if (s.gender) setGender(s.gender); if (s.lang) setLang(s.lang); if (s.voiceName) setVoiceName(s.voiceName); if (s.engine) setEngine(s.engine); setTurns(JSON.parse(localStorage.getItem("faheem-jarvis-chat") || "[]")); } catch {}
+    try { const s = JSON.parse(localStorage.getItem("faheem-jarvis") || "{}"); if (s.gender) setGender(s.gender); if (s.lang) setLang(s.lang); if (s.voiceName) setVoiceName(s.voiceName); if (s.engine) setEngine(s.engine); if (s.role) setRole(s.role); if (s.tone) setToneSel(s.tone); if (s.aname) setAname(s.aname); setTurns(JSON.parse(localStorage.getItem("faheem-jarvis-chat") || "[]")); } catch {}
     fetch("/api/jarvis").then((r) => r.json()).then(setStatus).catch(() => {});
     const load = () => setVoices(window.speechSynthesis?.getVoices() || []);
     load(); if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = load;
     return () => stopAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  useEffect(() => { try { localStorage.setItem("faheem-jarvis", JSON.stringify({ gender, lang, voiceName, engine })); } catch {} }, [gender, lang, voiceName, engine]);
+  useEffect(() => { try { localStorage.setItem("faheem-jarvis", JSON.stringify({ gender, lang, voiceName, engine, role, tone, aname })); } catch {} }, [gender, lang, voiceName, engine, role, tone, aname]);
+
+  // Lip-sync: har lafz (speech boundary) par honth syllables ke hisaab se khulte band hote hain; boundary na aaye to narm flap.
+  useEffect(() => {
+    let raf;
+    const tick = () => {
+      const T = talkRef.current; const now = performance.now(); let target = 0;
+      if (T.speaking) {
+        const w = T.words.find((x) => now >= x.start && now <= x.end);
+        if (w) target = Math.abs(Math.sin(Math.PI * w.syl * (now - w.start) / (w.end - w.start))) * 0.95;
+        else if (now - T.lastBoundary > 450) target = 0.35 + 0.35 * Math.abs(Math.sin(now / 95)) * (0.6 + 0.4 * Math.sin(now / 37));
+      }
+      T.m += (target - T.m) * 0.45;
+      if (mouthRef.current) mouthRef.current.style.opacity = T.m.toFixed(3);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
   useEffect(() => { try { localStorage.setItem("faheem-jarvis-chat", JSON.stringify(turns.slice(-60))); } catch {} endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [turns]);
 
   // Is gender aur zubaan ki awazen (lehje).
@@ -98,7 +122,9 @@ export default function Jarvis() {
   const speak = useCallback((text, tone = {}) => new Promise((resolve) => {
     const synth = window.speechSynthesis; if (!synth || !text) return resolve(false);
     synth.cancel();
-    const u = new SpeechSynthesisUtterance(clean(text));
+    const spoken = clean(text);
+    const u = new SpeechSynthesisUtterance(spoken);
+    const T = talkRef.current;
     const v = pickVoice(); const g = settingsRef.current.gender;
     if (v) { u.voice = v; u.lang = v.lang; }
     const mismatch = v && genderOf(v) !== "any" && genderOf(v) !== g;
@@ -111,8 +137,15 @@ export default function Jarvis() {
       if (loud > 8) { interrupted = true; synth.cancel(); return; } // ~250ms awaz = user bol raha hai
       bargeRef.current = requestAnimationFrame(watch);
     };
-    u.onstart = () => { setMode("speaking"); if (analyserRef.current) bargeRef.current = requestAnimationFrame(watch); };
-    u.onend = u.onerror = () => { cancelAnimationFrame(bargeRef.current); setLevel(0); resolve(interrupted); };
+    u.onboundary = (e) => {
+      if (e.name && e.name !== "word") return;
+      const rest = spoken.slice(e.charIndex); const word = (rest.match(/^\S+/) || [""])[0];
+      const syl = Math.max(1, (word.match(/[aeiouyاآوی]+/gi) || []).length);
+      const now = performance.now(); const dur = Math.max(160, word.length * 62) / (u.rate || 1);
+      T.lastBoundary = now; T.words = [...T.words.filter((x) => x.end > now - 50), { start: now, end: now + dur, syl }];
+    };
+    u.onstart = () => { T.speaking = true; T.words = []; T.lastBoundary = 0; setMode("speaking"); if (analyserRef.current) bargeRef.current = requestAnimationFrame(watch); };
+    u.onend = u.onerror = () => { T.speaking = false; T.words = []; cancelAnimationFrame(bargeRef.current); setLevel(0); resolve(interrupted); };
     synth.speak(u);
   }), [pickVoice]);
 
@@ -158,7 +191,7 @@ export default function Jarvis() {
     const u = { role: "user", content: text, at: Date.now() };
     setTurns((t) => [...t, u]); setMode("thinking");
     try {
-      const r = await fetch("/api/jarvis", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, history: turnsRef.current.slice(-10), gender: settingsRef.current.gender, lang: settingsRef.current.lang, pending: pendingRef.current }) });
+      const r = await fetch("/api/jarvis", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, history: turnsRef.current.slice(-10), gender: settingsRef.current.gender, lang: settingsRef.current.lang, pending: pendingRef.current, role: settingsRef.current.role, tone: settingsRef.current.tone, name: settingsRef.current.aname }) });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || r.status);
       pendingRef.current = d.pending || null;
@@ -208,83 +241,159 @@ export default function Jarvis() {
   async function delNote(id) { const d = await fetch("/api/jarvis/improve", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ deleteId: id }) }).then((r) => r.json()); setImp((x) => ({ ...x, notes: d.notes })); }
 
   const col = EMO_COLOR[emotion] || EMO_COLOR.neutral;
-  const name = gender === "female" ? "FRIDAY" : "J.A.R.V.I.S.";
-  const scale = 1 + (mode === "listening" || mode === "speaking" ? level * 0.35 : 0);
+  const P = gender === "female" ? "friday" : "jarvis";
+  const name = aname.trim() || (gender === "female" ? "Friday" : "Jarvis");
+  const lastReply = [...turns].reverse().find((t) => t.role === "assistant")?.content || (gender === "female" ? "Salam! Main Friday hoon. Aaj kya karna hai, Boss?" : "Salam! Main Jarvis hoon. Farmaiye Sir, kya karna hai?");
+  const mouthBox = gender === "female" ? "ellipse 12% 8% at 50% 49%" : "ellipse 13% 8.5% at 50% 55%";
+  const stateText = on ? ({ listening: "Sun raha hoon", thinking: "Soch raha hoon", speaking: "Bol raha hoon" }[mode] || "Tayyar") : "Shuru";
+  const sendCmd = async (t) => { const d = await ask(t); if (d?.reply) { await ensureMic(); await speak(d.reply, d.tone); } };
+  const PERSONA = [["assistant", "Personal Assistant", "Kaam, yaad-dehani, jawab", "check"], ["coder", "Coder", "Code aur projects", "box"], ["teacher", "Teacher", "Aasaan samjhana", "book"], ["business", "Business Advisor", "Marketing, hisaab", "graph"], ["friend", "Dost", "Baat cheet, hausla", "users"]];
+  const TONE_L = [["professional", "Professional", "Saaf aur chhota", "chat"], ["friendly", "Friendly", "Garam aur madadgar", "sparkle"], ["formal", "Formal", "Adab wala andaz", "edit"]];
+  const CAPS = [["Chrome kholo", "globe"], ["YouTube par naat chalao", "play"], ["Downloads folder kholo", "folder"], ["Screenshot lo", "image"], ["Awaz kam karo", "mic"], ["Kitne baje hain", "clock"]];
+  const EXAMPLES = ["Aaj ka plan banane mein madad karo", "Ek professional email ka jawab likhne ka tareeqa batao", "Mujhe thori tension hai, baat karo", "Python seekhna shuru kaise karoon"];
 
   return (
     <main className="jv" style={{ "--jc": col }}>
       <style>{CSS}</style>
       <header className="jv-top">
-        <Link href="/" className="jv-back" title="Chat par wapas"><Icon name="back" size={16} /> Chat</Link>
-        <div className="jv-title">{name}<span className={"jv-dot " + mode} /></div>
+        <div>
+          <h1>Aap ka AI Assistant, <em>aap ki marzi.</em></h1>
+          <p>Persona, lehja aur andaz chunein. Awaz se baat karein, {name} laptop bhi chalata hai.</p>
+        </div>
         <div className="jv-actions">
-          <button className={"jv-chip" + (gender === "male" ? " on" : "")} onClick={() => { setGender("male"); setVoiceName(""); }} title="Mard ki awaz (Jarvis)">Mard</button>
-          <button className={"jv-chip" + (gender === "female" ? " on" : "")} onClick={() => { setGender("female"); setVoiceName(""); }} title="Aurat ki awaz (Friday)">Aurat</button>
+          <span className={"jv-dot " + mode} title={mode} />
           <button className="jv-improve" onClick={improve} title="Self-Improve: Jarvis apni baat cheet parh kar khud behtar hota hai" data-jarvis-improve><Icon name="sparkle" size={16} /> Self-Improve</button>
         </div>
       </header>
 
-      <section className="jv-hud">
-        <div className="jv-ring r1" /><div className="jv-ring r2" /><div className="jv-ring r3" />
-        <button className={"jv-core " + mode} style={{ transform: `scale(${scale})` }} onClick={toggle} aria-label={on ? "Jarvis band karein" : "Jarvis se baat shuru karein"} data-jarvis-mic>
-          <Icon name={on ? "mic" : "play"} size={34} />
-          <span>{on ? ({ listening: "Sun raha hoon", thinking: "Soch raha hoon", speaking: "Bol raha hoon" }[mode] || "Tayyar") : "Shuru"}</span>
-        </button>
-        <div className="jv-emo" title="Aap ka mood (Jarvis is ke hisaab se andaz badalta hai)">Mood: {EMO_LABEL[emotion]}</div>
-      </section>
-
-      <section className="jv-bar">
-        <label>Zubaan
-          <select value={lang} onChange={(e) => { setLang(e.target.value); setVoiceName(""); }}>
-            <option value="roman">Roman Urdu</option><option value="ur-script">اردو</option><option value="en">English</option>
-          </select>
-        </label>
-        <label>Lehja (awaz)
-          <select value={voiceName} onChange={(e) => setVoiceName(e.target.value)} data-jarvis-voice>
-            <option value="">Khud chuno ({gender === "male" ? "mard" : "aurat"})</option>
-            {voiceList.map((v) => <option key={v.name} value={v.name}>{v.name.replace(/Microsoft |Online \(Natural\) - /g, "")} · {v.lang}</option>)}
-          </select>
-        </label>
-        <label>Sunna
-          <select value={engine} onChange={(e) => setEngine(e.target.value)}>
-            <option value="auto">Whisper (laptop / Groq)</option><option value="browser">Browser (Chrome/Edge)</option>
-          </select>
-        </label>
-        <button className="jv-chip" onClick={() => { const v = pickVoice(); speak(gender === "female" ? "Salam Boss, main Friday hoon." : "Salam Sir, main Jarvis hoon.", {}); setNotice(v ? `Awaz: ${v.name} (${v.lang})` : "Koi awaz nahi mili"); }}>Awaz suno</button>
-      </section>
-
-      {status && (
-        <div className="jv-status">
-          <span className={status.ollama?.running ? "ok" : "bad"}>Ollama: {status.ollama?.running ? (status.ollama.models?.[0]?.name || "chal raha") : "band"}</span>
-          <span className={status.localStt ? "ok" : "mid"}>Whisper laptop: {status.localStt ? "haan" : "nahi"}</span>
-          <span className={status.chromeDevtools ? "ok" : "mid"}>Chrome control: {status.chromeDevtools ? "haan" : "seedha link"}</span>
-          <span>Seekhe qawaid: {status.stats?.notes || 0}</span>
-        </div>
-      )}
-      {notice && <div className="jv-notice" role="status">{notice}</div>}
-
-      <section className="jv-log" aria-live="polite">
-        {turns.length === 0 && <p className="jv-hint">Shuru dabayein aur boliye: &quot;Chrome kholo&quot;, &quot;YouTube par naat chalao&quot;, &quot;Downloads folder kholo&quot;, &quot;screenshot lo&quot;, &quot;awaz kam karo&quot;, ya bas apni baat. Beech mein bolein to Jarvis ruk jata hai. &quot;Bas&quot; kahein to band.</p>}
-        {turns.map((t, i) => (
-          <div key={i} className={"jv-msg " + t.role}>
-            <b>{t.role === "user" ? "Aap" : name}</b> {t.content}
-            {t.role === "assistant" && (t.brain || t.action) && <small>{[t.action && "kaam: " + t.action, t.brain].filter(Boolean).join(" · ")}</small>}
+      <div className="jv-grid">
+        {/* Baayen: Persona, Tone, Capabilities */}
+        <aside className="jv-col">
+          <div className="jv-card">
+            <h3>Persona</h3>
+            {PERSONA.map(([id, t, d, ic]) => (
+              <button key={id} className={"jv-opt" + (role === id ? " on" : "")} onClick={() => setRole(id)}>
+                <Icon name={ic} size={16} /><span><b>{t}</b><small>{d}</small></span>{role === id && <Icon name="check" size={14} />}
+              </button>
+            ))}
           </div>
-        ))}
-        <div ref={endRef} />
+          <div className="jv-card">
+            <h3>Andaz (tone)</h3>
+            {TONE_L.map(([id, t, d, ic]) => (
+              <button key={id} className={"jv-opt" + (tone === id ? " on" : "")} onClick={() => setToneSel(id)}>
+                <Icon name={ic} size={16} /><span><b>{t}</b><small>{d}</small></span>{tone === id && <Icon name="check" size={14} />}
+              </button>
+            ))}
+          </div>
+          <div className="jv-card">
+            <h3>Laptop par kaam</h3>
+            {CAPS.map(([t, ic]) => <button key={t} className="jv-cap" onClick={() => sendCmd(t)}><Icon name={ic} size={15} /> {t}</button>)}
+          </div>
+        </aside>
+
+        {/* Beech: hologram avatar (lip-sync) */}
+        <section className="jv-stage">
+          <div className="jv-holo">
+            <div className="jv-badge"><Icon name="sparkle" size={15} /> {name.toUpperCase()}</div>
+            <div className="jv-avatar">
+              <img src={`/jarvis/${P}-closed.jpg`} alt={`${name} avatar`} className="jv-face" />
+              <img ref={mouthRef} src={`/jarvis/${P}-open.jpg`} alt="" aria-hidden="true" className="jv-face jv-mouth" style={{ WebkitMaskImage: `radial-gradient(${mouthBox}, #000 55%, transparent 100%)`, maskImage: `radial-gradient(${mouthBox}, #000 55%, transparent 100%)`, opacity: 0 }} />
+              <div className="jv-scan" />
+            </div>
+            <div className="jv-bubble" aria-live="polite">{lastReply.length > 160 ? lastReply.slice(0, 160) + "…" : lastReply}</div>
+            <div className="jv-tags">
+              <span><Icon name="brain" size={14} /> {mode === "thinking" ? "Soch raha" : "Smart"}</span>
+              <span><Icon name="loop" size={14} /> Mood: {EMO_LABEL[emotion]}</span>
+              <span><Icon name="check" size={14} /> Laptop par</span>
+            </div>
+          </div>
+          <div className="jv-pad">
+            <div className="jv-ring r1" /><div className="jv-ring r2" />
+            <button className={"jv-core " + mode} style={{ transform: `scale(${1 + (mode === "listening" ? level * 0.3 : 0)})` }} onClick={toggle} aria-label={on ? "Band karein" : "Baat shuru karein"} data-jarvis-mic>
+              <Icon name={on ? "mic" : "play"} size={26} /><span>{stateText}</span>
+            </button>
+          </div>
+          {status && (
+            <div className="jv-status">
+              <span className={status.ollama?.running ? "ok" : "bad"}>Ollama: {status.ollama?.running ? (status.ollama.models?.[0]?.name || "chal raha") : "band"}</span>
+              <span className={status.localStt ? "ok" : "mid"}>Whisper: {status.localStt ? "laptop" : engine === "browser" ? "browser" : "Groq/browser"}</span>
+              <span className={status.chromeDevtools ? "ok" : "mid"}>Chrome: {status.chromeDevtools ? "control" : "link"}</span>
+              <span>Qawaid: {status.stats?.notes || 0}</span>
+            </div>
+          )}
+          {notice && <div className="jv-notice" role="status">{notice}</div>}
+        </section>
+
+        {/* Daayen: chat side par */}
+        <aside className="jv-col jv-chat">
+          <div className="jv-card jv-chatbox">
+            <div className="jv-chathead"><h3>Baat cheet</h3><button className="jv-mini" onClick={() => setTurns([])} title="Saaf karein"><Icon name="trash" size={14} /></button></div>
+            <div className="jv-log">
+              {turns.length === 0 && <p className="jv-hint">Shuru dabayein aur boliye, ya neeche likhein. Beech mein bolein to {name} ruk jata hai. &quot;Bas&quot; kahein to band.</p>}
+              {turns.map((t, i) => (
+                <div key={i} className={"jv-msg " + t.role}>
+                  <b>{t.role === "user" ? "Aap" : name}</b> {t.content}
+                  {t.role === "assistant" && (t.brain || t.action) && <small>{[t.action && "kaam: " + t.action, t.brain].filter(Boolean).join(" · ")}</small>}
+                </div>
+              ))}
+              <div ref={endRef} />
+            </div>
+            <form className="jv-type" onSubmit={sendTyped}>
+              <input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder={`${name} ko likhein...`} aria-label="Likh kar bhejein" />
+              <button type="submit" aria-label="Bhejein"><Icon name="send" size={16} /></button>
+            </form>
+          </div>
+          <div className="jv-card">
+            <h3>Misaalen</h3>
+            {EXAMPLES.map((x) => <button key={x} className="jv-ex" onClick={() => sendCmd(x)}>{x}</button>)}
+          </div>
+        </aside>
+      </div>
+
+      {/* Neeche: Personalize */}
+      <section className="jv-card jv-personal">
+        <h3>Apna assistant banayein</h3>
+        <div className="jv-row">
+          <label>Naam<input value={aname} onChange={(e) => setAname(e.target.value)} placeholder={gender === "female" ? "Friday" : "Jarvis"} maxLength={24} /></label>
+          <label>Awaz
+            <div className="jv-seg">
+              <button className={gender === "male" ? "on" : ""} onClick={() => { setGender("male"); setVoiceName(""); }}>Mard</button>
+              <button className={gender === "female" ? "on" : ""} onClick={() => { setGender("female"); setVoiceName(""); }}>Aurat</button>
+            </div>
+          </label>
+          <label>Lehja
+            <select value={voiceName} onChange={(e) => setVoiceName(e.target.value)} data-jarvis-voice>
+              <option value="">Khud chuno ({gender === "male" ? "mard" : "aurat"})</option>
+              {voiceList.map((v) => <option key={v.name} value={v.name}>{v.name.replace(/Microsoft |Online \(Natural\) - /g, "")} · {v.lang}</option>)}
+            </select>
+          </label>
+          <label>Zubaan
+            <select value={lang} onChange={(e) => { setLang(e.target.value); setVoiceName(""); }}>
+              <option value="roman">Roman Urdu</option><option value="ur-script">اردو</option><option value="en">English</option>
+            </select>
+          </label>
+          <label>Sunna
+            <select value={engine} onChange={(e) => setEngine(e.target.value)}>
+              <option value="auto">Whisper</option><option value="browser">Browser</option>
+            </select>
+          </label>
+          <button className="jv-save" onClick={() => { setSaved(true); setTimeout(() => setSaved(false), 1500); speak(gender === "female" ? `Salam, main ${name} hoon.` : `Salam, main ${name} hoon.`, {}); }}>{saved ? "Save ho gaya" : "Save aur suno"}</button>
+        </div>
       </section>
 
-      <form className="jv-type" onSubmit={sendTyped}>
-        <input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="Ya yahan likhein..." aria-label="Jarvis ko likh kar bhejein" />
-        <button type="submit" aria-label="Bhejein"><Icon name="send" size={16} /></button>
-        <button type="button" className="jv-chip" onClick={() => { setTurns([]); }} title="Baat cheet saaf">Saaf</button>
-      </form>
+      <nav className="jv-nav" aria-label="Pages">
+        <Link href="/"><Icon name="chat" size={16} /> Chat</Link>
+        <Link href="/agent"><Icon name="bot" size={16} /> Agent</Link>
+        <Link href="/jarvis" className="on"><Icon name="sparkle" size={16} /> Jarvis</Link>
+        <Link href="/memory"><Icon name="book" size={16} /> Memory</Link>
+        <Link href="/options"><Icon name="settings" size={16} /> Options</Link>
+      </nav>
 
       {imp && (
         <div className="jv-imp" role="dialog" aria-label="Self-Improve">
           <div className="jv-imp-box">
             <div className="jv-imp-head"><b>Self-Improve</b><button onClick={() => setImp(null)} aria-label="Band"><Icon name="x" size={16} /></button></div>
-            {imp.loading ? <p>Jarvis apni pichli baat cheet parh raha hai...</p> : <>
+            {imp.loading ? <p>{name} apni pichli baat cheet parh raha hai...</p> : <>
               {imp.msg && <p>{imp.msg}</p>}
               {imp.added?.length > 0 && <p className="ok">Naye qawaid seekhe ({imp.brain}): ye ab har jawab mein lagenge.</p>}
               <h4>Seekhe hue qawaid</h4>
@@ -294,7 +403,7 @@ export default function Jarvis() {
               {imp.ideas?.length > 0 && <>
                 <h4>Code behtar karne ke mashware</h4>
                 {imp.ideas.map((x, i) => <div className="jv-note" key={i}><span>{x}</span><button onClick={() => { navigator.clipboard?.writeText(`Jarvis page (app/jarvis, lib/jarvis) mein yeh behtari karo: ${x}`); setNotice("Copy ho gaya. Agent Mode mein paste karein, wahan aap ki ijazat se code badlega."); }} title="Agent Mode ke liye copy"><Icon name="copy" size={14} /></button></div>)}
-                <Link href="/agent" className="jv-chip on">Agent Mode kholein</Link>
+                <Link href="/agent" className="jv-save">Agent Mode kholein</Link>
               </>}
               {imp.stats && <p className="muted">Baat cheet: {imp.stats.turns} · ghaltiyan/tasheeh: {imp.stats.fails} · ausat waqt: {Math.round((imp.stats.avgMs || 0) / 100) / 10}s</p>}
             </>}
@@ -306,48 +415,77 @@ export default function Jarvis() {
 }
 
 const CSS = `
-.jv{min-height:100vh;background:radial-gradient(ellipse at 50% 30%,#0b1d2e 0%,#05080f 60%,#020306 100%);color:#d9f3ff;font-family:var(--font, system-ui, sans-serif);padding:14px 18px 90px;display:flex;flex-direction:column;gap:12px}
-.jv-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.jv-back{display:inline-flex;gap:6px;align-items:center;color:#9cc8dd;text-decoration:none;font-size:14px}
-.jv-title{font-weight:700;letter-spacing:.25em;font-size:18px;color:var(--jc);text-shadow:0 0 12px var(--jc);display:flex;align-items:center;gap:10px}
-.jv-dot{width:9px;height:9px;border-radius:50%;background:#456}.jv-dot.listening{background:#5dffa8;box-shadow:0 0 8px #5dffa8}.jv-dot.thinking{background:#ffc95c}.jv-dot.speaking{background:var(--jc);box-shadow:0 0 8px var(--jc)}
-.jv-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
-.jv-chip{background:rgba(79,209,255,.08);border:1px solid rgba(79,209,255,.3);color:#cfefff;border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer;text-decoration:none;min-height:34px;display:inline-flex;align-items:center}
-.jv-chip.on{background:var(--jc);color:#03121c;border-color:var(--jc)}
-.jv-improve{display:inline-flex;gap:6px;align-items:center;background:linear-gradient(90deg,rgba(93,255,168,.15),rgba(79,209,255,.15));border:1px solid var(--jc);color:#eafaff;border-radius:10px;padding:8px 12px;font-weight:600;cursor:pointer;min-height:36px}
-.jv-improve:focus-visible,.jv-chip:focus-visible,.jv-core:focus-visible{outline:2px solid #fff;outline-offset:3px}
-.jv-hud{position:relative;height:330px;display:grid;place-items:center}
-.jv-ring{position:absolute;border-radius:50%;border:1px solid var(--jc);opacity:.35}
-.jv-ring.r1{width:300px;height:300px;border-style:dashed;animation:jvspin 24s linear infinite}
-.jv-ring.r2{width:240px;height:240px;border-width:3px;border-color:transparent var(--jc) transparent var(--jc);animation:jvspin 9s linear infinite reverse;opacity:.6}
-.jv-ring.r3{width:190px;height:190px;opacity:.25}
-.jv-core{width:150px;height:150px;border-radius:50%;border:2px solid var(--jc);background:radial-gradient(circle,rgba(79,209,255,.35),rgba(5,12,20,.9) 70%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;box-shadow:0 0 40px var(--jc),inset 0 0 30px var(--jc);transition:transform .08s linear,box-shadow .3s ease;font-size:13px}
+.jv{min-height:100vh;background:radial-gradient(ellipse at 50% 35%,#1a1550 0%,#0a0b24 45%,#04050f 100%);color:#e6e8ff;font-family:var(--font, system-ui, sans-serif);padding:18px 20px 80px;--card:rgba(20,22,58,.62);--line:rgba(140,130,255,.22);--vio:#8b7bff}
+.jv-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.jv-top h1{margin:0;font-size:28px;line-height:1.15;font-weight:700}.jv-top h1 em{font-style:normal;color:var(--vio)}
+.jv-top p{margin:6px 0 0;color:#a9aed6;font-size:14px;max-width:520px}
+.jv-actions{display:flex;gap:10px;align-items:center}
+.jv-dot{width:10px;height:10px;border-radius:50%;background:#4a4f77}.jv-dot.listening{background:#5dffa8;box-shadow:0 0 10px #5dffa8}.jv-dot.thinking{background:#ffc95c}.jv-dot.speaking{background:var(--vio);box-shadow:0 0 10px var(--vio)}
+.jv-improve{display:inline-flex;gap:6px;align-items:center;background:linear-gradient(90deg,#5b47ff,#8b5cf6);border:0;color:#fff;border-radius:12px;padding:10px 14px;font-weight:600;cursor:pointer;min-height:40px;box-shadow:0 6px 24px rgba(110,90,255,.35)}
+.jv-grid{display:grid;grid-template-columns:260px minmax(0,1fr) 340px;gap:16px;align-items:start}
+.jv-col{display:flex;flex-direction:column;gap:14px}
+.jv-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;backdrop-filter:blur(10px)}
+.jv-card h3{margin:0 0 10px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#bfc3ee}
+.jv-opt{width:100%;display:flex;align-items:center;gap:10px;text-align:left;background:transparent;border:1px solid transparent;color:#e6e8ff;border-radius:10px;padding:8px 10px;cursor:pointer;min-height:44px}
+.jv-opt span{flex:1;display:flex;flex-direction:column}.jv-opt b{font-size:14px;font-weight:600}.jv-opt small{color:#959bc8;font-size:12px}
+.jv-opt:hover{background:rgba(139,123,255,.08)}.jv-opt.on{background:rgba(110,90,255,.22);border-color:var(--vio)}
+.jv-cap,.jv-ex{width:100%;display:flex;gap:8px;align-items:center;text-align:left;background:transparent;border:0;color:#d7daf7;padding:7px 4px;cursor:pointer;font-size:14px;min-height:36px;border-radius:8px}
+.jv-cap:hover,.jv-ex:hover{background:rgba(139,123,255,.08)}
+.jv-ex{border:1px solid var(--line);margin-bottom:8px;padding:9px 10px;line-height:1.35}
+.jv-stage{display:flex;flex-direction:column;align-items:center;gap:0}
+.jv-holo{position:relative;width:100%;max-width:560px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(180deg,rgba(60,50,160,.25),rgba(15,16,45,.5));padding:16px 16px 12px;overflow:hidden}
+.jv-badge{position:absolute;top:14px;left:14px;z-index:3;display:inline-flex;gap:6px;align-items:center;background:rgba(10,12,35,.75);border:1px solid var(--line);border-radius:10px;padding:7px 12px;font-weight:600;letter-spacing:.12em;font-size:13px}
+.jv-avatar{position:relative;width:min(100%,420px);aspect-ratio:1;margin:0 auto;border-radius:16px;overflow:hidden;-webkit-mask-image:radial-gradient(ellipse 70% 75% at 50% 45%,#000 60%,transparent 100%);mask-image:radial-gradient(ellipse 70% 75% at 50% 45%,#000 60%,transparent 100%)}
+.jv-face{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.jv-mouth{will-change:opacity}
+.jv-scan{position:absolute;inset:0;background:repeating-linear-gradient(180deg,rgba(140,160,255,.06) 0 2px,transparent 2px 5px);mix-blend-mode:screen;pointer-events:none;animation:jvscan 6s linear infinite}
+.jv-bubble{position:absolute;top:70px;right:14px;z-index:3;max-width:min(44%,230px);background:rgba(12,14,40,.82);border:1px solid var(--line);border-radius:14px;padding:12px;font-size:14px;line-height:1.45;color:#e9ebff}
+.jv-tags{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.jv-tags span{display:inline-flex;gap:6px;align-items:center;background:rgba(10,12,35,.7);border:1px solid var(--line);border-radius:10px;padding:7px 12px;font-size:12px;letter-spacing:.06em}
+.jv-pad{position:relative;width:100%;max-width:520px;height:120px;display:grid;place-items:center;margin-top:-6px}
+.jv-ring{position:absolute;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}
+.jv-ring.r1{width:440px;max-width:96%;height:90px;border:2px solid rgba(110,140,255,.55);box-shadow:0 0 40px rgba(90,120,255,.55),inset 0 0 30px rgba(90,120,255,.4);background:radial-gradient(ellipse,rgba(80,110,255,.35),transparent 70%)}
+.jv-ring.r2{width:300px;max-width:70%;height:56px;border:1px dashed rgba(170,190,255,.6);animation:jvglow 2.4s ease-in-out infinite}
+.jv-core{position:relative;z-index:2;width:96px;height:96px;border-radius:50%;border:2px solid var(--jc);background:radial-gradient(circle,rgba(110,90,255,.55),rgba(8,10,30,.95) 70%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;box-shadow:0 0 30px var(--jc);font-size:11px;transition:transform .08s linear}
 .jv-core.thinking{animation:jvpulse 1.1s ease-in-out infinite}
-.jv-emo{position:absolute;bottom:6px;font-size:13px;color:var(--jc)}
-@keyframes jvspin{to{transform:rotate(360deg)}}
-@keyframes jvpulse{50%{box-shadow:0 0 70px var(--jc),inset 0 0 40px var(--jc)}}
-@media (prefers-reduced-motion: reduce){.jv-ring,.jv-core{animation:none!important;transition:none!important}}
-.jv-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;justify-content:center}
-.jv-bar label{display:flex;flex-direction:column;font-size:12px;color:#8fb5c8;gap:4px}
-.jv-bar select{background:#08131d;color:#e5f7ff;border:1px solid rgba(79,209,255,.3);border-radius:8px;padding:7px;min-height:36px;max-width:260px}
-.jv-status{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;font-size:12px}
+.jv-core:focus-visible,.jv-improve:focus-visible,.jv-opt:focus-visible,.jv-save:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.jv-status{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;font-size:12px;margin-top:4px}
 .jv-status span{padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.05)}
-.jv-status .ok{color:#5dffa8}.jv-status .bad{color:#ff7a6b}.jv-status .mid{color:#ffc95c}
-.jv-notice{text-align:center;color:#ffd98a;font-size:13px}
-.jv-log{max-width:820px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:8px}
-.jv-hint{color:#8fb5c8;text-align:center;font-size:14px;line-height:1.6}
-.jv-msg{padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.04);line-height:1.5;font-size:15px}
-.jv-msg.user{align-self:flex-end;background:rgba(79,209,255,.1)}
-.jv-msg b{color:var(--jc);margin-right:6px;font-size:12px;letter-spacing:.08em}
-.jv-msg small{display:block;color:#6f93a6;font-size:11px;margin-top:3px}
-.jv-type{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;width:min(820px,94vw);display:flex;gap:8px}
-.jv-type input{flex:1;background:#08131d;border:1px solid rgba(79,209,255,.3);color:#fff;border-radius:12px;padding:12px;min-height:44px}
-.jv-type button[type=submit]{width:46px;border-radius:12px;border:1px solid var(--jc);background:rgba(79,209,255,.15);color:#fff;cursor:pointer}
+.jv-status .ok{color:#5dffa8}.jv-status .bad{color:#ff8a7a}.jv-status .mid{color:#ffcf6b}
+.jv-notice{text-align:center;color:#ffd98a;font-size:13px;margin-top:6px}
+.jv-chatbox{display:flex;flex-direction:column;height:min(62vh,560px)}
+.jv-chathead{display:flex;justify-content:space-between;align-items:center}
+.jv-mini{background:none;border:0;color:#a9aed6;cursor:pointer;min-width:32px;min-height:32px}
+.jv-log{flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px}
+.jv-hint{color:#959bc8;font-size:13px;line-height:1.6}
+.jv-msg{padding:9px 11px;border-radius:12px;background:rgba(255,255,255,.05);line-height:1.5;font-size:14px}
+.jv-msg.user{align-self:flex-end;background:rgba(110,90,255,.22);max-width:90%}
+.jv-msg b{color:var(--vio);margin-right:6px;font-size:11px;letter-spacing:.08em}
+.jv-msg small{display:block;color:#7f86b5;font-size:11px;margin-top:3px}
+.jv-type{display:flex;gap:8px;margin-top:10px}
+.jv-type input{flex:1;background:rgba(5,6,20,.7);border:1px solid var(--line);color:#fff;border-radius:12px;padding:11px;min-height:44px}
+.jv-type button{width:46px;border-radius:12px;border:0;background:#5b47ff;color:#fff;cursor:pointer}
+.jv-personal{margin-top:16px}
+.jv-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.jv-row label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:#a9aed6}
+.jv-row input,.jv-row select{background:rgba(5,6,20,.7);border:1px solid var(--line);color:#fff;border-radius:10px;padding:9px;min-height:40px;min-width:150px;max-width:260px}
+.jv-seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.jv-seg button{background:transparent;border:0;color:#d7daf7;padding:9px 16px;cursor:pointer;min-height:40px}.jv-seg button.on{background:#5b47ff;color:#fff}
+.jv-save{background:linear-gradient(90deg,#5b47ff,#8b5cf6);border:0;color:#fff;border-radius:10px;padding:10px 16px;font-weight:600;cursor:pointer;min-height:40px;text-decoration:none;display:inline-flex;align-items:center}
+.jv-nav{position:fixed;left:50%;transform:translateX(-50%);bottom:12px;display:flex;gap:6px;background:rgba(10,12,35,.85);border:1px solid var(--line);border-radius:16px;padding:6px;backdrop-filter:blur(10px);z-index:20}
+.jv-nav a{display:inline-flex;gap:6px;align-items:center;color:#b9bde6;text-decoration:none;padding:8px 14px;border-radius:12px;font-size:14px;min-height:40px}
+.jv-nav a.on{background:rgba(110,90,255,.3);color:#fff;border:1px solid var(--vio)}
 .jv-imp{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;justify-content:flex-end;z-index:50}
-.jv-imp-box{width:min(440px,100vw);height:100%;overflow:auto;background:#07111a;border-left:1px solid var(--jc);padding:16px;display:flex;flex-direction:column;gap:8px}
+.jv-imp-box{width:min(440px,100vw);height:100%;overflow:auto;background:#0b0c26;border-left:1px solid var(--vio);padding:16px;display:flex;flex-direction:column;gap:8px}
 .jv-imp-head{display:flex;justify-content:space-between;align-items:center}
-.jv-imp-head button,.jv-note button{background:none;border:0;color:#9cc8dd;cursor:pointer;min-width:32px;min-height:32px}
-.jv-imp h4{margin:10px 0 2px;color:var(--jc);font-size:13px}
+.jv-imp-head button,.jv-note button{background:none;border:0;color:#a9aed6;cursor:pointer;min-width:32px;min-height:32px}
+.jv-imp h4{margin:10px 0 2px;color:var(--vio);font-size:13px}
 .jv-note{display:flex;gap:8px;justify-content:space-between;align-items:flex-start;background:rgba(255,255,255,.04);border-radius:8px;padding:8px;font-size:14px}
-.jv-imp .ok{color:#5dffa8}.jv-imp .muted{color:#7d9aab;font-size:12px}
+.jv-imp .ok{color:#5dffa8}.jv-imp .muted{color:#7f86b5;font-size:12px}
+@keyframes jvscan{to{background-position:0 100px}}
+@keyframes jvglow{50%{opacity:.4}}
+@keyframes jvpulse{50%{box-shadow:0 0 60px var(--jc)}}
+@media (max-width:1100px){.jv-grid{grid-template-columns:1fr 1fr}.jv-stage{grid-column:1/-1;order:-1}}
+@media (max-width:700px){.jv-grid{grid-template-columns:1fr}.jv-bubble{position:static;max-width:none;margin-top:8px}.jv-top h1{font-size:22px}}
+@media (prefers-reduced-motion: reduce){.jv-scan,.jv-ring,.jv-core{animation:none!important;transition:none!important}}
 `;

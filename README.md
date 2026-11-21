@@ -179,3 +179,8 @@ Sirf us computer/server par jahan Docker chal sake: `docker compose up -d`
 - **Chrome control** (optional): `npm i -g chrome-devtools-mcp@latest` (Google, Apache-2.0).
 - **Self-Improve button** (Jarvis page, upar daayen): pichli baat cheet parh kar naye qawaid seekhta hai (foran lagte hain, har ek Delete) aur code ke mashware deta hai jo Agent Mode mein aap ki ijazat se lagte hain.
 - **Emotional skills** (MIT: danielroe/empathy, lonelymoon87/need-a-hug, dralexlup/therapy-skill, hoainho/iamhumans): mood pehchan (udaas, pareshan, gussa, akela, khush, dara hua), usi hisaab se jawab aur awaz ki raftar/pitch. Front chat mein bhi. Khatre ki baat par madad ki taraf rehnumai. Therapy nahi.
+
+## v3.24.1 — Jarvis naya dashboard (hologram avatar + lip-sync)
+- Pinterest wale "AI Assistant" design jaisa: baayen Persona (Personal Assistant, Coder, Teacher, Business Advisor, Dost), Andaz (Professional, Friendly, Formal) aur Laptop kaam; beech mein hologram avatar platform par; chat ab daayen side par, neeche Misaalen.
+- Lip-sync: Friday (aurat) aur Jarvis (mard) ke avatar bolte waqt har lafz par honth hilate hain (speech boundary + syllables; boundary na mile to narm flap).
+- Neeche "Apna assistant banayein": Naam, Mard/Aurat, Lehja, Zubaan, Sunna. Persona aur andaz Jarvis ke jawab badalte hain.

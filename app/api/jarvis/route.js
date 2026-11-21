@@ -20,6 +20,6 @@ export async function POST(req) {
   if (b?.prefs) return Response.json({ prefs: savePrefs(b.prefs) });
   if (!text) return Response.json({ error: "Kuch kahiye." }, { status: 400 });
   try { if (isPaused()) return Response.json({ reply: "Pause All chalu hai. Pehle Resume dabayein.", emotion: "neutral" }); } catch {}
-  const out = await jarvisTurn({ text, history: Array.isArray(b.history) ? b.history : [], gender: b.gender === "female" ? "female" : "male", lang: ["en", "ur-script", "roman"].includes(b.lang) ? b.lang : "roman", pending: b.pending || null, preferLocal: b.preferLocal !== false });
+  const out = await jarvisTurn({ text, history: Array.isArray(b.history) ? b.history : [], gender: b.gender === "female" ? "female" : "male", lang: ["en", "ur-script", "roman"].includes(b.lang) ? b.lang : "roman", pending: b.pending || null, preferLocal: b.preferLocal !== false, role: String(b.role || "assistant"), tone: String(b.tone || "friendly"), name: String(b.name || "") });
   return Response.json(out);
 }

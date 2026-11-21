@@ -184,3 +184,8 @@ Sirf us computer/server par jahan Docker chal sake: `docker compose up -d`
 - Pinterest wale "AI Assistant" design jaisa: baayen Persona (Personal Assistant, Coder, Teacher, Business Advisor, Dost), Andaz (Professional, Friendly, Formal) aur Laptop kaam; beech mein hologram avatar platform par; chat ab daayen side par, neeche Misaalen.
 - Lip-sync: Friday (aurat) aur Jarvis (mard) ke avatar bolte waqt har lafz par honth hilate hain (speech boundary + syllables; boundary na mile to narm flap).
 - Neeche "Apna assistant banayein": Naam, Mard/Aurat, Lehja, Zubaan, Sunna. Persona aur andaz Jarvis ke jawab badalte hain.
+
+## v3.24.2 — Glass Jarvis + laptop meters
+- Poora shafaf glass design; avatar background mein ghula hua hologram.
+- Avatar ke saath side bubble mein jawab type hota dikhta hai (soch raha ho to dots).
+- Glass meters: CPU, RAM, Disk, Battery (har 2.5 sec live), /api/jarvis/sys.

@@ -32,6 +32,14 @@ export default function Jarvis() {
   const [aname, setAname] = useState("");
   const [saved, setSaved] = useState(false);
   const mouthRef = useRef(null);
+  const [sys, setSys] = useState(null);
+  const [typedN, setTypedN] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    const poll = async () => { try { const r = await fetch("/api/jarvis/sys", { cache: "no-store" }); if (r.ok && alive) setSys(await r.json()); } catch {} };
+    poll(); const id = setInterval(poll, 2500);
+    return () => { alive = false; clearInterval(id); };
+  }, []);
   const talkRef = useRef({ speaking: false, words: [], started: 0, lastBoundary: 0, m: 0 });
 
   const onRef = useRef(false); onRef.current = on;
@@ -244,6 +252,22 @@ export default function Jarvis() {
   const P = gender === "female" ? "friday" : "jarvis";
   const name = aname.trim() || (gender === "female" ? "Friday" : "Jarvis");
   const lastReply = [...turns].reverse().find((t) => t.role === "assistant")?.content || (gender === "female" ? "Salam! Main Friday hoon. Aaj kya karna hai, Boss?" : "Salam! Main Jarvis hoon. Farmaiye Sir, kya karna hai?");
+  useEffect(() => {
+    setTypedN(0); let n = 0;
+    const id = setInterval(() => { n += 1; setTypedN(n); if (n >= lastReply.length) clearInterval(id); }, 38);
+    return () => clearInterval(id);
+  }, [lastReply]);
+  const Gauge = ({ label, v, sub, icon }) => {
+    const pct = v == null ? 0 : Math.max(0, Math.min(100, v)); const C = 2 * Math.PI * 34;
+    const hue = pct > 85 ? "#ff6b7a" : pct > 60 ? "#ffcf6b" : "#7fe7ff";
+    return (
+      <div className="jv-gauge" role="meter" aria-label={label} aria-valuenow={v ?? undefined} aria-valuemin={0} aria-valuemax={100}>
+        <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="34" className="g-bg" /><circle cx="40" cy="40" r="34" className="g-fg" style={{ stroke: hue, strokeDasharray: C, strokeDashoffset: C * (1 - pct / 100) }} /></svg>
+        <div className="g-in"><Icon name={icon} size={13} /><b>{v == null ? "–" : v + "%"}</b></div>
+        <span>{label}</span>{sub && <small>{sub}</small>}
+      </div>
+    );
+  };
   const mouthBox = gender === "female" ? "ellipse 12% 8% at 50% 49%" : "ellipse 13% 8.5% at 50% 55%";
   const stateText = on ? ({ listening: "Sun raha hoon", thinking: "Soch raha hoon", speaking: "Bol raha hoon" }[mode] || "Tayyar") : "Shuru";
   const sendCmd = async (t) => { const d = await ask(t); if (d?.reply) { await ensureMic(); await speak(d.reply, d.tone); } };
@@ -300,7 +324,10 @@ export default function Jarvis() {
               <img ref={mouthRef} src={`/jarvis/${P}-open.jpg`} alt="" aria-hidden="true" className="jv-face jv-mouth" style={{ WebkitMaskImage: `radial-gradient(${mouthBox}, #000 55%, transparent 100%)`, maskImage: `radial-gradient(${mouthBox}, #000 55%, transparent 100%)`, opacity: 0 }} />
               <div className="jv-scan" />
             </div>
-            <div className="jv-bubble" aria-live="polite">{lastReply.length > 160 ? lastReply.slice(0, 160) + "…" : lastReply}</div>
+            <div className="jv-bubble" aria-live="polite">
+              <div className="jv-bname">{name}</div>
+              {mode === "thinking" ? <span className="jv-typing"><i /><i /><i /></span> : <>{lastReply.slice(0, typedN)}{typedN < lastReply.length && <span className="jv-caret" />}</>}
+            </div>
             <div className="jv-tags">
               <span><Icon name="brain" size={14} /> {mode === "thinking" ? "Soch raha" : "Smart"}</span>
               <span><Icon name="loop" size={14} /> Mood: {EMO_LABEL[emotion]}</span>
@@ -312,6 +339,12 @@ export default function Jarvis() {
             <button className={"jv-core " + mode} style={{ transform: `scale(${1 + (mode === "listening" ? level * 0.3 : 0)})` }} onClick={toggle} aria-label={on ? "Band karein" : "Baat shuru karein"} data-jarvis-mic>
               <Icon name={on ? "mic" : "play"} size={26} /><span>{stateText}</span>
             </button>
+          </div>
+          <div className="jv-meters" aria-label="Laptop ka load">
+            <Gauge label="CPU" icon="monitor" v={sys?.cpu} sub={sys ? `${sys.cores} cores` : ""} />
+            <Gauge label="RAM" icon="box" v={sys?.ram} sub={sys ? `${sys.ramGB[0]}/${sys.ramGB[1]} GB` : ""} />
+            <Gauge label="Disk" icon="folder" v={sys?.disk} sub={sys?.diskGB ? `${sys.diskGB[0]}/${sys.diskGB[1]} GB` : ""} />
+            <Gauge label={sys?.charging ? "Battery ⚡" : "Battery"} icon="zap" v={sys?.battery} sub={sys ? `On ${sys.uptimeH}h` : ""} />
           </div>
           {status && (
             <div className="jv-status">
@@ -488,4 +521,30 @@ const CSS = `
 @media (max-width:1100px){.jv-grid{grid-template-columns:1fr 1fr}.jv-stage{grid-column:1/-1;order:-1}}
 @media (max-width:700px){.jv-grid{grid-template-columns:1fr}.jv-bubble{position:static;max-width:none;margin-top:8px}.jv-top h1{font-size:22px}}
 @media (prefers-reduced-motion: reduce){.jv-scan,.jv-ring,.jv-core{animation:none!important;transition:none!important}}
+/* v3.24.2 glass: sab kuch shafaf, hologram background mein ghula hua */
+.jv{background:radial-gradient(ellipse at 50% 30%,rgba(90,70,255,.35) 0%,transparent 55%),radial-gradient(ellipse at 15% 85%,rgba(0,190,255,.18) 0%,transparent 50%),radial-gradient(ellipse at 90% 10%,rgba(190,80,255,.2) 0%,transparent 45%),#03040d}
+.jv-card,.jv-holo,.jv-badge,.jv-tags span,.jv-bubble,.jv-nav,.jv-gauge,.jv-imp-box{background:linear-gradient(135deg,rgba(255,255,255,.09),rgba(255,255,255,.025));border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 8px 32px rgba(0,0,0,.35);-webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%)}
+.jv-holo{background:transparent;border-color:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+.jv-avatar{mix-blend-mode:screen;isolation:isolate;opacity:.95}
+.jv-avatar::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(120,140,255,.10),rgba(80,60,255,.18));mix-blend-mode:color;pointer-events:none}
+.jv-opt.on{background:rgba(255,255,255,.12);border-color:rgba(170,160,255,.7)}
+.jv-row input,.jv-row select,.jv-type input{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.16)}
+.jv-row select option{background:#11122b}
+.jv-msg{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08)}
+.jv-msg.user{background:rgba(120,100,255,.22)}
+.jv-bubble{top:56px;right:10px;max-width:min(46%,260px);max-height:62%;overflow:auto;font-size:14.5px;border-radius:16px 16px 16px 4px}
+.jv-bname{font-size:11px;letter-spacing:.12em;color:#b7a9ff;margin-bottom:4px;text-transform:uppercase}
+.jv-caret{display:inline-block;width:2px;height:1em;background:#cfc6ff;margin-left:2px;vertical-align:-2px;animation:jvblink .8s steps(2) infinite}
+.jv-typing{display:inline-flex;gap:4px}.jv-typing i{width:7px;height:7px;border-radius:50%;background:#cfc6ff;animation:jvdot 1s infinite}.jv-typing i:nth-child(2){animation-delay:.15s}.jv-typing i:nth-child(3){animation-delay:.3s}
+.jv-meters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;width:100%;max-width:560px;margin:6px 0 4px}
+.jv-gauge{position:relative;border-radius:16px;padding:10px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.jv-gauge svg{width:74px;height:74px;transform:rotate(-90deg)}
+.jv-gauge .g-bg{fill:none;stroke:rgba(255,255,255,.1);stroke-width:7}
+.jv-gauge .g-fg{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke-dashoffset .8s ease,stroke .5s;filter:drop-shadow(0 0 6px currentColor)}
+.jv-gauge .g-in{position:absolute;top:10px;left:0;right:0;height:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:#e6e8ff}
+.jv-gauge .g-in b{font-size:15px}
+.jv-gauge span{font-size:12px;letter-spacing:.1em;color:#cfd3ff}.jv-gauge small{font-size:11px;color:#8d93c4}
+@keyframes jvblink{50%{opacity:0}}
+@keyframes jvdot{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+@media (max-width:700px){.jv-meters{grid-template-columns:repeat(2,1fr)}}
 `;

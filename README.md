@@ -166,3 +166,6 @@ Sirf us computer/server par jahan Docker chal sake: `docker compose up -d`
 ## v3.23.0
 - GitHub Pages publish chat se: "is website ko GitHub Pages par daal do" (chat ki aakhri website) ya "project <naam> ko GitHub Pages par daal do". Naya public repo, files upload, Pages on, link wapas. Token ko Contents, Pages, Administration: Read & write chahiye.
 - iFreeDomains hata diya; domain sawal par ab GitHub Pages ka rasta.
+
+## v3.23.1
+- Website pipeline: agar Fixer adhoora ya khali jawab de (free brain limit/timeout), to pichla chalne wala page rakha jata hai, khona nahi.

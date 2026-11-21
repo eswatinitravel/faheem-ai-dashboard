@@ -311,7 +311,11 @@ ${designBrief(String(rawText || ""))}`;
             step("Tester Agent", `${issues.length} masle: ${issues.join(" | ").slice(0, 300)}`);
             if (round === 3) break;
             step("Fixer Agent", "Masle theek kar raha hoon…");
+            const prevReply = reply, prevP = p;
             ({ reply, p } = await ask([...fresh, { role: "assistant", content: reply }, { role: "user", content: `Fix ALL these problems and return the COMPLETE corrected page again:\n- ${issues.join("\n- ")}\n\n${RULES}` }], "Fix"));
+            // v3.23.1: fixer adhoora/khali jawab de to pichla chalne wala page na khoyein.
+            const newCode = (reply.match(/```html\s*([\s\S]*?)```/i) || [])[1] || "";
+            if (code && code.length > 300 && (!newCode || newCode.length < code.length * 0.5 || !/<\/html>/i.test(newCode))) { step("Fixer Agent", "Fixer ka jawab adhoora tha, pichla chalne wala page rakh liya."); reply = prevReply; p = prevP; left = issues.filter((x) => !String(x).startsWith("Design:") && !/Overused font|Cramped padding/.test(x)); break; }
             fixes++;
           }
           const real = left.filter((x) => !x.startsWith("Design:"));

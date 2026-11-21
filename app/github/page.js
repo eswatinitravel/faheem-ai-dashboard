@@ -9,6 +9,11 @@ import ThemeBalls from "../components/ThemeBalls";
 const TABS = [["mine", "Meri repos"], ["download", "Repo download"], ["skills", "Skill download"], ["local", "Laptop par"]];
 const SKILL_IDEAS = [
   ["obra/superpowers", "Superpowers (brainstorm, plan, TDD, debugging, review)"],
+  ["https://github.com/alirezarezvani/claude-skills/tree/main/engineering-team", "Claude-Skills: Engineering (code, review, DevOps, security)"],
+  ["https://github.com/alirezarezvani/claude-skills/tree/main/product-team", "Claude-Skills: Product (PRD, roadmap, UX)"],
+  ["https://github.com/alirezarezvani/claude-skills/tree/main/marketing-skill", "Claude-Skills: Marketing (SEO, copy, ads)"],
+  ["https://github.com/alirezarezvani/claude-skills/tree/main/finance", "Claude-Skills: Finance (budget, SaaS metrics)"],
+  ["https://github.com/alirezarezvani/claude-skills/tree/main/c-level-advisor", "Claude-Skills: CEO/CTO advisor"],
   ["anthropics/skills", "Anthropic ki official skills (docx, pdf, pptx, xlsx, design)"],
   ["https://github.com/Nutlope/hallmark/tree/main/skills/hallmark", "Hallmark design rules"],
   ["nextlevelbuilder/ui-ux-pro-max-skill", "UI UX Pro Max"],

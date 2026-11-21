@@ -19,6 +19,23 @@ export default function LivePanel({ job, log, lineup, onClose, notify }) {
   }, []);
   useEffect(() => { load(); const id = setInterval(load, 6000); return () => clearInterval(id); }, [load]);
   // Kaam shuru ho to Brains tab khud khulay, jawab aaye to Live par wapas.
+  // v3.20 Hook: koi kaam khatam/ruk jaye to desktop notification (TUIOS hooks jaisa).
+  const [seen, setSeen] = useState(null);
+  useEffect(() => {
+    const jobs = ops?.jobs; if (!jobs) return;
+    const now = Object.fromEntries(jobs.map((j) => [j.id, j.status]));
+    if (seen && typeof Notification !== "undefined") {
+      for (const j of jobs) {
+        const was = seen[j.id];
+        if (was && was !== j.status && ["completed", "dead_letter", "waiting_for_approval"].includes(j.status)) {
+          const t = { completed: "Kaam ho gaya", dead_letter: "Kaam ruk gaya", waiting_for_approval: "Ijazat chahiye" }[j.status];
+          if (Notification.permission === "granted") { try { new Notification(`Faheem AI: ${t}`, { body: j.title }); } catch {} }
+          else if (Notification.permission === "default") Notification.requestPermission().catch(() => {});
+        }
+      }
+    }
+    setSeen(now);
+  }, [ops]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (job?.busy) setTab("brains"); else if (job?.reply) setTab("live"); }, [job?.busy, job?.reply]);
 
   async function act(body) {
@@ -36,6 +53,11 @@ export default function LivePanel({ job, log, lineup, onClose, notify }) {
 
   const paused = !!ops?.paused;
   const pend = (ops?.approvals || []).filter((a) => a.status === "pending");
+  // v3.20 Agent Inbox (TUIOS se idea): har kaam ki haalat ek jagah; ruka hua ya ijazat wala oopar.
+  const INBOX_ST = { waiting_for_approval: "ijazat chahiye", dead_letter: "ruk gaya", retrying: "dobara koshish", running: "chal raha", queued: "line mein", completed: "ho gaya", cancelled: "cancel" };
+  const RANK = { waiting_for_approval: 0, dead_letter: 1, retrying: 2, running: 3, queued: 4, completed: 5, cancelled: 6 };
+  const inbox = [...(ops?.jobs || [])].sort((a, b) => (RANK[a.status] ?? 9) - (RANK[b.status] ?? 9) || String(b.createdAt).localeCompare(String(a.createdAt))).slice(0, 30);
+  const attn = (ops?.jobs || []).filter((j) => ["waiting_for_approval", "dead_letter"].includes(j.status)).length;
   const running = (ops?.jobs || []).filter((j) => ["running", "queued", "retrying", "waiting_for_approval"].includes(j.status)).length;
 
   return (
@@ -52,6 +74,7 @@ export default function LivePanel({ job, log, lineup, onClose, notify }) {
       <div className="lp-tabs" role="tablist">
         <button role="tab" aria-selected={tab === "live"} className={tab === "live" ? "on" : ""} onClick={() => setTab("live")}>Live kaam</button>
         <button role="tab" aria-selected={tab === "brains"} className={tab === "brains" ? "on" : ""} onClick={() => setTab("brains")}>Brains{job?.busy ? " •" : ""}</button>
+        <button role="tab" aria-selected={tab === "inbox"} className={tab === "inbox" ? "on" : ""} onClick={() => setTab("inbox")} data-inbox-tab>Inbox{attn ? ` (${attn})` : ""}</button>
         <button role="tab" aria-selected={tab === "approvals"} className={tab === "approvals" ? "on" : ""} onClick={() => setTab("approvals")}>Ijazat{pend.length ? ` (${pend.length})` : ""}</button>
       </div>
 
@@ -96,6 +119,23 @@ export default function LivePanel({ job, log, lineup, onClose, notify }) {
               </div>
             ))}
             <Link className="lp-more" href="/workflows">Poori tafseel: Workflows (schedule, audit, export)</Link>
+          </div>
+        )}
+
+        {tab === "inbox" && (
+          <div className="lp-scroll" data-inbox>
+            {!inbox.length && <p className="muted lp-empty">Abhi koi kaam nahi. Agent, schedule ya workflow chale ga to yahan nazar aaye ga.</p>}
+            {inbox.map((j) => (
+              <div key={j.id} className={"lp-appr st-" + j.status}>
+                <div><b>{j.title}</b> <span className="chip">{INBOX_ST[j.status] || j.status}</span></div>
+                <small className="muted">{j.steps?.length ? j.steps[j.steps.length - 1].text : ""}{j.error ? ` · ${String(j.error).slice(0, 140)}` : ""}</small>
+                <div className="btnrow">
+                  {j.status === "waiting_for_approval" && <button type="button" className="chip" onClick={() => setTab("approvals")}>Ijazat dekho</button>}
+                  {j.status === "dead_letter" && <button type="button" className="lp-ok" onClick={() => act({ action: "retry", id: j.id })}>Dobara</button>}
+                  {["queued", "running", "retrying", "waiting_for_approval"].includes(j.status) && <button type="button" className="lp-no" onClick={() => act({ action: "cancel", id: j.id })}>Cancel</button>}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

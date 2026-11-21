@@ -146,3 +146,9 @@ Sirf us computer/server par jahan Docker chal sake: `docker compose up -d`
 
 ## v3.19.2
 - Next.js 16.4.3 se 16.4.5 (security fixes).
+
+## v3.20.0
+- Claude-Skills (alirezarezvani, MIT): GitHub page par 5 packs ke chips (Engineering, Product, Marketing, Finance, CEO/CTO).
+- Skill auto-pick: naam poore lafz se, aur description se milaan (bina naam likhe sahi skill).
+- Model Autopilot (Linger se idea): Brains page par laptop ka RAM/GPU dekh kar Ollama model ka mashwara, Install aur Use karo.
+- Agent Inbox (TUIOS se idea): LIVE panel mein Inbox tab, ruke/ijazat wale kaam oopar, Dobara/Cancel, aur kaam khatam par desktop notification.

@@ -4,6 +4,7 @@ import Link from "next/link";
 import Icon from "../components/Icon";
 import Background from "../components/Background";
 import ThemeBalls from "../components/ThemeBalls";
+import AutopilotCard from "../components/AutopilotCard";
 import { pageRooms, PER_PAGE } from "../../lib/brain-status";
 import { prepareFiles, forServer } from "../../lib/attach";
 import { thinking } from "../../lib/thinking";
@@ -209,6 +210,7 @@ export default function Brains() {
           <span className="muted">{rooms ? <>{rooms.length} brains{["green", "yellow", "red", "grey"].map((l) => <span key={l} className="cnt"><span className={"light " + l} />{counts[l] || 0}</span>)}</> : ""} {msg}</span>
         </div>
         {live && <div className="livestrip" data-live-strip>Live free list (har ghanta): {!live.enabled ? "band (Options)" : live.brains.length ? live.brains.map((b) => b.name).join(" · ") : live.error ? `service nahi mili (${live.error}) — purane brains chal rahe` : "abhi khali"}</div>}
+        <AutopilotCard />
         {rooms === null && <p className="muted">Brains load ho rahe hain…</p>}
         {view && <div className="roomgrid" data-roomgrid data-page={view.page}>{view.items.map((r) => <RoomCard key={r.id} room={r} onStatus={onStatus} />)}</div>}
       </div>

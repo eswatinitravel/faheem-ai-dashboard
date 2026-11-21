@@ -143,3 +143,6 @@ https://ollama.com/download phir `ollama pull llama3.2:3b` (8GB RAM ke liye).
 ## Docker (optional)
 
 Sirf us computer/server par jahan Docker chal sake: `docker compose up -d`
+
+## v3.19.2
+- Next.js 16.4.3 se 16.4.5 (security fixes).

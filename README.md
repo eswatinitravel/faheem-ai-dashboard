@@ -162,3 +162,7 @@ Sirf us computer/server par jahan Docker chal sake: `docker compose up -d`
 - Chat Powers: front chat se GitHub search, repo download, skill install ("github se X skill lagao"), repo utha kar us mein kaam, aur laptop par asli project (Agent Mode chat ke andar, har qadam LIVE panel par).
 - Uiverse (MIT, uiverse-io/galaxy): "uiverse se loader/button/card lao" par 3 elements code ke saath.
 - Grainrad aur free domain/hosting (iFreeDomains, GitHub Pages) ka mashwara chat mein; Skills list mein shamil.
+
+## v3.23.0
+- GitHub Pages publish chat se: "is website ko GitHub Pages par daal do" (chat ki aakhri website) ya "project <naam> ko GitHub Pages par daal do". Naya public repo, files upload, Pages on, link wapas. Token ko Contents, Pages, Administration: Read & write chahiye.
+- iFreeDomains hata diya; domain sawal par ab GitHub Pages ka rasta.

@@ -165,7 +165,7 @@ export async function POST(req) {
       if (act) {
         try {
           step("Copilot", `Asli kaam: ${act.kind}`);
-          const out = await runAction(act, { step, signal: req.signal, isPaused });
+          const out = await runAction(act, { step, signal: req.signal, isPaused, messages: Array.isArray(body?.messages) ? body.messages : [] });
           if (out) { emit({ type: "done", reply: out, provider: "Copilot", model: act.kind, agent: { id: "copilot", name: "Copilot", icon: "" }, skipped: [], task: "text" }); ctrl.close(); return; }
         } catch (e) { emit({ type: "error", error: `Copilot: ${e.message}` }); ctrl.close(); return; }
       }

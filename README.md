@@ -157,3 +157,8 @@ Sirf us computer/server par jahan Docker chal sake: `docker compose up -d`
 - Copilot (front chat): har message par khud faisla, kaun sa specialist, kaun se brains kis tarteeb mein, aur kaun si skills. Saaf na ho to sab se tez brain se 1 chhota sawal.
 - Dashboard ki purani skills (Hallmark, UI UX Pro Max, Impeccable, Browser Tester, Playwright, Compound Engineering, Graphify, Agent Team, Memory) ab front chat mein khud lagti hain.
 - LIVE panel mein naya Skills tab: Model Autopilot + saari dashboard aur GitHub skills ki list.
+
+## v3.22.0
+- Chat Powers: front chat se GitHub search, repo download, skill install ("github se X skill lagao"), repo utha kar us mein kaam, aur laptop par asli project (Agent Mode chat ke andar, har qadam LIVE panel par).
+- Uiverse (MIT, uiverse-io/galaxy): "uiverse se loader/button/card lao" par 3 elements code ke saath.
+- Grainrad aur free domain/hosting (iFreeDomains, GitHub Pages) ka mashwara chat mein; Skills list mein shamil.

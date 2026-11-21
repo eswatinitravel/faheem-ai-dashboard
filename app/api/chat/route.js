@@ -2,6 +2,7 @@ import vm from "vm";
 import { getProviders, callProvider, isCooling, visionProviders } from "../../../lib/providers";
 import { isPaused } from "../../../lib/ops/control";
 import { decide, copilotPrompt, allSkillsCatalog } from "../../../lib/copilot";
+import { detectAction, runAction } from "../../../lib/chat-actions";
 import { ensureLive } from "../../../lib/free-live";
 import { AGENTS, BASE, routeAgent } from "../../../lib/agents";
 import { DESIGN_RULES, designCheckFull } from "../../../lib/design";
@@ -158,6 +159,16 @@ export async function POST(req) {
       const bstate = (p, state, note) => emit({ type: "brain", id: p.id, name: p.name, state, note: note ? String(note).slice(0, 90) : undefined });
       let pausedNow = false; try { pausedNow = isPaused(); } catch {}
       if (pausedNow) { emit({ type: "error", error: "Pause All chalu hai. Daayen panel par Resume dabayein." }); ctrl.close(); return; }
+
+      // v3.22: chat se asli kaam: GitHub repo/skill, laptop par project, Uiverse, domain.
+      const act = (() => { try { return body?.voice ? null : detectAction(rawText, { hasFiles: (lastMsg?.attachments || []).length > 0 }); } catch { return null; } })();
+      if (act) {
+        try {
+          step("Copilot", `Asli kaam: ${act.kind}`);
+          const out = await runAction(act, { step, signal: req.signal, isPaused });
+          if (out) { emit({ type: "done", reply: out, provider: "Copilot", model: act.kind, agent: { id: "copilot", name: "Copilot", icon: "" }, skipped: [], task: "text" }); ctrl.close(); return; }
+        } catch (e) { emit({ type: "error", error: `Copilot: ${e.message}` }); ctrl.close(); return; }
+      }
 
       if (images.length) step("Vision Agent", visionProviders(providers).length ? `${images.length} picture mili — ${visionProviders(providers).map((v) => v.name).join(" / ")} dekhega.` : `${images.length} picture mili — dekhne ke liye Gemini ya Groq key chahiye (Options > Keys).`);
       if (task === "image") {

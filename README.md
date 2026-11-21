@@ -169,3 +169,13 @@ Sirf us computer/server par jahan Docker chal sake: `docker compose up -d`
 
 ## v3.23.1
 - Website pipeline: agar Fixer adhoora ya khali jawab de (free brain limit/timeout), to pichla chalne wala page rakha jata hai, khona nahi.
+
+## v3.24.0 — Jarvis (live awaz assistant) + Emotional skills
+- Naya page **/jarvis** (front chat ke upar mic button aur sidebar mein "Jarvis"): HUD screen, mic hamesha sunta hai, beech mein bolo to Jarvis ruk jata hai, "bas" kaho to band.
+- **Mard / Aurat**: Jarvis (mard) aur Friday (aurat), har ek ki alag awazen; "Lehja" list se en-GB, en-IN, ur-PK waghera chunein. Zubaan: Roman Urdu, اردو, English.
+- **Sunna**: laptop wala Whisper (`pip install faster-whisper`, free, offline) → Groq Whisper key → Chrome/Edge ki apni speech recognition.
+- **Sochna**: pehle laptop ka Ollama, phir baqi free brains.
+- **Laptop control** (allowlist): apps kholna (Chrome, Edge, Notepad, Calculator, Explorer, VS Code, Word, Excel, WhatsApp, Spotify, Settings), links/YouTube/Google search, folders, files dhoondna, screenshot, awaz, lock/shutdown/restart (pehle "haan"), shutdown roko. Front chat mein bhi: "chrome kholo", "screenshot lo".
+- **Chrome control** (optional): `npm i -g chrome-devtools-mcp@latest` (Google, Apache-2.0).
+- **Self-Improve button** (Jarvis page, upar daayen): pichli baat cheet parh kar naye qawaid seekhta hai (foran lagte hain, har ek Delete) aur code ke mashware deta hai jo Agent Mode mein aap ki ijazat se lagte hain.
+- **Emotional skills** (MIT: danielroe/empathy, lonelymoon87/need-a-hug, dralexlup/therapy-skill, hoainho/iamhumans): mood pehchan (udaas, pareshan, gussa, akela, khush, dara hua), usi hisaab se jawab aur awaz ki raftar/pitch. Front chat mein bhi. Khatre ki baat par madad ki taraf rehnumai. Therapy nahi.

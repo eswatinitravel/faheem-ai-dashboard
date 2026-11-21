@@ -10,6 +10,7 @@ import { designBrief } from "../../../lib/uupm/index.js";
 import { runtimeTest } from "../../../lib/runtime";
 import { memoryContext, lessonTracker, saveProjectSummary, warmMemory } from "../../../lib/memory.js";
 import { UIUX_PROMPT, uiuxAudit } from "../../../lib/uiux-specialist.js";
+import { detectEmotion, emotionGuide } from "../../../lib/jarvis/emotion.js";
 import { addLearned, learnedContext, reorderByLearned, isCorrection } from "../../../lib/learned.js";
 try { warmMemory(); } catch {}
 
@@ -102,6 +103,8 @@ export async function POST(req) {
   if (task === "image" || task === "video") system.push({ role: "system", content: "The dashboard is generating the picture(s) for the user right now with a free image model. Briefly describe what is being created (style, colors, composition) in 2-4 lines and offer one improvement idea. Do not say you cannot create images." });
   if (body?.voice) system.push({ role: "system", content: "The user is talking by voice and your reply will be read aloud. Answer in 1-4 short spoken sentences, no markdown, no lists, no code unless asked." });
   if (body?.voice && body?.voiceLang === "ur") system.push({ role: "system", content: "Write this spoken reply in proper Urdu script (اردو رسم الخط), not Roman Urdu and not English." });
+  // v3.24 Emotional skills: user ke mood ke hisaab se andaz (MIT skills: empathy, need-a-hug, therapy-skill, iamhumans).
+  try { const emo = detectEmotion(rawText || lastUser); if (emo !== "neutral") system.push({ role: "system", content: emotionGuide(emo) }); } catch {}
   if (!images.length && /\[Video attached/.test(lastUser)) system.push({ role: "system", content: "The user attached a video. You cannot watch it; you only know its name, length and size. Help based on what they wrote and ask them to describe the part they need help with." });
   // v3.13 Persistent Memory: pasand + seekh (chhota, token cap). Memory band ho to kuch nahi.
   const longMem = (() => { try { return body?.memory === false ? "" : memoryContext(lastUser); } catch { return ""; } })();

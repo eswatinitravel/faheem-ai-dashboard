@@ -360,6 +360,7 @@ export default function Home() {
         <div className="brand"><img src="/icon.png" alt="" className="logo" /> Faheem AI <span className={"stat " + mode} /></div>
         <span className="verchip" data-version-chip title="Installed version">v{APP_VERSION}</span>
         <div className="top-actions">
+          <Link className="icon-btn jarvis-top" href="/jarvis" title="Jarvis: awaz se live baat + laptop control" aria-label="Jarvis" data-jarvis-link><Icon name="mic" /></Link>
           <button className="icon-btn" title="Search (Ctrl+K)" aria-label="Search" onClick={() => setShowSearch(true)}><Icon name="search" /></button>
           <button className="icon-btn" title="Naya chat" aria-label="Naya chat" onClick={newChat}><Icon name="plus" /></button>
           <button className="icon-btn" title="Chat export (Markdown)" aria-label="Chat export" data-export-chat onClick={exportChat}><Icon name="download" /></button>
@@ -372,6 +373,7 @@ export default function Home() {
       <nav className={"sidenav" + (navMin ? " min" : "")} aria-label="Pages" data-sidenav>
         <button type="button" className="sn-new" onClick={newChat} data-sidenav-new><Icon name="plus" size={16} /> Naya chat</button>
         <div className="sn-group">Kaam</div>
+        <Link className="icon-btn agentlink" href="/jarvis" title="Jarvis: live awaz, mard/aurat lehje, laptop control, Self-Improve"><Icon name="mic" size={16} /> Jarvis</Link>
         <Link className="icon-btn agentlink" href="/agent" title="Agent Mode (Cursor jaisa coding agent)"><Icon name="bot" size={16} /> Agent</Link>
         <Link className="icon-btn agentlink" href="/brains" title="Brains Rooms: har brain ka apna kamra + status light"><Icon name="brain" size={16} /> Brains</Link>
         <Link className="icon-btn agentlink" href="/github" title="GitHub: repos aur skills download"><Icon name="github" size={16} /> GitHub</Link>

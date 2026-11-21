@@ -189,3 +189,6 @@ Sirf us computer/server par jahan Docker chal sake: `docker compose up -d`
 - Poora shafaf glass design; avatar background mein ghula hua hologram.
 - Avatar ke saath side bubble mein jawab type hota dikhta hai (soch raha ho to dots).
 - Glass meters: CPU, RAM, Disk, Battery (har 2.5 sec live), /api/jarvis/sys.
+
+## v3.24.3 — Pro polish
+- Chhote saaf fonts, ziada glass blur, avatar ka sar ab poora nazar aata hai, meters compact aur tabular numbers.

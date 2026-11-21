@@ -268,7 +268,7 @@ export default function Jarvis() {
       </div>
     );
   };
-  const mouthBox = gender === "female" ? "ellipse 12% 8% at 50% 49%" : "ellipse 13% 8.5% at 50% 55%";
+  const mouthBox = gender === "female" ? "ellipse 11.4% 7.6% at 50% 51.4%" : "ellipse 12.4% 8.1% at 50% 57.1%";
   const stateText = on ? ({ listening: "Sun raha hoon", thinking: "Soch raha hoon", speaking: "Bol raha hoon" }[mode] || "Tayyar") : "Shuru";
   const sendCmd = async (t) => { const d = await ask(t); if (d?.reply) { await ensureMic(); await speak(d.reply, d.tone); } };
   const PERSONA = [["assistant", "Personal Assistant", "Kaam, yaad-dehani, jawab", "check"], ["coder", "Coder", "Code aur projects", "box"], ["teacher", "Teacher", "Aasaan samjhana", "book"], ["business", "Business Advisor", "Marketing, hisaab", "graph"], ["friend", "Dost", "Baat cheet, hausla", "users"]];
@@ -547,4 +547,29 @@ const CSS = `
 @keyframes jvblink{50%{opacity:0}}
 @keyframes jvdot{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
 @media (max-width:700px){.jv-meters{grid-template-columns:repeat(2,1fr)}}
+/* v3.24.3 pro: chhote fonts, ziada glass, avatar ka sar poora nazar aaye */
+.jv{font-size:13px;padding:14px 18px 72px}
+.jv-top h1{font-size:20px;font-weight:600;letter-spacing:-.01em}.jv-top p{font-size:12px}
+.jv-card{padding:12px;border-radius:14px}.jv-card h3{font-size:10px;margin-bottom:8px}
+.jv-opt{min-height:38px;padding:6px 8px}.jv-opt b{font-size:12.5px}.jv-opt small{font-size:11px}
+.jv-cap,.jv-ex{font-size:12px;min-height:30px}.jv-ex{padding:7px 9px}
+.jv-msg{font-size:12.5px;padding:7px 9px}.jv-type input{font-size:12.5px;min-height:38px}
+.jv-row label{font-size:11px}.jv-row input,.jv-row select{font-size:12px;min-height:34px;padding:7px}
+.jv-seg button,.jv-save,.jv-improve{font-size:12px;min-height:34px;padding:7px 12px}
+.jv-nav a{font-size:12px;min-height:34px;padding:6px 12px}
+.jv-badge{font-size:10.5px;padding:5px 10px;top:10px;left:10px}
+.jv-tags span{font-size:10.5px;padding:5px 10px}
+.jv-bubble{font-size:12.5px;top:44px}
+.jv-core{width:80px;height:80px;font-size:10px}
+.jv-card,.jv-holo,.jv-badge,.jv-tags span,.jv-bubble,.jv-nav,.jv-gauge,.jv-imp-box{background:linear-gradient(140deg,rgba(255,255,255,.12),rgba(255,255,255,.02) 60%);border:1px solid rgba(255,255,255,.18);-webkit-backdrop-filter:blur(28px) saturate(180%);backdrop-filter:blur(28px) saturate(180%);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),inset 0 -1px 0 rgba(255,255,255,.04),0 10px 40px rgba(0,0,0,.4)}
+.jv-holo{padding-top:44px}
+.jv-avatar{width:min(100%,380px);aspect-ratio:1/1.05;-webkit-mask-image:radial-gradient(ellipse 72% 80% at 50% 50%,#000 62%,transparent 100%);mask-image:radial-gradient(ellipse 72% 80% at 50% 50%,#000 62%,transparent 100%)}
+.jv-face{object-fit:contain;object-position:50% 100%;image-rendering:high-quality}
+.jv-meters{gap:8px}
+.jv-gauge{padding:8px 4px 6px;border-radius:14px}
+.jv-gauge svg{width:62px;height:62px}.jv-gauge .g-in{top:8px;height:62px}
+.jv-gauge .g-bg,.jv-gauge .g-fg{stroke-width:5}
+.jv-gauge .g-in b{font-size:12.5px;font-variant-numeric:tabular-nums}
+.jv-gauge span{font-size:10px}.jv-gauge small{font-size:9.5px;font-variant-numeric:tabular-nums}
+.jv-status{font-size:10.5px}
 `;

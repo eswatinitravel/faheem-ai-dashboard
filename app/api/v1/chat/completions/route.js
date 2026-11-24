@@ -2,6 +2,7 @@
 // Faheem AI ki free pipeline deti hai — aapki keys pehle, phir bina-key free brains.
 // Dyad mein: Base URL = http://localhost:3000/api/v1 , API key = free , Model = faheem-free
 import { getProviders, callProvider, isCooling, sortProviders } from "../../../../../lib/providers";
+import { preflight, withCors } from "../../../../../lib/cors";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -14,7 +15,9 @@ function toText(c) {
   return c == null ? "" : String(c);
 }
 
-export async function POST(req) {
+export const OPTIONS = (req) => preflight(req);
+export async function POST(req) { return withCors(req, await handle(req)); }
+async function handle(req) {
   const body = await req.json().catch(() => null);
   if (!body || !Array.isArray(body.messages)) return Response.json({ error: { message: "messages required" } }, { status: 400 });
   const messages = body.messages

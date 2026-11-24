@@ -34,6 +34,26 @@ export default function Jarvis() {
   const mouthRef = useRef(null);
   const [sys, setSys] = useState(null);
   const [typedN, setTypedN] = useState(0);
+  // v3.25 Agent Inbox (TUIOS se, MIT): /api/ops ke kaam; ruka/ijazat wala oopar; badle to desktop notification.
+  const [ops, setOps] = useState(null);
+  const seenRef = useRef(null);
+  const [origin, setOrigin] = useState("http://localhost:3000");
+  const [copied, setCopied] = useState(false);
+  useEffect(() => { try { setOrigin(window.location.origin); } catch {} }, []);
+  useEffect(() => {
+    let dead = false;
+    const load = async () => {
+      try {
+        const r = await fetch("/api/ops", { cache: "no-store" }).then((x) => x.json()); if (dead || !r?.ok) return;
+        const now = Object.fromEntries((r.jobs || []).map((j) => [j.id, j.status]));
+        if (seenRef.current && typeof Notification !== "undefined" && Notification.permission === "granted") {
+          for (const j of r.jobs || []) { const was = seenRef.current[j.id]; const t = { completed: "Kaam ho gaya", dead_letter: "Kaam ruk gaya", waiting_for_approval: "Ijazat chahiye" }[j.status]; if (was && was !== j.status && t) { try { new Notification(`Jarvis: ${t}`, { body: j.title }); } catch {} } }
+        }
+        seenRef.current = now; setOps(r);
+      } catch {}
+    };
+    load(); const id = setInterval(load, 6000); return () => { dead = true; clearInterval(id); };
+  }, []);
   useEffect(() => {
     let alive = true;
     const poll = async () => { try { const r = await fetch("/api/jarvis/sys", { cache: "no-store" }); if (r.ok && alive) setSys(await r.json()); } catch {} };
@@ -273,7 +293,13 @@ export default function Jarvis() {
   const sendCmd = async (t) => { const d = await ask(t); if (d?.reply) { await ensureMic(); await speak(d.reply, d.tone); } };
   const PERSONA = [["assistant", "Personal Assistant", "Kaam, yaad-dehani, jawab", "check"], ["coder", "Coder", "Code aur projects", "box"], ["teacher", "Teacher", "Aasaan samjhana", "book"], ["business", "Business Advisor", "Marketing, hisaab", "graph"], ["friend", "Dost", "Baat cheet, hausla", "users"]];
   const TONE_L = [["professional", "Professional", "Saaf aur chhota", "chat"], ["friendly", "Friendly", "Garam aur madadgar", "sparkle"], ["formal", "Formal", "Adab wala andaz", "edit"]];
-  const CAPS = [["Chrome kholo", "globe"], ["YouTube par naat chalao", "play"], ["Downloads folder kholo", "folder"], ["Screenshot lo", "image"], ["Awaz kam karo", "mic"], ["Kitne baje hain", "clock"]];
+  const INBOX_ST = { waiting_for_approval: ["ijazat chahiye", "warn"], dead_letter: ["ruk gaya", "bad"], retrying: ["dobara koshish", "warn"], running: ["chal raha", "run"], queued: ["line mein", "run"], completed: ["ho gaya", "ok"], cancelled: ["cancel", "off"] };
+  const IRANK = { waiting_for_approval: 0, dead_letter: 1, retrying: 2, running: 3, queued: 4, completed: 5, cancelled: 6 };
+  const inbox = [...(ops?.jobs || [])].sort((a, b) => (IRANK[a.status] ?? 9) - (IRANK[b.status] ?? 9) || String(b.createdAt).localeCompare(String(a.createdAt))).slice(0, 6);
+  const attn = (ops?.jobs || []).filter((j) => ["waiting_for_approval", "dead_letter"].includes(j.status)).length;
+  const wbBase = `${origin}/api/v1`;
+  const copyBase = async () => { try { await navigator.clipboard.writeText(wbBase); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { setNotice("Copy nahi hua, khud select kar lein."); } };
+  const CAPS = [["Chrome kholo", "globe"], ["YouTube par naat chalao", "play"], ["Downloads folder kholo", "folder"], ["Screenshot lo", "image"], ["Awaz kam karo", "mic"], ["Kitne baje hain", "clock"], ["TUIOS kholo", "grid"], ["WebBrain kholo", "brain"]];
   const EXAMPLES = ["Aaj ka plan banane mein madad karo", "Ek professional email ka jawab likhne ka tareeqa batao", "Mujhe thori tension hai, baat karo", "Python seekhna shuru kaise karoon"];
 
   return (
@@ -376,6 +402,20 @@ export default function Jarvis() {
               <button type="submit" aria-label="Bhejein"><Icon name="send" size={16} /></button>
             </form>
           </div>
+          <div className="jv-card" data-jarvis-inbox>
+            <div className="jv-chathead"><h3>Agent Inbox{attn ? <span className="jv-attn">{attn}</span> : null}</h3>
+              <button className="jv-mini" onClick={() => { if (typeof Notification !== "undefined" && Notification.permission === "default") Notification.requestPermission().catch(() => {}); sendCmd("TUIOS kholo"); }} title="TUIOS (terminal + agent inbox) kholo"><Icon name="grid" size={14} /></button></div>
+            {!ops ? <p className="jv-hint">Kaam dekh raha hoon…</p> : inbox.length === 0 ? <p className="jv-hint">Koi kaam nahi chal raha. Ruka hua ya ijazat wala kaam yahan oopar aayega.</p> :
+              <ul className="jv-inbox">{inbox.map((j) => { const [l, c] = INBOX_ST[j.status] || [j.status, "off"]; return <li key={j.id}><i className={"jv-dot " + c} /><span title={j.title}>{j.title}</span><small>{l}</small></li>; })}</ul>}
+            <Link href="/workflows" className="jv-link">Sab kaam aur ijazat</Link>
+          </div>
+          <div className="jv-card" data-jarvis-webbrain>
+            <h3>WebBrain (browser agent)</h3>
+            <p className="jv-hint">WebBrain lagayein, phir us ki settings mein &quot;Local OpenAI-compatible&quot; chun kar yeh dalein. Aap ke saare free brains wahan chalenge.</p>
+            <div className="jv-wb"><code>{wbBase}</code><button className="jv-mini" onClick={copyBase} title="Base URL copy"><Icon name={copied ? "check" : "copy"} size={14} /></button></div>
+            <p className="jv-hint">Model: <code>faheem-free</code> · Key: <code>free</code>. Click/type (Act) ke liye Ollama behtar: <code>http://localhost:11434/v1</code></p>
+            <div className="jv-wbl">{[["Chrome", "chrome"], ["Edge", "edge"], ["Firefox", "firefox"]].map(([t, b]) => <button key={b} className="jv-mini wide" onClick={() => sendCmd(`WebBrain ${b} kholo`)}><Icon name="external" size={13} /> {t}</button>)}</div>
+          </div>
           <div className="jv-card">
             <h3>Misaalen</h3>
             {EXAMPLES.map((x) => <button key={x} className="jv-ex" onClick={() => sendCmd(x)}>{x}</button>)}
@@ -464,6 +504,19 @@ const CSS = `
 .jv-opt:hover{background:rgba(139,123,255,.08)}.jv-opt.on{background:rgba(110,90,255,.22);border-color:var(--vio)}
 .jv-cap,.jv-ex{width:100%;display:flex;gap:8px;align-items:center;text-align:left;background:transparent;border:0;color:#d7daf7;padding:7px 4px;cursor:pointer;font-size:14px;min-height:36px;border-radius:8px}
 .jv-cap:hover,.jv-ex:hover{background:rgba(139,123,255,.08)}
+.jv-inbox{list-style:none;margin:4px 0 6px;padding:0;display:grid;gap:4px}
+.jv-inbox li{display:flex;align-items:center;gap:8px;font-size:13px;color:#d7daf7;min-height:26px}
+.jv-inbox li span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jv-inbox li small{color:#9aa0c8;font-size:11px}
+.jv-dot{width:8px;height:8px;border-radius:50%;flex:none;background:#6b7090}
+.jv-dot.ok{background:#3fd29a}.jv-dot.run{background:#7c8bff;box-shadow:0 0 8px #7c8bff}.jv-dot.warn{background:#ffb648}.jv-dot.bad{background:#ff5d6c}
+.jv-attn{margin-left:6px;font-size:11px;background:#ff5d6c;color:#fff;border-radius:999px;padding:1px 7px;vertical-align:middle}
+.jv-link{font-size:12px;color:#a9b1ff;text-decoration:none}.jv-link:hover{text-decoration:underline}
+.jv-wb{display:flex;gap:6px;align-items:center;background:rgba(10,12,30,.55);border:1px solid rgba(139,123,255,.2);border-radius:8px;padding:6px 8px;margin:6px 0}
+.jv-wb code{flex:1;font-size:12px;color:#cfd3ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jv-card code{font-size:12px;color:#cfd3ff}
+.jv-wbl{display:flex;gap:6px;flex-wrap:wrap}
+.jv-mini.wide{width:auto;border:1px solid rgba(139,123,255,.25);border-radius:8px;padding:0 10px;gap:5px;display:inline-flex;align-items:center;font-size:12px}
 .jv-ex{border:1px solid var(--line);margin-bottom:8px;padding:9px 10px;line-height:1.35}
 .jv-stage{display:flex;flex-direction:column;align-items:center;gap:0}
 .jv-holo{position:relative;width:100%;max-width:560px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(180deg,rgba(60,50,160,.25),rgba(15,16,45,.5));padding:16px 16px 12px;overflow:hidden}

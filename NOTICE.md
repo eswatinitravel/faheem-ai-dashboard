@@ -100,3 +100,9 @@ Dashboard sirf template ki files ZIP mein daalta hai; neeche wali dependencies u
 - **Ideas (code nahi):** OpenClaw, NousResearch Hermes Agent (MIT), nanobot, QwenPaw, AstrBot, Orkas — features ki list aur "pehle ijazat" andaaz. Research ke liye github.com/trending (public page) aur GitHub search API (bina key) parhe jate hain.
 
 - v3.17 Workflows / queue / approvals: ideas from "Arena Assistant" (user's own project) and the "Nexa" build prompt; code written fresh for this app.
+
+## TUIOS (v3.25)
+- https://github.com/Gaurav-Gosain/tuios — MIT License, (c) Gaurav Gosain. Code shamil nahi; TUIOS.bat official release download karta hai.
+
+## WebBrain (v3.25)
+- https://github.com/webbrain-one/webbrain — GPL-3.0-or-later. Koi code copy nahi; sirf store links aur OpenAI-compatible raasta.

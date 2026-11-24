@@ -159,3 +159,11 @@
 
 ## 21 Nov 2026 — v3.17.3
 - Asal fix: next.config.mjs mein experimental.agentUpgrade = false. Next.js 16.4 ka default "security" har build par upgrade/agent sawal poochhta tha; ab kabhi nahi.
+
+## 24 Nov 2026 — v3.25.0 (Brains deep check + WebBrain + TUIOS)
+- Brains deep check (asli 1-token chat): Kilo, OVH, PollFree, FreeAI, AI Horde chal rahe; LLM7 bina token din ki limit par; Ollama sandbox mein nahi (laptop par check karein).
+- Fix: brain ki light pehle /models dekh kar hari dikhti thi jabke asli chat "limit" keh chuki hoti. Ab peeli: "Limit par — X min baad wapas".
+- WebBrain (GPL-3.0, webbrain-one/webbrain): code copy nahi kiya. /api/v1 ab browser extension (chrome/moz-extension) aur localhost ke liye CORS kholta hai, baqi websites ke liye band. Jarvis mein WebBrain card: Base URL copy, model faheem-free, key free; Chrome/Edge/Firefox store link. Act mode (click/type) ke liye Ollama seedha behtar, kyunke bridge tool-calls nahi bhejta.
+- TUIOS (MIT, Gaurav-Gosain/tuios): TUIOS.bat GitHub se tuios + tuios-web (Windows x86_64/arm64) %USERPROFILE%\.faheem-ai\bin mein lagata hai. Jarvis: "TUIOS kholo" = tuios-web 127.0.0.1:7681 browser mein; "TUIOS terminal mein kholo" = Windows Terminal. Jarvis mein Agent Inbox card (ruka/ijazat wala oopar, desktop notification).
+- Test: action pehchan 7/7, CORS 5/5 (evil.com band), /api/v1 normal + stream extension origin ke saath, tuios-web asli launch (Linux) HTTP 200, build EXIT 0.
+- Baaki: TUIOS.bat asli Windows par; WebBrain extension asli browser mein; visual check.

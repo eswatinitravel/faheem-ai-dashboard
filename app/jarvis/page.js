@@ -4,13 +4,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Icon from "../components/Icon";
+import ThemeBalls from "../components/ThemeBalls";
 
 const FEMALE = /(zira|hazel|susan|heera|uzma|jenny|aria|sonia|libby|neerja|natasha|clara|emma|ava|michelle|samantha|karen|moira|tessa|fiona|veena|catherine|linda|eva|kalpana|swara|female|woman|salma|sara|zira|ana\b|maisie|mia|elena|joanna|amy|kimberly|ivy|kendra|salli|raveena|aditi|kajal|aurat)/i;
 const MALE = /(david|mark|george|ravi|asad|guy|ryan|thomas|prabhat|william|christopher|eric|brian|daniel|alex|fred|rishi|richard|james|sean|roger|steffan|andrew|liam|madhur|male|man\b|matthew|joey|justin|kevin|russell|arthur|oliver)/i;
 const genderOf = (v) => (FEMALE.test(v.name) ? "female" : MALE.test(v.name) ? "male" : "any");
 const clean = (t) => String(t || "").replace(/```[\s\S]*?```/g, " ").replace(/[*_#>`|]/g, "").replace(/\s+/g, " ").trim();
 const EMO_LABEL = { neutral: "Normal", happy: "Khush", sad: "Udaas", angry: "Gussa", stressed: "Pareshan", lonely: "Akela", scared: "Dara hua", crisis: "Madad" };
-const EMO_COLOR = { neutral: "#4fd1ff", happy: "#5dffa8", sad: "#7aa2ff", angry: "#ff7a6b", stressed: "#ffc95c", lonely: "#b58cff", scared: "#ffd36b", crisis: "#ff5470" };
+const EMO_COLOR = { neutral: "var(--hi)", happy: "#5dffa8", sad: "#7aa2ff", angry: "#ff7a6b", stressed: "#ffc95c", lonely: "#b58cff", scared: "#ffd36b", crisis: "#ff5470" };
 
 export default function Jarvis() {
   const [on, setOn] = useState(false);
@@ -31,6 +32,8 @@ export default function Jarvis() {
   const [tone, setToneSel] = useState("friendly");
   const [aname, setAname] = useState("");
   const [saved, setSaved] = useState(false);
+  const [idleChat, setIdleChat] = useState(false); // v3.26: user ki ijazat se hi khud baat chhere
+  const idleRef = useRef({ last: Date.now(), lastIdle: 0 });
   const mouthRef = useRef(null);
   const [sys, setSys] = useState(null);
   const [typedN, setTypedN] = useState(0);
@@ -72,19 +75,19 @@ export default function Jarvis() {
   const recRef = useRef(null);
   const bargeRef = useRef(0);
   const engineRef = useRef("auto"); engineRef.current = engine;
-  const settingsRef = useRef({}); settingsRef.current = { gender, lang, voiceName, role, tone, aname };
+  const settingsRef = useRef({}); settingsRef.current = { gender, lang, voiceName, role, tone, aname, idleChat };
   const endRef = useRef(null);
 
   // Pasand yaad rakhein.
   useEffect(() => {
-    try { const s = JSON.parse(localStorage.getItem("faheem-jarvis") || "{}"); if (s.gender) setGender(s.gender); if (s.lang) setLang(s.lang); if (s.voiceName) setVoiceName(s.voiceName); if (s.engine) setEngine(s.engine); if (s.role) setRole(s.role); if (s.tone) setToneSel(s.tone); if (s.aname) setAname(s.aname); setTurns(JSON.parse(localStorage.getItem("faheem-jarvis-chat") || "[]")); } catch {}
+    try { const s = JSON.parse(localStorage.getItem("faheem-jarvis") || "{}"); if (s.gender) setGender(s.gender); if (s.lang) setLang(s.lang); if (s.voiceName) setVoiceName(s.voiceName); if (s.engine) setEngine(s.engine); if (s.role) setRole(s.role); if (s.tone) setToneSel(s.tone); if (s.aname) setAname(s.aname); if (s.idleChat) setIdleChat(true); setTurns(JSON.parse(localStorage.getItem("faheem-jarvis-chat") || "[]")); } catch {}
     fetch("/api/jarvis").then((r) => r.json()).then(setStatus).catch(() => {});
     const load = () => setVoices(window.speechSynthesis?.getVoices() || []);
     load(); if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = load;
     return () => stopAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  useEffect(() => { try { localStorage.setItem("faheem-jarvis", JSON.stringify({ gender, lang, voiceName, engine, role, tone, aname })); } catch {} }, [gender, lang, voiceName, engine, role, tone, aname]);
+  useEffect(() => { try { localStorage.setItem("faheem-jarvis", JSON.stringify({ gender, lang, voiceName, engine, role, tone, aname, idleChat })); } catch {} }, [gender, lang, voiceName, engine, role, tone, aname, idleChat]);
 
   // Lip-sync: har lafz (speech boundary) par honth syllables ke hisaab se khulte band hote hain; boundary na aaye to narm flap.
   useEffect(() => {
@@ -229,6 +232,16 @@ export default function Jarvis() {
     } catch (e) { setNotice("Ghalti: " + e.message); return null; }
   }, []);
 
+  // v3.26: khamoshi mein ek halki baat (user turn chat mein nahi dikhta).
+  const askIdle = useCallback(async () => {
+    try {
+      const r = await fetch("/api/jarvis", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idle: true, text: "", history: turnsRef.current.slice(-10), gender: settingsRef.current.gender, lang: settingsRef.current.lang, role: settingsRef.current.role, tone: settingsRef.current.tone, name: settingsRef.current.aname }) });
+      const d = await r.json(); if (!r.ok || !d?.reply || d.error) return null;
+      setTurns((t) => [...t, { role: "assistant", content: d.reply, at: Date.now(), brain: d.brain }]);
+      return d;
+    } catch { return null; }
+  }, []);
+
   // ---------- Guftagu ka loop ----------
   const loop = useCallback(async () => {
     while (onRef.current) {
@@ -236,7 +249,16 @@ export default function Jarvis() {
       if (text === "__retry__") continue;
       if (!onRef.current) break;
       text = String(text || "").trim();
-      if (!text) { setMode("listening"); continue; }
+      if (!text) {
+        // v3.26 Khud baat chhero: sirf jab user ne on kiya, 2 min khamoshi, aur pichli baar se 10 min guzre.
+        const I = idleRef.current, now = Date.now();
+        if (settingsRef.current.idleChat && now - I.last > 120000 && now - I.lastIdle > 600000) {
+          I.lastIdle = now; I.last = now;
+          const d = await askIdle(); if (d?.reply && onRef.current) await speak(d.reply, d.tone);
+        }
+        setMode("listening"); continue;
+      }
+      idleRef.current.last = Date.now();
       if (/^(bas|stop|ruk\s*jao|band\s*karo|goodbye|allah\s*hafiz|khuda\s*hafiz)\b/i.test(text)) { await speak(settingsRef.current.gender === "female" ? "Theek hai Boss, jab zaroorat ho bula lijiye." : "Ji Sir, jab zaroorat ho bula lijiye."); setOn(false); break; }
       const d = await ask(text);
       if (d?.reply && onRef.current) await speak(d.reply, d.tone);
@@ -249,7 +271,7 @@ export default function Jarvis() {
     if (on) { setOn(false); onRef.current = false; stopAll(); setMode("idle"); return; }
     setNotice("");
     if (!(await ensureMic())) return;
-    setOn(true); onRef.current = true;
+    setOn(true); onRef.current = true; idleRef.current.last = Date.now();
     const hi = gender === "female" ? (lang === "en" ? "Friday online. What do you need, Boss?" : "Friday haazir hai Boss. Kya karna hai?") : (lang === "en" ? "Jarvis online. How can I help, Sir?" : "Jarvis haazir hai Sir. Farmaiye?");
     setTurns((t) => [...t, { role: "assistant", content: hi, at: Date.now() }]);
     await speak(hi);
@@ -277,13 +299,25 @@ export default function Jarvis() {
     const id = setInterval(() => { n += 1; setTypedN(n); if (n >= lastReply.length) clearInterval(id); }, 38);
     return () => clearInterval(id);
   }, [lastReply]);
+  // v3.26 Energy gauge: 270 darje par 24 hisse, value barhne par --accent se safed ki taraf roshan; andar dashed --hi ring.
+  const GICON = {
+    bolt: <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" />,
+    chip: <><rect x="7" y="7" width="10" height="10" rx="1.5" /><path d="M9 3v3M12 3v3M15 3v3M9 18v3M12 18v3M15 18v3M3 9h3M3 12h3M3 15h3M18 9h3M18 12h3M18 15h3" /></>,
+    ram: <><rect x="2.5" y="7" width="19" height="9" rx="1.2" /><path d="M6 10v3M9.5 10v3M13 10v3M16.5 10v3M5 16v2.5M9 16v2.5M15 16v2.5M19 16v2.5" /></>,
+    disk: <><ellipse cx="12" cy="6" rx="8" ry="3" /><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" /></>,
+  };
   const Gauge = ({ label, v, sub, icon }) => {
-    const pct = v == null ? 0 : Math.max(0, Math.min(100, v)); const C = 2 * Math.PI * 34;
-    const hue = pct > 85 ? "#ff6b7a" : pct > 60 ? "#ffcf6b" : "#7fe7ff";
+    const pct = v == null ? 0 : Math.max(0, Math.min(100, v)); const N = 24, lit = Math.round((pct / 100) * N);
+    const seg = (i) => { const a0 = (135 + i * (270 / N) + 1.6) * Math.PI / 180, a1 = (135 + (i + 1) * (270 / N) - 1.6) * Math.PI / 180, r = 41;
+      return `M${(50 + r * Math.cos(a0)).toFixed(2)} ${(50 + r * Math.sin(a0)).toFixed(2)} A${r} ${r} 0 0 1 ${(50 + r * Math.cos(a1)).toFixed(2)} ${(50 + r * Math.sin(a1)).toFixed(2)}`; };
     return (
       <div className="jv-gauge" role="meter" aria-label={label} aria-valuenow={v ?? undefined} aria-valuemin={0} aria-valuemax={100}>
-        <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="34" className="g-bg" /><circle cx="40" cy="40" r="34" className="g-fg" style={{ stroke: hue, strokeDasharray: C, strokeDashoffset: C * (1 - pct / 100) }} /></svg>
-        <div className="g-in"><Icon name={icon} size={13} /><b>{v == null ? "–" : v + "%"}</b></div>
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          {Array.from({ length: N }, (_, i) => <path key={i} d={seg(i)} className={i < lit ? "g-on" : "g-off"} style={i < lit ? { stroke: `color-mix(in srgb, var(--accent), #fff ${Math.round((i / (N - 1)) * 75)}%)` } : undefined} />)}
+          <circle cx="50" cy="50" r="31" className="g-ring" />
+          <g transform="translate(40 26) scale(.84)" className="g-ico">{GICON[icon]}</g>
+          <text x="50" y="62" textAnchor="middle" className="g-val">{v == null ? "–" : v + "%"}</text>
+        </svg>
         <span>{label}</span>{sub && <small>{sub}</small>}
       </div>
     );
@@ -311,6 +345,7 @@ export default function Jarvis() {
           <p>Persona, lehja aur andaz chunein. Awaz se baat karein, {name} laptop bhi chalata hai.</p>
         </div>
         <div className="jv-actions">
+          <ThemeBalls />
           <span className={"jv-dot " + mode} title={mode} />
           <button className="jv-improve" onClick={improve} title="Self-Improve: Jarvis apni baat cheet parh kar khud behtar hota hai" data-jarvis-improve><Icon name="sparkle" size={16} /> Self-Improve</button>
         </div>
@@ -321,23 +356,23 @@ export default function Jarvis() {
         <aside className="jv-col">
           <div className="jv-card">
             <h3>Persona</h3>
-            {PERSONA.map(([id, t, d, ic]) => (
-              <button key={id} className={"jv-opt" + (role === id ? " on" : "")} onClick={() => setRole(id)}>
-                <Icon name={ic} size={16} /><span><b>{t}</b><small>{d}</small></span>{role === id && <Icon name="check" size={14} />}
+            <div className="jv-opts">{PERSONA.map(([id, t, d, ic]) => (
+              <button key={id} className={"jv-opt" + (role === id ? " on" : "")} onClick={() => setRole(id)} title={d} aria-pressed={role === id}>
+                <Icon name={ic} size={13} /><span><b>{t}</b></span>
               </button>
-            ))}
+            ))}</div>
           </div>
           <div className="jv-card">
             <h3>Andaz (tone)</h3>
-            {TONE_L.map(([id, t, d, ic]) => (
-              <button key={id} className={"jv-opt" + (tone === id ? " on" : "")} onClick={() => setToneSel(id)}>
-                <Icon name={ic} size={16} /><span><b>{t}</b><small>{d}</small></span>{tone === id && <Icon name="check" size={14} />}
+            <div className="jv-opts">{TONE_L.map(([id, t, d, ic]) => (
+              <button key={id} className={"jv-opt" + (tone === id ? " on" : "")} onClick={() => setToneSel(id)} title={d} aria-pressed={tone === id}>
+                <Icon name={ic} size={13} /><span><b>{t}</b></span>
               </button>
-            ))}
+            ))}</div>
           </div>
           <div className="jv-card">
             <h3>Laptop par kaam</h3>
-            {CAPS.map(([t, ic]) => <button key={t} className="jv-cap" onClick={() => sendCmd(t)}><Icon name={ic} size={15} /> {t}</button>)}
+            <div className="jv-opts">{CAPS.map(([t, ic]) => <button key={t} className="jv-cap" onClick={() => sendCmd(t)} title={t}><Icon name={ic} size={13} /> <span>{t}</span></button>)}</div>
           </div>
         </aside>
 
@@ -367,10 +402,10 @@ export default function Jarvis() {
             </button>
           </div>
           <div className="jv-meters" aria-label="Laptop ka load">
-            <Gauge label="CPU" icon="monitor" v={sys?.cpu} sub={sys ? `${sys.cores} cores` : ""} />
-            <Gauge label="RAM" icon="box" v={sys?.ram} sub={sys ? `${sys.ramGB[0]}/${sys.ramGB[1]} GB` : ""} />
-            <Gauge label="Disk" icon="folder" v={sys?.disk} sub={sys?.diskGB ? `${sys.diskGB[0]}/${sys.diskGB[1]} GB` : ""} />
-            <Gauge label={sys?.charging ? "Battery ⚡" : "Battery"} icon="zap" v={sys?.battery} sub={sys ? `On ${sys.uptimeH}h` : ""} />
+            <Gauge label="CPU" icon="chip" v={sys?.cpu} sub={sys ? `${sys.cores} cores` : ""} />
+            <Gauge label="RAM" icon="ram" v={sys?.ram} sub={sys ? `${sys.ramGB[0]}/${sys.ramGB[1]} GB` : ""} />
+            <Gauge label="Disk" icon="disk" v={sys?.disk} sub={sys?.diskGB ? `${sys.diskGB[0]}/${sys.diskGB[1]} GB` : ""} />
+            <Gauge label={sys?.charging ? "Battery ⚡" : "Battery"} icon="bolt" v={sys?.battery} sub={sys ? `On ${sys.uptimeH}h` : ""} />
           </div>
           {status && (
             <div className="jv-status">
@@ -450,6 +485,9 @@ export default function Jarvis() {
               <option value="auto">Whisper</option><option value="browser">Browser</option>
             </select>
           </label>
+          <label className="jv-idle" title="Aap der tak chup rahein to Jarvis kabhi kabhi khud ek halki baat chhere">
+            <span><input type="checkbox" checked={idleChat} onChange={(e) => setIdleChat(e.target.checked)} data-jarvis-idlechat /> Khud baat chhero</span>
+          </label>
           <button className="jv-save" onClick={() => { setSaved(true); setTimeout(() => setSaved(false), 1500); speak(gender === "female" ? `Salam, main ${name} hoon.` : `Salam, main ${name} hoon.`, {}); }}>{saved ? "Save ho gaya" : "Save aur suno"}</button>
         </div>
       </details>
@@ -488,35 +526,35 @@ export default function Jarvis() {
 }
 
 const CSS = `
-.jv{min-height:100vh;background:radial-gradient(ellipse at 50% 35%,#1a1550 0%,#0a0b24 45%,#04050f 100%);color:#e6e8ff;font-family:var(--font, system-ui, sans-serif);padding:18px 20px 80px;--card:rgba(20,22,58,.62);--line:rgba(140,130,255,.22);--vio:#8b7bff}
+.jv{min-height:100vh;background:radial-gradient(ellipse at 50% 35%,#1a1550 0%,#0a0b24 45%,#04050f 100%);color:var(--text);font-family:var(--font, system-ui, sans-serif);padding:18px 20px 80px;--card:rgba(20,22,58,.62);--line:rgba(var(--dot),.22);--vio:var(--hi)}
 .jv-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
 .jv-top h1{margin:0;font-size:28px;line-height:1.15;font-weight:700}.jv-top h1 em{font-style:normal;color:var(--vio)}
-.jv-top p{margin:6px 0 0;color:#a9aed6;font-size:14px;max-width:520px}
+.jv-top p{margin:6px 0 0;color:var(--muted);font-size:14px;max-width:520px}
 .jv-actions{display:flex;gap:10px;align-items:center}
 .jv-dot{width:10px;height:10px;border-radius:50%;background:#4a4f77}.jv-dot.listening{background:#5dffa8;box-shadow:0 0 10px #5dffa8}.jv-dot.thinking{background:#ffc95c}.jv-dot.speaking{background:var(--vio);box-shadow:0 0 10px var(--vio)}
-.jv-improve{display:inline-flex;gap:6px;align-items:center;background:linear-gradient(90deg,#5b47ff,#8b5cf6);border:0;color:#fff;border-radius:12px;padding:10px 14px;font-weight:600;cursor:pointer;min-height:40px;box-shadow:0 6px 24px rgba(110,90,255,.35)}
+.jv-improve{display:inline-flex;gap:6px;align-items:center;background:var(--grad);border:0;color:#fff;border-radius:12px;padding:10px 14px;font-weight:600;cursor:pointer;min-height:40px;box-shadow:0 6px 24px rgba(var(--dot),.35)}
 .jv-grid{display:grid;grid-template-columns:260px minmax(0,1fr) 340px;gap:16px;align-items:start}
 .jv-col{display:flex;flex-direction:column;gap:14px}
 .jv-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;backdrop-filter:blur(10px)}
-.jv-card h3{margin:0 0 10px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#bfc3ee}
-.jv-opt{width:100%;display:flex;align-items:center;gap:10px;text-align:left;background:transparent;border:1px solid transparent;color:#e6e8ff;border-radius:10px;padding:8px 10px;cursor:pointer;min-height:44px}
-.jv-opt span{flex:1;display:flex;flex-direction:column}.jv-opt b{font-size:14px;font-weight:600}.jv-opt small{color:#959bc8;font-size:12px}
-.jv-opt:hover{background:rgba(139,123,255,.08)}.jv-opt.on{background:rgba(110,90,255,.22);border-color:var(--vio)}
-.jv-cap,.jv-ex{width:100%;display:flex;gap:8px;align-items:center;text-align:left;background:transparent;border:0;color:#d7daf7;padding:7px 4px;cursor:pointer;font-size:14px;min-height:36px;border-radius:8px}
-.jv-cap:hover,.jv-ex:hover{background:rgba(139,123,255,.08)}
+.jv-card h3{margin:0 0 10px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--text)}
+.jv-opt{width:100%;display:flex;align-items:center;gap:10px;text-align:left;background:transparent;border:1px solid transparent;color:var(--text);border-radius:10px;padding:8px 10px;cursor:pointer;min-height:44px}
+.jv-opt span{flex:1;display:flex;flex-direction:column}.jv-opt b{font-size:14px;font-weight:600}.jv-opt small{color:var(--muted);font-size:12px}
+.jv-opt:hover{background:rgba(var(--dot),.08)}.jv-opt.on{background:rgba(var(--dot),.22);border-color:var(--vio)}
+.jv-cap,.jv-ex{width:100%;display:flex;gap:8px;align-items:center;text-align:left;background:transparent;border:0;color:var(--text);padding:7px 4px;cursor:pointer;font-size:14px;min-height:36px;border-radius:8px}
+.jv-cap:hover,.jv-ex:hover{background:rgba(var(--dot),.08)}
 .jv-inbox{list-style:none;margin:4px 0 6px;padding:0;display:grid;gap:4px}
-.jv-inbox li{display:flex;align-items:center;gap:8px;font-size:13px;color:#d7daf7;min-height:26px}
+.jv-inbox li{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);min-height:26px}
 .jv-inbox li span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.jv-inbox li small{color:#9aa0c8;font-size:11px}
-.jv-dot{width:8px;height:8px;border-radius:50%;flex:none;background:#6b7090}
-.jv-dot.ok{background:#3fd29a}.jv-dot.run{background:#7c8bff;box-shadow:0 0 8px #7c8bff}.jv-dot.warn{background:#ffb648}.jv-dot.bad{background:#ff5d6c}
+.jv-inbox li small{color:var(--muted);font-size:11px}
+.jv-dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--muted)}
+.jv-dot.ok{background:#3fd29a}.jv-dot.run{background:var(--accent);box-shadow:0 0 8px var(--accent)}.jv-dot.warn{background:#ffb648}.jv-dot.bad{background:#ff5d6c}
 .jv-attn{margin-left:6px;font-size:11px;background:#ff5d6c;color:#fff;border-radius:999px;padding:1px 7px;vertical-align:middle}
-.jv-link{font-size:12px;color:#a9b1ff;text-decoration:none}.jv-link:hover{text-decoration:underline}
-.jv-wb{display:flex;gap:6px;align-items:center;background:rgba(10,12,30,.55);border:1px solid rgba(139,123,255,.2);border-radius:8px;padding:6px 8px;margin:6px 0}
-.jv-wb code{flex:1;font-size:12px;color:#cfd3ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.jv-card code{font-size:12px;color:#cfd3ff}
+.jv-link{font-size:12px;color:var(--hi);text-decoration:none}.jv-link:hover{text-decoration:underline}
+.jv-wb{display:flex;gap:6px;align-items:center;background:rgba(10,12,30,.55);border:1px solid rgba(var(--dot),.2);border-radius:8px;padding:6px 8px;margin:6px 0}
+.jv-wb code{flex:1;font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jv-card code{font-size:12px;color:var(--text)}
 .jv-wbl{display:flex;gap:6px;flex-wrap:wrap}
-.jv-mini.wide{width:auto;border:1px solid rgba(139,123,255,.25);border-radius:8px;padding:0 10px;gap:5px;display:inline-flex;align-items:center;font-size:12px}
+.jv-mini.wide{width:auto;border:1px solid rgba(var(--dot),.25);border-radius:8px;padding:0 10px;gap:5px;display:inline-flex;align-items:center;font-size:12px}
 .jv-ex{border:1px solid var(--line);margin-bottom:8px;padding:9px 10px;line-height:1.35}
 .jv-stage{display:flex;flex-direction:column;align-items:center;gap:0}
 .jv-holo{position:relative;width:100%;max-width:560px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(180deg,rgba(60,50,160,.25),rgba(15,16,45,.5));padding:16px 16px 12px;overflow:hidden}
@@ -524,15 +562,15 @@ const CSS = `
 .jv-avatar{position:relative;width:min(100%,420px);aspect-ratio:1;margin:0 auto;border-radius:16px;overflow:hidden;-webkit-mask-image:radial-gradient(ellipse 70% 75% at 50% 45%,#000 60%,transparent 100%);mask-image:radial-gradient(ellipse 70% 75% at 50% 45%,#000 60%,transparent 100%)}
 .jv-face{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .jv-mouth{will-change:opacity}
-.jv-scan{position:absolute;inset:0;background:repeating-linear-gradient(180deg,rgba(140,160,255,.06) 0 2px,transparent 2px 5px);mix-blend-mode:screen;pointer-events:none;animation:jvscan 6s linear infinite}
-.jv-bubble{position:absolute;top:70px;right:14px;z-index:3;max-width:min(44%,230px);background:rgba(12,14,40,.82);border:1px solid var(--line);border-radius:14px;padding:12px;font-size:14px;line-height:1.45;color:#e9ebff}
+.jv-scan{position:absolute;inset:0;background:repeating-linear-gradient(180deg,rgba(var(--dot),.06) 0 2px,transparent 2px 5px);mix-blend-mode:screen;pointer-events:none;animation:jvscan 6s linear infinite}
+.jv-bubble{position:absolute;top:70px;right:14px;z-index:3;max-width:min(44%,230px);background:rgba(12,14,40,.82);border:1px solid var(--line);border-radius:14px;padding:12px;font-size:14px;line-height:1.45;color:var(--text)}
 .jv-tags{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px}
 .jv-tags span{display:inline-flex;gap:6px;align-items:center;background:rgba(10,12,35,.7);border:1px solid var(--line);border-radius:10px;padding:7px 12px;font-size:12px;letter-spacing:.06em}
 .jv-pad{position:relative;width:100%;max-width:520px;height:120px;display:grid;place-items:center;margin-top:-6px}
 .jv-ring{position:absolute;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}
-.jv-ring.r1{width:440px;max-width:96%;height:90px;border:2px solid rgba(110,140,255,.55);box-shadow:0 0 40px rgba(90,120,255,.55),inset 0 0 30px rgba(90,120,255,.4);background:radial-gradient(ellipse,rgba(80,110,255,.35),transparent 70%)}
-.jv-ring.r2{width:300px;max-width:70%;height:56px;border:1px dashed rgba(170,190,255,.6);animation:jvglow 2.4s ease-in-out infinite}
-.jv-core{position:relative;z-index:2;width:96px;height:96px;border-radius:50%;border:2px solid var(--jc);background:radial-gradient(circle,rgba(110,90,255,.55),rgba(8,10,30,.95) 70%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;box-shadow:0 0 30px var(--jc);font-size:11px;transition:transform .08s linear}
+.jv-ring.r1{width:440px;max-width:96%;height:90px;border:2px solid rgba(var(--dot),.55);box-shadow:0 0 40px rgba(var(--dot),.55),inset 0 0 30px rgba(var(--dot),.4);background:radial-gradient(ellipse,rgba(var(--dot),.35),transparent 70%)}
+.jv-ring.r2{width:300px;max-width:70%;height:56px;border:1px dashed rgba(var(--dot),.6);animation:jvglow 2.4s ease-in-out infinite}
+.jv-core{position:relative;z-index:2;width:96px;height:96px;border-radius:50%;border:2px solid var(--jc);background:radial-gradient(circle,rgba(var(--dot),.55),rgba(8,10,30,.95) 70%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;box-shadow:0 0 30px var(--jc);font-size:11px;transition:transform .08s linear}
 .jv-core.thinking{animation:jvpulse 1.1s ease-in-out infinite}
 .jv-core:focus-visible,.jv-improve:focus-visible,.jv-opt:focus-visible,.jv-save:focus-visible{outline:2px solid #fff;outline-offset:3px}
 .jv-status{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;font-size:12px;margin-top:4px}
@@ -541,33 +579,33 @@ const CSS = `
 .jv-notice{text-align:center;color:#ffd98a;font-size:13px;margin-top:6px}
 .jv-chatbox{display:flex;flex-direction:column;height:min(62vh,560px)}
 .jv-chathead{display:flex;justify-content:space-between;align-items:center}
-.jv-mini{background:none;border:0;color:#a9aed6;cursor:pointer;min-width:32px;min-height:32px}
+.jv-mini{background:none;border:0;color:var(--muted);cursor:pointer;min-width:32px;min-height:32px}
 .jv-log{flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px}
-.jv-hint{color:#959bc8;font-size:13px;line-height:1.6}
+.jv-hint{color:var(--muted);font-size:13px;line-height:1.6}
 .jv-msg{padding:9px 11px;border-radius:12px;background:rgba(255,255,255,.05);line-height:1.5;font-size:14px}
-.jv-msg.user{align-self:flex-end;background:rgba(110,90,255,.22);max-width:90%}
+.jv-msg.user{align-self:flex-end;background:rgba(var(--dot),.22);max-width:90%}
 .jv-msg b{color:var(--vio);margin-right:6px;font-size:11px;letter-spacing:.08em}
-.jv-msg small{display:block;color:#7f86b5;font-size:11px;margin-top:3px}
+.jv-msg small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
 .jv-type{display:flex;gap:8px;margin-top:10px}
 .jv-type input{flex:1;background:rgba(5,6,20,.7);border:1px solid var(--line);color:#fff;border-radius:12px;padding:11px;min-height:44px}
-.jv-type button{width:46px;border-radius:12px;border:0;background:#5b47ff;color:#fff;cursor:pointer}
+.jv-type button{width:46px;border-radius:12px;border:0;background:var(--accent);color:#fff;cursor:pointer}
 .jv-personal{margin-top:16px}
 .jv-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
-.jv-row label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:#a9aed6}
+.jv-row label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--muted)}
 .jv-row input,.jv-row select{background:rgba(5,6,20,.7);border:1px solid var(--line);color:#fff;border-radius:10px;padding:9px;min-height:40px;min-width:150px;max-width:260px}
 .jv-seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.jv-seg button{background:transparent;border:0;color:#d7daf7;padding:9px 16px;cursor:pointer;min-height:40px}.jv-seg button.on{background:#5b47ff;color:#fff}
-.jv-save{background:linear-gradient(90deg,#5b47ff,#8b5cf6);border:0;color:#fff;border-radius:10px;padding:10px 16px;font-weight:600;cursor:pointer;min-height:40px;text-decoration:none;display:inline-flex;align-items:center}
+.jv-seg button{background:transparent;border:0;color:var(--text);padding:9px 16px;cursor:pointer;min-height:40px}.jv-seg button.on{background:var(--accent);color:#fff}
+.jv-save{background:var(--grad);border:0;color:#fff;border-radius:10px;padding:10px 16px;font-weight:600;cursor:pointer;min-height:40px;text-decoration:none;display:inline-flex;align-items:center}
 .jv-nav{position:fixed;left:50%;transform:translateX(-50%);bottom:12px;display:flex;gap:6px;background:rgba(10,12,35,.85);border:1px solid var(--line);border-radius:16px;padding:6px;backdrop-filter:blur(10px);z-index:20}
-.jv-nav a{display:inline-flex;gap:6px;align-items:center;color:#b9bde6;text-decoration:none;padding:8px 14px;border-radius:12px;font-size:14px;min-height:40px}
-.jv-nav a.on{background:rgba(110,90,255,.3);color:#fff;border:1px solid var(--vio)}
+.jv-nav a{display:inline-flex;gap:6px;align-items:center;color:var(--text);text-decoration:none;padding:8px 14px;border-radius:12px;font-size:14px;min-height:40px}
+.jv-nav a.on{background:rgba(var(--dot),.3);color:#fff;border:1px solid var(--vio)}
 .jv-imp{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;justify-content:flex-end;z-index:50}
-.jv-imp-box{width:min(440px,100vw);height:100%;overflow:auto;background:#0b0c26;border-left:1px solid var(--vio);padding:16px;display:flex;flex-direction:column;gap:8px}
+.jv-imp-box{width:min(440px,100vw);height:100%;overflow:auto;background:rgba(6,9,22,.92);border-left:1px solid var(--vio);padding:16px;display:flex;flex-direction:column;gap:8px}
 .jv-imp-head{display:flex;justify-content:space-between;align-items:center}
-.jv-imp-head button,.jv-note button{background:none;border:0;color:#a9aed6;cursor:pointer;min-width:32px;min-height:32px}
+.jv-imp-head button,.jv-note button{background:none;border:0;color:var(--muted);cursor:pointer;min-width:32px;min-height:32px}
 .jv-imp h4{margin:10px 0 2px;color:var(--vio);font-size:13px}
 .jv-note{display:flex;gap:8px;justify-content:space-between;align-items:flex-start;background:rgba(255,255,255,.04);border-radius:8px;padding:8px;font-size:14px}
-.jv-imp .ok{color:#5dffa8}.jv-imp .muted{color:#7f86b5;font-size:12px}
+.jv-imp .ok{color:#5dffa8}.jv-imp .muted{color:var(--muted);font-size:12px}
 @keyframes jvscan{to{background-position:0 100px}}
 @keyframes jvglow{50%{opacity:.4}}
 @keyframes jvpulse{50%{box-shadow:0 0 60px var(--jc)}}
@@ -575,28 +613,28 @@ const CSS = `
 @media (max-width:700px){.jv-grid{grid-template-columns:1fr}.jv-bubble{position:static;max-width:none;margin-top:8px}.jv-top h1{font-size:22px}}
 @media (prefers-reduced-motion: reduce){.jv-scan,.jv-ring,.jv-core{animation:none!important;transition:none!important}}
 /* v3.24.2 glass: sab kuch shafaf, hologram background mein ghula hua */
-.jv{background:radial-gradient(ellipse at 50% 30%,rgba(90,70,255,.35) 0%,transparent 55%),radial-gradient(ellipse at 15% 85%,rgba(0,190,255,.18) 0%,transparent 50%),radial-gradient(ellipse at 90% 10%,rgba(190,80,255,.2) 0%,transparent 45%),#03040d}
+.jv{background:radial-gradient(ellipse at 50% 30%,rgba(var(--dot),.35) 0%,transparent 55%),radial-gradient(ellipse at 15% 85%,rgba(0,190,255,.18) 0%,transparent 50%),radial-gradient(ellipse at 90% 10%,rgba(190,80,255,.2) 0%,transparent 45%),transparent}
 .jv-card,.jv-holo,.jv-badge,.jv-tags span,.jv-bubble,.jv-nav,.jv-gauge,.jv-imp-box{background:linear-gradient(135deg,rgba(255,255,255,.09),rgba(255,255,255,.025));border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 8px 32px rgba(0,0,0,.35);-webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%)}
 .jv-holo{background:transparent;border-color:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
 .jv-avatar{mix-blend-mode:screen;isolation:isolate;opacity:.95}
-.jv-avatar::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(120,140,255,.10),rgba(80,60,255,.18));mix-blend-mode:color;pointer-events:none}
-.jv-opt.on{background:rgba(255,255,255,.12);border-color:rgba(170,160,255,.7)}
+.jv-avatar::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(var(--dot),.10),rgba(var(--dot),.18));mix-blend-mode:color;pointer-events:none}
+.jv-opt.on{background:rgba(255,255,255,.12);border-color:rgba(var(--dot),.7)}
 .jv-row input,.jv-row select,.jv-type input{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.16)}
-.jv-row select option{background:#11122b}
+.jv-row select option{background:#0a0e1e}
 .jv-msg{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08)}
-.jv-msg.user{background:rgba(120,100,255,.22)}
+.jv-msg.user{background:rgba(var(--dot),.22)}
 .jv-bubble{top:56px;right:10px;max-width:min(46%,260px);max-height:62%;overflow:auto;font-size:14.5px;border-radius:16px 16px 16px 4px}
-.jv-bname{font-size:11px;letter-spacing:.12em;color:#b7a9ff;margin-bottom:4px;text-transform:uppercase}
-.jv-caret{display:inline-block;width:2px;height:1em;background:#cfc6ff;margin-left:2px;vertical-align:-2px;animation:jvblink .8s steps(2) infinite}
-.jv-typing{display:inline-flex;gap:4px}.jv-typing i{width:7px;height:7px;border-radius:50%;background:#cfc6ff;animation:jvdot 1s infinite}.jv-typing i:nth-child(2){animation-delay:.15s}.jv-typing i:nth-child(3){animation-delay:.3s}
+.jv-bname{font-size:11px;letter-spacing:.12em;color:var(--hi);margin-bottom:4px;text-transform:uppercase}
+.jv-caret{display:inline-block;width:2px;height:1em;background:var(--hi);margin-left:2px;vertical-align:-2px;animation:jvblink .8s steps(2) infinite}
+.jv-typing{display:inline-flex;gap:4px}.jv-typing i{width:7px;height:7px;border-radius:50%;background:var(--hi);animation:jvdot 1s infinite}.jv-typing i:nth-child(2){animation-delay:.15s}.jv-typing i:nth-child(3){animation-delay:.3s}
 .jv-meters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;width:100%;max-width:560px;margin:6px 0 4px}
 .jv-gauge{position:relative;border-radius:16px;padding:10px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:2px}
 .jv-gauge svg{width:74px;height:74px;transform:rotate(-90deg)}
 .jv-gauge .g-bg{fill:none;stroke:rgba(255,255,255,.1);stroke-width:7}
 .jv-gauge .g-fg{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke-dashoffset .8s ease,stroke .5s;filter:drop-shadow(0 0 6px currentColor)}
-.jv-gauge .g-in{position:absolute;top:10px;left:0;right:0;height:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:#e6e8ff}
+.jv-gauge .g-in{position:absolute;top:10px;left:0;right:0;height:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:var(--text)}
 .jv-gauge .g-in b{font-size:15px}
-.jv-gauge span{font-size:12px;letter-spacing:.1em;color:#cfd3ff}.jv-gauge small{font-size:11px;color:#8d93c4}
+.jv-gauge span{font-size:12px;letter-spacing:.1em;color:var(--text)}.jv-gauge small{font-size:11px;color:var(--muted)}
 @keyframes jvblink{50%{opacity:0}}
 @keyframes jvdot{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
 @media (max-width:700px){.jv-meters{grid-template-columns:repeat(2,1fr)}}
@@ -626,10 +664,10 @@ const CSS = `
 .jv-gauge span{font-size:10px}.jv-gauge small{font-size:9.5px;font-variant-numeric:tabular-nums}
 .jv-status{font-size:10.5px}
 /* v3.25.1 Fit: laptop par poora Jarvis ek screen mein, koi page scroll nahi. Har column andar se scroll. */
-.jv-personal summary{cursor:pointer;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#cfd3ff;list-style:none;display:flex;gap:6px;align-items:center;min-height:24px}
+.jv-personal summary{cursor:pointer;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text);list-style:none;display:flex;gap:6px;align-items:center;min-height:24px}
 .jv-personal summary::-webkit-details-marker{display:none}
 .jv-personal summary::before{content:"▸";transition:transform .15s}.jv-personal[open] summary::before{transform:rotate(90deg)}
-.jv-personal summary small{text-transform:none;letter-spacing:0;color:#8d93c4}
+.jv-personal summary small{text-transform:none;letter-spacing:0;color:var(--muted)}
 .jv-personal[open] summary{margin-bottom:8px}
 @media (min-width:1101px){
 .jv{height:100vh;height:100dvh;min-height:0;overflow:hidden;display:flex;flex-direction:column;padding:10px 16px 58px}
@@ -650,4 +688,62 @@ const CSS = `
 .jv-nav{bottom:8px;padding:4px}
 }
 @media (min-width:1101px) and (max-height:700px){.jv-top p{display:none}.jv-meters{display:none}.jv-avatar{width:min(100%,320px,calc(100dvh - 300px))}}
+/* ===== v3.26 Neon glass: theme variables, ripple background (global), glint frames, aadhe buttons, energy gauges ===== */
+.jv{position:relative;z-index:1;background:transparent!important;color:var(--text)}
+.jv-top h1 em{color:var(--hi)}
+.jv-card,.jv-holo,.jv-badge,.jv-tags span,.jv-bubble,.jv-nav,.jv-imp-box{background:rgba(8,12,28,.40);border:1px solid color-mix(in srgb,var(--hi) 60%,transparent);-webkit-backdrop-filter:blur(12px) saturate(140%);backdrop-filter:blur(12px) saturate(140%);box-shadow:0 0 18px color-mix(in srgb,var(--accent) 28%,transparent),inset 0 1px 0 rgba(255,255,255,.10)}
+.jv-holo{background:rgba(8,12,28,.18)}
+.jv-personal[open]{background:rgba(6,9,22,.92)}
+.jv-card,.jv-holo{position:relative}
+.jv-card::before,.jv-card::after,.jv-holo::before,.jv-holo::after{content:"";position:absolute;width:46px;height:8px;pointer-events:none;z-index:4;background:radial-gradient(circle at 24% 50%,#fff 0 1.3px,rgba(255,255,255,.55) 2px,transparent 3.4px),linear-gradient(90deg,transparent,var(--hi) 30%,#fff 50%,var(--hi) 70%,transparent) center/100% 1px no-repeat;filter:drop-shadow(0 0 3px var(--hi)) drop-shadow(0 0 6px color-mix(in srgb,var(--accent) 70%,transparent))}
+.jv-card::before,.jv-holo::before{top:-4px;left:10px}
+.jv-card::after,.jv-holo::after{bottom:-4px;right:10px;transform:scaleX(-1)}
+.jv-holo::before{top:0}.jv-holo::after{bottom:0}
+.jv-card h3{color:var(--hi);opacity:.9}
+.jv-opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+.jv-opt,.jv-cap{min-height:28px;height:28px;padding:3px 8px;gap:5px;font-size:11px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid color-mix(in srgb,var(--hi) 30%,transparent);color:var(--text);box-shadow:none;width:100%;overflow:hidden}
+.jv-opt span,.jv-cap span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jv-opt b{font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jv-opt:hover,.jv-cap:hover{background:rgba(255,255,255,.08);border-color:color-mix(in srgb,var(--hi) 60%,transparent);filter:none}
+.jv-opt.on{background:var(--grad);border-color:color-mix(in srgb,var(--hi) 70%,transparent);box-shadow:0 0 10px color-mix(in srgb,var(--accent) 50%,transparent)}
+.jv-ex{min-height:28px;padding:4px 10px;font-size:11px;margin-bottom:5px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid color-mix(in srgb,var(--hi) 25%,transparent);box-shadow:none;color:var(--text);font-weight:500}
+.jv-improve,.jv-save{min-height:28px;padding:4px 12px;font-size:11.5px;border-radius:999px;background:var(--grad);border:1px solid color-mix(in srgb,var(--hi) 60%,transparent);box-shadow:0 0 10px color-mix(in srgb,var(--accent) 45%,transparent),inset 0 1px 0 rgba(255,255,255,.3)}
+.jv-seg{border-color:color-mix(in srgb,var(--hi) 40%,transparent);border-radius:999px}
+.jv-seg button{min-height:28px;padding:4px 12px;font-size:11.5px;border-radius:0;background:transparent;border:0;box-shadow:none;color:var(--text)}
+.jv-seg button.on{background:var(--grad)}
+.jv-mini{min-height:26px;min-width:26px;padding:0;background:transparent;border:0;box-shadow:none;color:var(--muted)}
+.jv-mini.wide{min-height:26px;padding:0 9px;font-size:11px;border-radius:999px;border:1px solid color-mix(in srgb,var(--hi) 35%,transparent)}
+.jv-type button{width:34px;min-height:34px;padding:0;border-radius:50%;background:var(--grad)}
+.jv-type input,.jv-row input,.jv-row select{border-color:color-mix(in srgb,var(--hi) 25%,transparent);min-height:32px}
+.jv-nav a{min-height:28px;padding:4px 11px;font-size:11.5px;border-radius:999px;color:var(--muted)}
+.jv-nav a.on{background:var(--grad);border:1px solid color-mix(in srgb,var(--hi) 60%,transparent);color:#fff}
+.jv-msg.user{background:rgba(var(--dot),.20)}.jv-msg b{color:var(--hi)}
+.jv-ring.r1{border-color:color-mix(in srgb,var(--accent) 60%,transparent);box-shadow:0 0 40px color-mix(in srgb,var(--accent) 50%,transparent),inset 0 0 30px color-mix(in srgb,var(--accent) 40%,transparent);background:radial-gradient(ellipse,rgba(var(--dot),.32),transparent 70%)}
+.jv-ring.r2{border-color:color-mix(in srgb,var(--hi) 60%,transparent)}
+.jv-core{min-height:0;padding:0;border-radius:50%;background:radial-gradient(circle,rgba(var(--dot),.55),rgba(4,6,16,.95) 70%);backdrop-filter:none}
+.jv-avatar::after{background:linear-gradient(180deg,rgba(var(--dot),.10),rgba(var(--dot),.18))}
+.jv-scan{background:repeating-linear-gradient(180deg,rgba(var(--dot),.07) 0 2px,transparent 2px 5px)}
+.jv-actions .balls{padding:3px 6px}
+.jv-idle{justify-content:flex-end}.jv-idle span{display:inline-flex;gap:6px;align-items:center;font-size:11.5px;color:var(--text);min-height:32px}.jv-idle input{min-width:0!important;width:16px;min-height:16px;accent-color:var(--accent)}
+/* Energy gauges */
+.jv-meters{position:relative;isolation:isolate}
+.jv-meters::before{content:"";position:absolute;inset:18% -6%;z-index:-1;pointer-events:none;opacity:.55;
+  background:linear-gradient(90deg,transparent 4%,color-mix(in srgb,var(--hi) 55%,transparent) 30%,transparent 46%) 0 22%/100% 1px no-repeat,
+  linear-gradient(90deg,transparent 40%,color-mix(in srgb,var(--accent) 70%,transparent) 62%,transparent 84%) 0 38%/100% 1px no-repeat,
+  linear-gradient(90deg,transparent 12%,rgba(255,255,255,.35) 22%,transparent 34%) 0 55%/100% 1px no-repeat,
+  linear-gradient(90deg,transparent 58%,color-mix(in srgb,var(--hi) 50%,transparent) 76%,transparent 96%) 0 70%/100% 1px no-repeat,
+  linear-gradient(90deg,transparent 0,color-mix(in srgb,var(--accent) 50%,transparent) 14%,transparent 28%) 0 84%/100% 1px no-repeat;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent);mask-image:linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent);animation:jvstreak 5s linear infinite}
+@keyframes jvstreak{50%{opacity:.25}}
+.jv-gauge{background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;padding:2px 2px 0}
+.jv-gauge svg{width:66px;height:66px;transform:none;overflow:visible}
+.jv-gauge .g-off{fill:none;stroke:rgba(255,255,255,.08);stroke-width:7}
+.jv-gauge .g-on{fill:none;stroke-width:7;filter:drop-shadow(0 0 2.5px var(--accent));transition:stroke .4s}
+.jv-gauge .g-ring{fill:none;stroke:var(--hi);stroke-width:1;stroke-dasharray:2 3;opacity:.6}
+.jv-gauge .g-ico{fill:none;stroke:var(--hi);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 2px var(--accent))}
+.jv-gauge .g-val{fill:#fff;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.jv-gauge span{font-size:10px;letter-spacing:.12em;color:var(--hi);text-transform:uppercase}.jv-gauge small{font-size:9.5px;color:var(--muted)}
+@media (min-width:1101px){.jv-gauge svg{width:64px;height:64px}}
+@media (min-width:1101px) and (min-height:900px){.jv-gauge svg{width:84px;height:84px}}
+@media (prefers-reduced-motion: reduce){.jv-meters::before{animation:none}}
 `;

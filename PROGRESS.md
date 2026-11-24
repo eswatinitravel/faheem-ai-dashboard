@@ -170,3 +170,14 @@
 
 ## 24 Nov 2026 — v3.25.1
 - Jarvis laptop screen par poora fit: page scroll band (100vh), har column andar se scroll, avatar screen ki oonchai ke hisaab se chhota/bara, "Apna assistant banayein" ab band patti (click se khulti hai). Chhoti screen (700px se kam oonchai) par meters chhup jate hain.
+
+## 24 Nov 2026 — v3.26.0
+- Naye theme: sirf 3 neon glass — Neon Blue (default), Neon Red, Neon Magenta. Purane 6 theme hata diye; purani saved value khud Neon Blue ban jati hai (layout.js ka chhota script pehle paint se pehle theme lagata hai, har page par, Jarvis aur Agent bhi).
+- Har page ka background "ripple glass": gehra gradient + do narm rang ke dhabbe + khari fluted glass dhaariyan (~34px), sirf CSS. Options > Background mein "Ripple glass" naya default (Desert/DNA ab bhi chun sakte hain).
+- Har card/panel: shafaf frosted glass, patla chamakta kinara (--hi), halki accent glow, upar-baayen aur neeche-daayen chhoti chamak (glint).
+- Buttons glass pill, aadhe size (~28px). Jarvis ke options 2 column grid mein chhote.
+- Jarvis: CPU/RAM/Disk/Battery ab gol "energy gauges" (24 hisse, 270°, andar dashed ring, beech mein icon + %), peeche halki speed lines. Mard/Aurat avatar aur lip-sync waise hi.
+- Jarvis conversation skills (andaz ke liye): pehle suno, chhoti baari, ek follow-up sawal, khushamad nahi. "Khud baat chhero" toggle (default band): on ho aur aap 2 min chup rahein to Jarvis kabhi kabhi (10 min mein ek baar) ek halki baat chherta hai.
+- Skills: pjt222/agent-almanac listen (MIT), harims95/straight-talk (MIT), CoffeeFancy/hermes-proactive-chat (MIT, sirf khayal), pipecat-ai/skills talk (BSD-2-Clause), ironyjk/howtotalk active-listening + nvc (MIT) — apne lafzon mein Roman Urdu khulasa. underyx/human-skills chhor diya: LICENSE file nahi.
+- Test: build EXIT 0; headless screenshot /jarvis 1366x768 + 1920x1080 (page scroll nahi), / aur /options 1366x768.
+- Baaki: asli Windows laptop par visual check; Neon Red/Magenta par har page ki nazar.

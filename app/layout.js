@@ -1,6 +1,7 @@
 import "./globals.css";
 import AgentationDock from "./components/AgentationDock";
 import ThinkingBar from "./components/ThinkingBar";
+import { THEME_BOOT } from "../lib/prefs";
 
 export const metadata = {
   title: "Faheem AI Dashboard",
@@ -9,7 +10,8 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="neon-blue" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} /></head>
       <body><ThinkingBar />{children}<AgentationDock /></body>
     </html>
   );

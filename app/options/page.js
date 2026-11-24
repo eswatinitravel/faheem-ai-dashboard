@@ -108,7 +108,8 @@ export default function Options() {
               <option value="8k">8K Extreme (7680px, sirf taqatwar GPU)</option>
             </select>
             <label className="muted" htmlFor="bgscene-picker">Background (main chatboard)</label>
-            <select id="bgscene-picker" value={prefs.bgScene || "desert"} onChange={(e) => set("bgScene", e.target.value)} data-bgscene-picker>
+            <select id="bgscene-picker" value={prefs.bgScene || "ripple"} onChange={(e) => set("bgScene", e.target.value)} data-bgscene-picker>
+              <option value="ripple">Ripple glass (naya)</option>
               <option value="desert">Purple Desert (GetLayers free video)</option>
               <option value="dna">DNA (apna 3D helix, halka)</option>
               <option value="off">Off</option>

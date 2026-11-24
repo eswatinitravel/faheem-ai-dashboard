@@ -1,26 +1,48 @@
-/* Faheem AI v3 — Stitch-style clean chat, aura themes */
+/* Faheem AI v3 — v3.26 neon glass themes */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 /* v3.16 "Linear Ink" theme: Linear/Vercel jaisa dark-first near-black base + patli 1px lines,
    magar dashboard ke purane rang accents par (laal/coral primary, violet keys/brains, blue tools, teal badges, green/amber/red status). */
-:root, [data-theme="aura"] {
-  --bg: #08080a; --surface: #0f0f12; --surface2: #16161b; --surface3: #1d1d24; --text: #ededf0; --muted: #9b9ba6; --line: rgba(255,255,255,.08); --line2: rgba(255,255,255,.14);
-  --glass: rgba(15,15,18,.86); --field: rgba(255,255,255,.04);
-  --accent: #e11d48; --accent2: #ff7a59; --dot: 255,59,59; --grad: linear-gradient(135deg, #e11d48, #ff5a36);
-  --violet: #a78bfa; --blue: #60a5fa; --teal: #2dd4bf; --pink: #f472b6;
-  --aura1: rgba(255,40,40,.10); --aura2: rgba(120,0,30,.14);
-  --user: #1a1a20; --usertext: #ededf0; --btntext: #fff;
-  --ok: #22c55e; --warn: #f59e0b; --bad: #ef4444;
+/* v3.26 Neon glass themes: neon-blue (default), neon-red, neon-magenta. Purane theme (aura/black/white/pink/purple/green) hata diye;
+   un ki saved value layout.js ke chhote script mein neon-blue ban jati hai. Variable naam wahi, --hi = highlight (edge/glint). */
+:root, [data-theme="neon-blue"] {
+  --accent: #1e8cff; --accent2: #7fe3ff; --hi: #7fe3ff; --dot: 30,140,255; --bg: #04060f;
+  --rip1: 4,6,22; --rip2: 60,30,170; --rip3: 40,170,210;
+  --surface: rgba(8,12,28,.42); --surface2: rgba(255,255,255,.06); --surface3: rgba(255,255,255,.10);
+  --text: #eef3ff; --muted: #9fb0cc; --line: rgba(255,255,255,.10); --line2: rgba(255,255,255,.18);
+  --glass: rgba(8,12,28,.40); --field: rgba(255,255,255,.05);
+  --violet: #b9a6ff; --blue: #7cc4ff; --teal: #5eead4; --pink: #f9a8d4;
+  --usertext: #eef3ff; --btntext: #fff;
+  --ok: #34d399; --warn: #fbbf24; --bad: #f87171;
+  --grad: linear-gradient(180deg, color-mix(in srgb, var(--accent) 88%, transparent), color-mix(in srgb, var(--accent) 42%, transparent));
+  --user: color-mix(in srgb, var(--accent) 20%, rgba(8,12,28,.55));
+  --aura1: rgba(var(--rip2), .30); --aura2: rgba(var(--rip3), .22);
 }
-[data-theme="black"] { --bg: #000; --surface: #0b0b0d; --surface2: #131316; --surface3: #1a1a1e; --text: #f4f4f5; --muted: #a1a1aa; --line: rgba(255,255,255,.08); --line2: rgba(255,255,255,.14); --glass: rgba(11,11,13,.88); --field: rgba(255,255,255,.04);
-  --accent: #e4e4e7; --accent2: #a1a1aa; --dot: 200,200,215; --grad: linear-gradient(135deg, #3f3f46, #52525b); --aura1: rgba(120,120,140,.10); --aura2: rgba(60,60,80,.14); --user: #18181b; --usertext: #f4f4f5; --btntext: #111113; }
-[data-theme="white"] { --bg: #fbfbfc; --surface: #ffffff; --surface2: #f4f4f6; --surface3: #ececf0; --text: #18181b; --muted: #5f5f6b; --line: rgba(0,0,0,.08); --line2: rgba(0,0,0,.14); --glass: rgba(255,255,255,.92); --field: #fff;
-  --accent: #e11d48; --accent2: #ff5a36; --dot: 225,29,72; --grad: linear-gradient(135deg, #e11d48, #ff5a36); --violet: #7c3aed; --blue: #2563eb; --teal: #0d9488; --pink: #db2777; --aura1: rgba(200,200,215,.35); --aura2: rgba(230,230,240,.5); --user: #f1f1f4; --usertext: #18181b; --btntext: #fff; --ok: #15803d; --warn: #b45309; --bad: #b91c1c; }
-[data-theme="pink"] { --bg: #fff7fa; --surface: #ffffff; --surface2: #fdeef4; --surface3: #f9e0ea; --text: #3b1d2c; --muted: #7d5568; --line: rgba(190,24,93,.12); --line2: rgba(190,24,93,.2); --glass: rgba(255,255,255,.92); --field: #fff;
-  --accent: #db2777; --accent2: #f472b6; --dot: 236,72,153; --grad: linear-gradient(135deg, #db2777, #f472b6); --violet: #7c3aed; --blue: #2563eb; --teal: #0d9488; --pink: #db2777; --aura1: rgba(249,168,212,.3); --aura2: rgba(253,205,230,.4); --user: #fdeef4; --usertext: #3b1d2c; --btntext: #fff; --ok: #15803d; --warn: #b45309; --bad: #b91c1c; }
-[data-theme="purple"] { --bg: #faf8ff; --surface: #ffffff; --surface2: #f3effd; --surface3: #e9e2fb; --text: #2a1b45; --muted: #66588a; --line: rgba(126,34,206,.12); --line2: rgba(126,34,206,.2); --glass: rgba(255,255,255,.92); --field: #fff;
-  --accent: #9333ea; --accent2: #c084fc; --dot: 147,51,234; --grad: linear-gradient(135deg, #9333ea, #c084fc); --violet: #7c3aed; --blue: #2563eb; --teal: #0d9488; --pink: #db2777; --aura1: rgba(196,181,253,.3); --aura2: rgba(233,213,255,.4); --user: #f3effd; --usertext: #2a1b45; --btntext: #fff; --ok: #15803d; --warn: #b45309; --bad: #b91c1c; }
-[data-theme="green"] { --bg: #f6fdf9; --surface: #ffffff; --surface2: #eafaf1; --surface3: #d9f4e5; --text: #12321f; --muted: #4f7461; --line: rgba(5,150,105,.12); --line2: rgba(5,150,105,.2); --glass: rgba(255,255,255,.92); --field: #fff;
-  --accent: #059669; --accent2: #10b981; --dot: 16,185,129; --grad: linear-gradient(135deg, #059669, #10b981); --violet: #7c3aed; --blue: #2563eb; --teal: #0d9488; --pink: #db2777; --aura1: rgba(110,231,183,.25); --aura2: rgba(209,250,229,.4); --user: #eafaf1; --usertext: #12321f; --btntext: #fff; --ok: #15803d; --warn: #b45309; --bad: #b91c1c; }
+[data-theme="neon-red"] {
+  --accent: #ff2a3c; --accent2: #ffb3a0; --hi: #ffb3a0; --dot: 255,42,60; --bg: #0e0306;
+  --rip1: 14,3,6; --rip2: 90,10,30; --rip3: 170,40,50;
+  --surface: rgba(8,12,28,.42); --surface2: rgba(255,255,255,.06); --surface3: rgba(255,255,255,.10);
+  --text: #eef3ff; --muted: #9fb0cc; --line: rgba(255,255,255,.10); --line2: rgba(255,255,255,.18);
+  --glass: rgba(8,12,28,.40); --field: rgba(255,255,255,.05);
+  --violet: #b9a6ff; --blue: #7cc4ff; --teal: #5eead4; --pink: #f9a8d4;
+  --usertext: #eef3ff; --btntext: #fff;
+  --ok: #34d399; --warn: #fbbf24; --bad: #f87171;
+  --grad: linear-gradient(180deg, color-mix(in srgb, var(--accent) 88%, transparent), color-mix(in srgb, var(--accent) 42%, transparent));
+  --user: color-mix(in srgb, var(--accent) 20%, rgba(8,12,28,.55));
+  --aura1: rgba(var(--rip2), .30); --aura2: rgba(var(--rip3), .22);
+}
+[data-theme="neon-magenta"] {
+  --accent: #e030ff; --accent2: #ffb3ff; --hi: #ffb3ff; --dot: 224,48,255; --bg: #0a0314;
+  --rip1: 10,3,20; --rip2: 70,20,140; --rip3: 170,50,200;
+  --surface: rgba(8,12,28,.42); --surface2: rgba(255,255,255,.06); --surface3: rgba(255,255,255,.10);
+  --text: #eef3ff; --muted: #9fb0cc; --line: rgba(255,255,255,.10); --line2: rgba(255,255,255,.18);
+  --glass: rgba(8,12,28,.40); --field: rgba(255,255,255,.05);
+  --violet: #b9a6ff; --blue: #7cc4ff; --teal: #5eead4; --pink: #f9a8d4;
+  --usertext: #eef3ff; --btntext: #fff;
+  --ok: #34d399; --warn: #fbbf24; --bad: #f87171;
+  --grad: linear-gradient(180deg, color-mix(in srgb, var(--accent) 88%, transparent), color-mix(in srgb, var(--accent) 42%, transparent));
+  --user: color-mix(in srgb, var(--accent) 20%, rgba(8,12,28,.55));
+  --aura1: rgba(var(--rip2), .30); --aura2: rgba(var(--rip3), .22);
+}
 
 html { font-size: 14px; }
 html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font-body); overflow: hidden; -webkit-font-smoothing: antialiased; transition: background .4s, color .4s; }
@@ -286,7 +308,7 @@ html[data-quality="4k"] body, html[data-quality="8k"] body { text-rendering: geo
 .toolcard header small { color: var(--muted); display: block; font-size: 11px; }
 .toolcard .tlog { flex: 1; max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
 .toolcard .tmsg { padding: 7px 10px; border-radius: 10px; background: var(--field); white-space: pre-wrap; word-break: break-word; }
-.toolcard .tmsg.me { align-self: flex-end; background: rgba(109,93,252,.25); }
+.toolcard .tmsg.me { align-self: flex-end; background: rgba(var(--dot),.22); }
 .toolcard .tmsg.err { color: #f87171; }
 .toolcard form { display: flex; gap: 6px; }
 .tstat { margin-left: auto; font-size: 11px; padding: 2px 8px; border-radius: 99px; background: var(--field); }
@@ -297,7 +319,7 @@ html[data-quality="4k"] body, html[data-quality="8k"] body { text-rendering: geo
 .agentlink .svgicon { margin-right: 2px; }
 a, button, select, [role="button"] { cursor: pointer; }
 .icon-btn { transition: background-color .18s ease, border-color .18s ease, transform .18s ease; }
-.icon-btn:focus-visible, button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent, #6d5dfc); outline-offset: 2px; }
+.icon-btn:focus-visible, button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (pointer: coarse) { .icon-btn { width: 44px; height: 44px; } .agentlink { height: 44px; } }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -395,13 +417,13 @@ a, button, select, [role="button"] { cursor: pointer; }
 
 /* ===== v3.14 Thinking animation (global top strip + room border dots) ===== */
 .thinkbar { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 60; pointer-events: none; opacity: 0; transition: opacity .2s;
-  background-image: radial-gradient(circle, #ff3b3b 1.2px, transparent 1.6px); background-size: 10px 3px; background-repeat: repeat-x; }
+  background-image: radial-gradient(circle, var(--accent) 1.2px, transparent 1.6px); background-size: 10px 3px; background-repeat: repeat-x; }
 .thinkbar.on { opacity: 1; animation: thinkrun .45s linear infinite; }
 @keyframes thinkrun { to { background-position: 10px 0; } }
 .room { position: relative; }
 .room .thinkborder { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; opacity: 0; transition: opacity .2s; }
 .room.thinking .thinkborder { opacity: 1; }
-.room .thinkborder rect { fill: none; stroke: #ff3b3b; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 0 9; animation: thinkdots .6s linear infinite; }
+.room .thinkborder rect { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 0 9; animation: thinkdots .6s linear infinite; }
 @keyframes thinkdots { to { stroke-dashoffset: -18; } }
 @media (prefers-reduced-motion: reduce) {
   .thinkbar.on { animation: none; }
@@ -904,3 +926,126 @@ tr:hover td { background: var(--surface2); }
 .gh-msg.ok { border-color: var(--ok); background: rgba(34,197,94,.08); }
 .gh-msg.bad { border-color: var(--bad); background: rgba(239,68,68,.08); color: var(--bad); }
 .gh-ideas { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* =====================================================================================
+   v3.26 NEON GLASS layer (sab pages par): ripple glass background, shafaf glass cards + chamakte kinare (glint),
+   aadhe size ke glass pill buttons. Sirf CSS, koi bari image nahi. Rang theme variables se (--accent, --hi, --rip*).
+   ===================================================================================== */
+html {
+  background-color: rgb(var(--rip1));
+  background-image:
+    radial-gradient(42% 52% at 20% 28%, rgba(var(--rip2), .62), transparent 70%),
+    radial-gradient(40% 48% at 82% 76%, rgba(var(--rip3), .42), transparent 72%),
+    linear-gradient(165deg, rgb(var(--rip1)) 0%, var(--bg) 55%, rgb(var(--rip1)) 100%);
+  background-attachment: fixed;
+}
+html, body { background-color: transparent; }
+html { background-color: rgb(var(--rip1)); }
+/* Fluted glass: khari dhaariyan (~34px), roshni/saya, halka tircha + kinaron par mor */
+body::before {
+  content: ""; position: fixed; inset: -6% -10%; z-index: -1; pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg,
+      rgba(255,255,255,0) 0px, rgba(255,255,255,.075) 5px, rgba(255,255,255,.02) 12px,
+      rgba(0,0,0,.05) 20px, rgba(0,0,0,.26) 31px, rgba(255,255,255,0) 34px);
+  transform: skewX(-5deg) perspective(900px) rotateY(-4deg);
+  -webkit-mask-image: radial-gradient(120% 90% at 50% 50%, #000 55%, rgba(0,0,0,.45) 100%);
+  mask-image: radial-gradient(120% 90% at 50% 50%, #000 55%, rgba(0,0,0,.45) 100%);
+}
+body::after {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(90deg, rgba(0,0,0,.35), transparent 18%, transparent 82%, rgba(0,0,0,.35)),
+              radial-gradient(60% 40% at 50% 0%, rgba(255,255,255,.05), transparent 70%);
+}
+.aura { display: none; }
+.dots { opacity: .18; }
+.topbar, .sidenav { background: rgba(4,6,16,.35); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-color: color-mix(in srgb, var(--hi) 18%, transparent); }
+.modal { background: rgba(6,9,22,.86); }
+
+/* Glass cards + chamakta kinara + glow */
+.panel, .card, .room, .skillcard, .guidecard, .zipcard, .research .bubble, .assistant .bubble, .composer, .livepanel, .ag-grid .panel, .search, .wfcard, .lp-appr {
+  background: rgba(8,12,28,.40);
+  border: 1px solid color-mix(in srgb, var(--hi) 60%, transparent);
+  -webkit-backdrop-filter: blur(12px) saturate(140%); backdrop-filter: blur(12px) saturate(140%);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 28%, transparent), inset 0 1px 0 rgba(255,255,255,.10), inset 0 0 24px rgba(255,255,255,.025);
+}
+.assistant .bubble { border-left: 1px solid color-mix(in srgb, var(--hi) 60%, transparent); }
+.modal.panel { background: rgba(6,9,22,.86); }
+:where(.panel, .card, .room, .zipcard, .composer, .guidecard) { position: relative; }
+/* Glints: upar-baayen aur neeche-daayen: chhoti roshan line + chhota safed nuqta (blur glow) */
+.panel::before, .card::before, .room::before, .zipcard::before, .composer::before, .guidecard::before,
+.panel::after, .card::after, .room::after, .zipcard::after, .composer::after, .guidecard::after {
+  content: ""; position: absolute; width: 46px; height: 8px; pointer-events: none; z-index: 3;
+  background:
+    radial-gradient(circle at 24% 50%, #fff 0 1.3px, rgba(255,255,255,.55) 2px, transparent 3.4px),
+    linear-gradient(90deg, transparent, var(--hi) 30%, #fff 50%, var(--hi) 70%, transparent) center / 100% 1px no-repeat;
+  filter: drop-shadow(0 0 3px var(--hi)) drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 70%, transparent));
+  opacity: .9;
+}
+.panel::before, .card::before, .room::before, .zipcard::before, .composer::before, .guidecard::before { top: -4px; left: 10px; }
+.panel::after, .card::after, .room::after, .zipcard::after, .composer::after, .guidecard::after { bottom: -4px; right: 10px; transform: scaleX(-1); }
+
+/* Buttons: glass pill, patla --hi kinara, primary = shafaf accent gradient + glow. Aadha size. */
+button {
+  min-height: 28px; height: auto; padding: 4px 12px; font-size: 11.5px; line-height: 1.2; font-weight: 600;
+  border-radius: 999px; color: #fff;
+  background: var(--grad);
+  border: 1px solid color-mix(in srgb, var(--hi) 60%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 45%, transparent), inset 0 1px 0 rgba(255,255,255,.30);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+button:hover { background: var(--grad); filter: brightness(1.15); box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 60%, transparent), inset 0 1px 0 rgba(255,255,255,.35); }
+.ghost, button.ghost, .outline, button.outline {
+  background: rgba(255,255,255,.04); color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--hi) 45%, transparent); box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
+}
+.ghost:hover, button.ghost:hover, .outline:hover { background: rgba(255,255,255,.08); box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 30%, transparent); }
+.icon-btn { width: 28px; height: 28px; min-height: 28px; padding: 0; border-radius: 999px; background: rgba(255,255,255,.03); border: 1px solid color-mix(in srgb, var(--hi) 25%, transparent); box-shadow: none; color: var(--text); }
+.icon-btn:hover { background: rgba(255,255,255,.08); border-color: color-mix(in srgb, var(--hi) 60%, transparent); }
+.linkbtn, .bigopen, .linkbtn.bigopen, .zipcard .btn { min-height: 28px; padding: 4px 12px; font-size: 11.5px; border-radius: 999px; background: var(--grad); border: 1px solid color-mix(in srgb, var(--hi) 60%, transparent); color: #fff; }
+.zipcard .btn.ghost { background: rgba(255,255,255,.04); }
+.chip { min-height: 28px; padding: 4px 12px; font-size: 11.5px; border-radius: 999px; background: rgba(8,12,28,.40); border: 1px solid color-mix(in srgb, var(--hi) 40%, transparent); }
+.agentlink { height: 28px; min-height: 28px; font-size: 12px; border-radius: 999px; }
+.sidenav .agentlink { height: 30px; min-height: 30px; border-radius: 10px; }
+.sidenav .agentlink:nth-of-type(n) .svgicon { color: var(--hi); }
+.pagetabs button, .ws-tabs button, .lp-tabs button { min-height: 26px; padding: 3px 10px; font-size: 11px; box-shadow: none; }
+.lp-tabs button { background: none; border: 0; border-bottom: 2px solid transparent; border-radius: 0; }
+.lp-tabs button.on { border-bottom-color: var(--hi); }
+.ws-tabs button.on, .pagetabs button.on { background: var(--grad); border-color: color-mix(in srgb, var(--hi) 60%, transparent); }
+.ball { width: 18px; height: 18px; min-height: 18px; padding: 0; border-radius: 50%; border: 1px solid rgba(255,255,255,.35); backdrop-filter: none; }
+.ball:hover { filter: brightness(1.15); }
+.ball.on { outline: 2px solid var(--hi); outline-offset: 2px; box-shadow: 0 0 10px var(--accent); }
+.mic, .attach { width: 34px; height: 34px; min-height: 34px; padding: 0; border-radius: 50%; background: rgba(255,255,255,.04); border: 1px solid color-mix(in srgb, var(--hi) 35%, transparent); box-shadow: none; }
+.mic.on { background: var(--grad); }
+.sendbtn { width: 34px; height: 34px; min-height: 34px; padding: 0; border-radius: 50%; }
+.x { background: transparent; border: 0; box-shadow: none; color: var(--text); }
+.verbadge button { min-width: 0; min-height: 20px; padding: 2px 8px; font-size: 10px; background: var(--ok); color: #04130b; border: 0; box-shadow: none; }
+.lp-ok { background: var(--ok); color: #04130b; }
+.lp-no { background: transparent; color: var(--bad); }
+.wf button.danger, .ag-input .stopbtn { background: color-mix(in srgb, var(--bad) 70%, transparent) !important; }
+.pend button, .ag-imgs.pending button, .rc-actions button { min-width: 28px; min-height: 28px; }
+.rc-actions button { min-height: 28px; }
+
+/* Fields: shafaf */
+select, textarea, input { background: rgba(255,255,255,.04); border: 1px solid color-mix(in srgb, var(--hi) 22%, transparent); min-height: 32px; color: var(--text); }
+select:focus, textarea:focus, input:focus { border-color: color-mix(in srgb, var(--hi) 70%, transparent); box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 30%, transparent); }
+.composer textarea { background: transparent; border: 0; box-shadow: none; }
+option { background: #0a0e1e; color: var(--text); }
+.toggle input { accent-color: var(--accent); }
+
+/* Purane hard-coded rang ab variables se */
+.hello h1 .hl, .card h3 .svgicon, .field-head a, .roomhead a.keylink, .lp-more, .guidecard h3 { color: var(--hi); }
+.verchip { background: color-mix(in srgb, var(--accent) 16%, transparent); border-color: color-mix(in srgb, var(--hi) 45%, transparent); color: var(--hi); }
+.agent-chip, .memtag { background: color-mix(in srgb, var(--accent) 14%, transparent); border-color: color-mix(in srgb, var(--hi) 35%, transparent); color: var(--hi); }
+.masked, [data-masked-key], .keychip { color: var(--hi); }
+.ok-text { color: var(--ok); } .warnline, .paidwarn { color: var(--warn); }
+.freebadge { color: var(--ok); } .paidbadge { color: var(--warn); }
+.typing i, .caret { background: var(--hi); }
+.rmsg.me, .toolcard .tmsg.me { background: rgba(var(--dot), .20); }
+.user .bubble { background: var(--user); border: 1px solid color-mix(in srgb, var(--hi) 35%, transparent); }
+tr:hover td { background: rgba(255,255,255,.04); }
+::selection { background: color-mix(in srgb, var(--accent) 70%, transparent); color: #fff; }
+.bgscene { background: transparent; }
+
+@media (pointer: coarse) { button, .icon-btn, .agentlink { min-height: 36px; } .icon-btn { width: 36px; height: 36px; } }
+@media (prefers-reduced-transparency: reduce) { .panel, .card, .room, .composer { background: rgba(8,12,28,.9); } }

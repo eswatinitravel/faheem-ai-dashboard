@@ -106,3 +106,15 @@ Dashboard sirf template ki files ZIP mein daalta hai; neeche wali dependencies u
 
 ## WebBrain (v3.25)
 - https://github.com/webbrain-one/webbrain — GPL-3.0-or-later. Koi code copy nahi; sirf store links aur OpenAI-compatible raasta.
+
+## Jarvis conversation skills (v3.26)
+Sab apne lafzon mein chhota Roman Urdu khulasa (asal text copy nahi), lib/jarvis/skills/ mein. Tafseel aur licence: lib/jarvis/skills/NOTICE.md.
+- https://github.com/pjt222/agent-almanac (skills/listen) — MIT, Copyright (c) 2025 Development Guides Contributors.
+- https://github.com/harims95/straight-talk — MIT, Copyright (c) 2026 harims95.
+- https://github.com/CoffeeFancy/hermes-proactive-chat — MIT, Copyright (c) 2026 Coffee_Fancy (sirf khayal, code nahi).
+- https://github.com/pipecat-ai/skills (skills/talk) — BSD-2-Clause, Copyright (c) 2024-2026, Daily.
+- https://github.com/ironyjk/howtotalk (active-listening, nvc) — MIT, Copyright (c) 2026 ironyjk.
+- Istemal nahi kiya: https://github.com/underyx/human-skills (small-talk) — repo mein LICENSE nahi.
+
+## Neon glass look (v3.26)
+- Shutterstock "glass effect frames shining edges" sirf andaz ka hawala; koi image ya asset istemal nahi. Sab apna CSS.

@@ -7,10 +7,10 @@ import { loadPrefs, renderScale } from "../../lib/prefs";
 // Aura background with small glowing dots moving fast (colour follows the theme's --dot).
 export default function Background({ scene = false }) {
   const ref = useRef(null);
-  const [disp, setDisp] = useState({ quality: "auto", fx3d: "off", uiScale: "100", bgScene: "desert" });
+  const [disp, setDisp] = useState({ quality: "auto", fx3d: "off", uiScale: "100", bgScene: "ripple" });
   useEffect(() => {
     const apply = (p) => {
-      setDisp({ quality: p.quality || "auto", fx3d: p.fx3d || "off", uiScale: p.uiScale || "100", bgScene: p.bgScene || "desert" });
+      setDisp({ quality: p.quality || "auto", fx3d: p.fx3d || "off", uiScale: p.uiScale || "100", bgScene: p.bgScene || "ripple" });
       document.body.style.zoom = String(Number(p.uiScale || 100) / 100);
       document.documentElement.dataset.quality = p.quality || "auto";
     };
@@ -55,7 +55,7 @@ export default function Background({ scene = false }) {
   }, [disp.quality]);
   return (
     <>
-      {scene && disp.bgScene !== "off" && <SceneBackground scene={disp.bgScene} />}
+      {scene && (disp.bgScene === "desert" || disp.bgScene === "dna") && <SceneBackground scene={disp.bgScene} />}
       <div className="aura" aria-hidden="true" />
       <canvas ref={ref} className="dots" aria-hidden="true" />
       {disp.fx3d !== "off" && <div className="fx3d"><Scene3D quality={disp.quality} detail={disp.fx3d} /></div>}

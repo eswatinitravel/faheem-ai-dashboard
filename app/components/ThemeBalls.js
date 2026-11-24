@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import { THEMES, applyTheme, savedTheme } from "../../lib/prefs";
 
 export default function ThemeBalls() {
-  const [theme, setTheme] = useState("aura");
-  useEffect(() => { const t = savedTheme(); setTheme(t); applyTheme(t); }, []);
+  const [theme, setTheme] = useState("neon-blue");
+  useEffect(() => { const t = applyTheme(savedTheme()); setTheme(t); }, []);
   return (
     <div className="balls" role="group" aria-label="Theme">
       {THEMES.map((t) => (

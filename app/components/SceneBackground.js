@@ -5,6 +5,7 @@ import * as THREE from "three";
 // v3.16 Main chatboard background (Options > Display > Background): "desert" (default) / "dna" / "off".
 // Purple Desert = getlayers.ai free layer video. DNA = apna Three.js helix (GetLayers ka premium DNA istemal nahi).
 export const BG_SCENES = [
+  { id: "ripple", name: "Ripple glass (v3.26 default)" },
   { id: "desert", name: "Purple Desert (GetLayers free video)" },
   { id: "dna", name: "DNA (apna 3D helix, halka)" },
   { id: "off", name: "Off" },

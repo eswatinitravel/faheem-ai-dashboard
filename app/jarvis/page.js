@@ -424,8 +424,8 @@ export default function Jarvis() {
       </div>
 
       {/* Neeche: Personalize */}
-      <section className="jv-card jv-personal">
-        <h3>Apna assistant banayein</h3>
+      <details className="jv-card jv-personal">
+        <summary>Apna assistant banayein <small>(awaz, naam, zabaan)</small></summary>
         <div className="jv-row">
           <label>Naam<input value={aname} onChange={(e) => setAname(e.target.value)} placeholder={gender === "female" ? "Friday" : "Jarvis"} maxLength={24} /></label>
           <label>Awaz
@@ -452,7 +452,7 @@ export default function Jarvis() {
           </label>
           <button className="jv-save" onClick={() => { setSaved(true); setTimeout(() => setSaved(false), 1500); speak(gender === "female" ? `Salam, main ${name} hoon.` : `Salam, main ${name} hoon.`, {}); }}>{saved ? "Save ho gaya" : "Save aur suno"}</button>
         </div>
-      </section>
+      </details>
 
       <nav className="jv-nav" aria-label="Pages">
         <Link href="/"><Icon name="chat" size={16} /> Chat</Link>
@@ -625,4 +625,29 @@ const CSS = `
 .jv-gauge .g-in b{font-size:12.5px;font-variant-numeric:tabular-nums}
 .jv-gauge span{font-size:10px}.jv-gauge small{font-size:9.5px;font-variant-numeric:tabular-nums}
 .jv-status{font-size:10.5px}
+/* v3.25.1 Fit: laptop par poora Jarvis ek screen mein, koi page scroll nahi. Har column andar se scroll. */
+.jv-personal summary{cursor:pointer;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#cfd3ff;list-style:none;display:flex;gap:6px;align-items:center;min-height:24px}
+.jv-personal summary::-webkit-details-marker{display:none}
+.jv-personal summary::before{content:"▸";transition:transform .15s}.jv-personal[open] summary::before{transform:rotate(90deg)}
+.jv-personal summary small{text-transform:none;letter-spacing:0;color:#8d93c4}
+.jv-personal[open] summary{margin-bottom:8px}
+@media (min-width:1101px){
+.jv{height:100vh;height:100dvh;min-height:0;overflow:hidden;display:flex;flex-direction:column;padding:10px 16px 58px}
+.jv-top{flex:none;margin-bottom:8px}.jv-top p{margin-top:2px}
+.jv-grid{flex:1;min-height:0;grid-template-columns:240px minmax(0,1fr) 320px;gap:12px;align-items:stretch}
+.jv-col{min-height:0;overflow-y:auto;overflow-x:hidden;gap:10px;padding-right:2px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}
+.jv-chat .jv-chatbox{flex:none;height:auto;min-height:300px;max-height:62%}
+.jv-stage{min-height:0;overflow:hidden;justify-content:center}
+.jv-holo{flex:0 1 auto;min-height:0;padding-top:36px;padding-bottom:8px}
+.jv-avatar{width:min(100%,380px,calc(100dvh - 400px));min-width:200px}
+.jv-pad{height:78px;margin-top:-10px}
+.jv-ring.r1{height:62px}.jv-ring.r2{height:40px}
+.jv-core{width:68px;height:68px}
+.jv-meters{margin:2px 0 0}
+.jv-gauge svg{width:52px;height:52px}.jv-gauge .g-in{height:52px}
+.jv-personal{flex:none;margin-top:8px;padding:8px 12px}
+.jv-personal[open]{position:fixed;left:50%;transform:translateX(-50%);bottom:62px;width:min(980px,94vw);z-index:25;max-height:60vh;overflow:auto;background:rgba(12,14,38,.96)}
+.jv-nav{bottom:8px;padding:4px}
+}
+@media (min-width:1101px) and (max-height:700px){.jv-top p{display:none}.jv-meters{display:none}.jv-avatar{width:min(100%,320px,calc(100dvh - 300px))}}
 `;

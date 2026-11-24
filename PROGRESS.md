@@ -167,3 +167,6 @@
 - TUIOS (MIT, Gaurav-Gosain/tuios): TUIOS.bat GitHub se tuios + tuios-web (Windows x86_64/arm64) %USERPROFILE%\.faheem-ai\bin mein lagata hai. Jarvis: "TUIOS kholo" = tuios-web 127.0.0.1:7681 browser mein; "TUIOS terminal mein kholo" = Windows Terminal. Jarvis mein Agent Inbox card (ruka/ijazat wala oopar, desktop notification).
 - Test: action pehchan 7/7, CORS 5/5 (evil.com band), /api/v1 normal + stream extension origin ke saath, tuios-web asli launch (Linux) HTTP 200, build EXIT 0.
 - Baaki: TUIOS.bat asli Windows par; WebBrain extension asli browser mein; visual check.
+
+## 24 Nov 2026 — v3.25.1
+- Jarvis laptop screen par poora fit: page scroll band (100vh), har column andar se scroll, avatar screen ki oonchai ke hisaab se chhota/bara, "Apna assistant banayein" ab band patti (click se khulti hai). Chhoti screen (700px se kam oonchai) par meters chhup jate hain.

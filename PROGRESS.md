@@ -181,3 +181,12 @@
 - Skills: pjt222/agent-almanac listen (MIT), harims95/straight-talk (MIT), CoffeeFancy/hermes-proactive-chat (MIT, sirf khayal), pipecat-ai/skills talk (BSD-2-Clause), ironyjk/howtotalk active-listening + nvc (MIT) — apne lafzon mein Roman Urdu khulasa. underyx/human-skills chhor diya: LICENSE file nahi.
 - Test: build EXIT 0; headless screenshot /jarvis 1366x768 + 1920x1080 (page scroll nahi), / aur /options 1366x768.
 - Baaki: asli Windows laptop par visual check; Neon Red/Magenta par har page ki nazar.
+
+## 26 Nov 2026 — v3.26.1
+- Friday/Jarvis ke liye offline awaz: KittenTTS 2 nano (Hindi model, int4, ~8.8 MB + awazen ~2 MB), Roman Urdu ko pehle Devanagari mein badal kar bolta hai (English lafz waise hi).
+- Lehja list mein "Kitten Urdu/Hindi (offline)": Aurat = Priya, Mard = Arjun. Sirf Roman Urdu / اردو zubaan par dikhta hai (اردو script wala jawab browser awaz se).
+- Laptop par ek dafa: `pip install onnxruntime numpy phonemizer espeakng_loader`. Pehli baar model khud download (%USERPROFILE%\.cache\kitten-tts-2-nano), phir internet ki zaroorat nahi.
+- Server: /api/jarvis/tts -> lib/jarvis/kitten_tts.py (wav). Honth AnalyserNode se hilte hain; beech mein bolo to ruk jata hai.
+- Kuch bhi ghalat ho (package nahi, model nahi, error) to chup chaap purani browser awaz, aur is session mein Kitten dobara try nahi.
+- Test: sandbox mein asli wav bani (3.9 s, 24 kHz, "Salam, main Friday hoon. Aaj kya karna hai?"); build EXIT 0.
+- Baaki: asli Windows par sun kar check; Roman Urdu -> Devanagari rules saade hain (t/d retroflex, "salam/salaam" jaise farq ghalat ho sakte hain).

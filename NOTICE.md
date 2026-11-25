@@ -118,3 +118,9 @@ Sab apne lafzon mein chhota Roman Urdu khulasa (asal text copy nahi), lib/jarvis
 
 ## Neon glass look (v3.26)
 - Shutterstock "glass effect frames shining edges" sirf andaz ka hawala; koi image ya asset istemal nahi. Sab apna CSS.
+
+## KittenTTS 2 nano awaz (v3.26.1)
+- Model: https://huggingface.co/KittenML/kitten-tts-2-nano — Apache-2.0 (model, voice packs, G2P files), (c) KittenML / Stellon Labs. Repo mein shamil NAHI; laptop par pehli dafa download (hi int4 ONNX + voices_hi.npz + vocab.json).
+- Code ka tareeqa: https://github.com/KittenML/KittenTTS (kittenml 0.9.8, Apache-2.0). lib/jarvis/kitten_tts.py chhota apna runner hai; phoneme post-processing aur chunking kittenml ke `kittentts2_tiny` (jo misaki ka EspeakG2P vendor karta hai, Apache-2.0, https://github.com/hexgrad/misaki) ke hisaab se dobara likhi.
+- Runtime (user khud pip se lagata hai, repo mein bundle nahi): onnxruntime (MIT, Microsoft), numpy (BSD-3-Clause).
+- **GPL note:** Hindi phonemes ke liye eSpeak NG (GPL-3.0, https://github.com/espeak-ng/espeak-ng) aur phonemizer (GPL-3.0, https://github.com/bootphon/phonemizer), espeakng_loader (MIT wrapper, andar eSpeak NG GPL-3.0 library). Yeh sirf laptop par alag Python process mein chalte hain; is repo mein koi GPL code copy ya bundle nahi.

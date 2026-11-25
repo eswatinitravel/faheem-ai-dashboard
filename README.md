@@ -174,6 +174,7 @@ Sirf us computer/server par jahan Docker chal sake: `docker compose up -d`
 - Naya page **/jarvis** (front chat ke upar mic button aur sidebar mein "Jarvis"): HUD screen, mic hamesha sunta hai, beech mein bolo to Jarvis ruk jata hai, "bas" kaho to band.
 - **Mard / Aurat**: Jarvis (mard) aur Friday (aurat), har ek ki alag awazen; "Lehja" list se en-GB, en-IN, ur-PK waghera chunein. Zubaan: Roman Urdu, اردو, English.
 - **Sunna**: laptop wala Whisper (`pip install faster-whisper`, free, offline) → Groq Whisper key → Chrome/Edge ki apni speech recognition.
+- **Bolna (offline, v3.26.1)**: Lehja > "Kitten Urdu/Hindi (offline)" — KittenTTS 2 nano, `pip install onnxruntime numpy phonemizer espeakng_loader`. Na lage to browser ki awaz.
 - **Sochna**: pehle laptop ka Ollama, phir baqi free brains.
 - **Laptop control** (allowlist): apps kholna (Chrome, Edge, Notepad, Calculator, Explorer, VS Code, Word, Excel, WhatsApp, Spotify, Settings), links/YouTube/Google search, folders, files dhoondna, screenshot, awaz, lock/shutdown/restart (pehle "haan"), shutdown roko. Front chat mein bhi: "chrome kholo", "screenshot lo".
 - **Chrome control** (optional): `npm i -g chrome-devtools-mcp@latest` (Google, Apache-2.0).

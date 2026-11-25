@@ -74,6 +74,8 @@ export default function Jarvis() {
   const analyserRef = useRef(null);
   const recRef = useRef(null);
   const bargeRef = useRef(0);
+  const playCtxRef = useRef(null);
+  const kittenSrcRef = useRef(null);
   const engineRef = useRef("auto"); engineRef.current = engine;
   const settingsRef = useRef({}); settingsRef.current = { gender, lang, voiceName, role, tone, aname, idleChat };
   const endRef = useRef(null);
@@ -96,7 +98,8 @@ export default function Jarvis() {
       const T = talkRef.current; const now = performance.now(); let target = 0;
       if (T.speaking) {
         const w = T.words.find((x) => now >= x.start && now <= x.end);
-        if (w) target = Math.abs(Math.sin(Math.PI * w.syl * (now - w.start) / (w.end - w.start))) * 0.95;
+        if (T.an) { const b = new Uint8Array(T.an.fftSize); T.an.getByteTimeDomainData(b); let q = 0; for (let i = 0; i < b.length; i++) { const v = (b[i] - 128) / 128; q += v * v; } target = Math.min(0.95, Math.sqrt(q / b.length) * 7); }
+        else if (w) target = Math.abs(Math.sin(Math.PI * w.syl * (now - w.start) / (w.end - w.start))) * 0.95;
         else if (now - T.lastBoundary > 450) target = 0.35 + 0.35 * Math.abs(Math.sin(now / 95)) * (0.6 + 0.4 * Math.sin(now / 37));
       }
       T.m += (target - T.m) * 0.45;
@@ -141,6 +144,7 @@ export default function Jarvis() {
   };
   function stopAll() {
     try { window.speechSynthesis?.cancel(); } catch {}
+    try { kittenSrcRef.current?.stop(); } catch {}
     try { recRef.current?.stop?.(); } catch {}
     try { recRef.current?.abort?.(); } catch {}
     recRef.current = null;
@@ -150,7 +154,7 @@ export default function Jarvis() {
   }
 
   // ---------- Bolna (jazbaat ke hisaab se), beech mein user bole to ruk jaye ----------
-  const speak = useCallback((text, tone = {}) => new Promise((resolve) => {
+  const speakSynth = useCallback((text, tone = {}) => new Promise((resolve) => {
     const synth = window.speechSynthesis; if (!synth || !text) return resolve(false);
     synth.cancel();
     const spoken = clean(text);
@@ -179,6 +183,45 @@ export default function Jarvis() {
     u.onend = u.onerror = () => { T.speaking = false; T.words = []; cancelAnimationFrame(bargeRef.current); setLevel(0); resolve(interrupted); };
     synth.speak(u);
   }), [pickVoice]);
+
+  // v3.26.1 Kitten (offline, laptop par KittenTTS 2 nano): wav le kar AudioContext mein bajao; analyser se honth hilte hain.
+  // Koi bhi gadbad ho to chup chaap browser wali awaz, aur is session mein Kitten dobara nahi.
+  const kittenFailRef = useRef(false);
+  useEffect(() => { try { kittenFailRef.current = sessionStorage.getItem("faheem-kitten-fail") === "1"; } catch {} }, []);
+  const speakKitten = (text, voice, tone = {}) => new Promise(async (resolve) => {
+    const fail = () => { kittenFailRef.current = true; try { sessionStorage.setItem("faheem-kitten-fail", "1"); } catch {} resolve(null); };
+    try {
+      const r = await fetch("/api/jarvis/tts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: clean(text), voice }) });
+      if (!r.ok) return fail();
+      const ac = playCtxRef.current || (playCtxRef.current = new (window.AudioContext || window.webkitAudioContext)());
+      if (ac.state === "suspended") await ac.resume();
+      const buf = await ac.decodeAudioData(await r.arrayBuffer());
+      const src = ac.createBufferSource(); src.buffer = buf; src.playbackRate.value = Math.min(1.25, Math.max(0.85, tone.rate || 1));
+      const an = ac.createAnalyser(); an.fftSize = 512; src.connect(an); an.connect(ac.destination);
+      const T = talkRef.current; let interrupted = false, loud = 0;
+      const watch = () => {
+        const q = rms(); setLevel(Math.min(1, q * 6));
+        if (q > 0.09) loud++; else loud = Math.max(0, loud - 1);
+        if (loud > 8) { interrupted = true; try { src.stop(); } catch {} return; }
+        bargeRef.current = requestAnimationFrame(watch);
+      };
+      kittenSrcRef.current = src;
+      src.onended = () => { T.speaking = false; T.an = null; T.words = []; kittenSrcRef.current = null; cancelAnimationFrame(bargeRef.current); setLevel(0); resolve(interrupted); };
+      T.speaking = true; T.words = []; T.an = an; setMode("speaking");
+      if (analyserRef.current) bargeRef.current = requestAnimationFrame(watch);
+      src.start();
+    } catch { fail(); }
+  });
+  const speak = useCallback(async (text, tone = {}) => {
+    const vn = settingsRef.current.voiceName || "";
+    if (vn.startsWith("kitten:") && !kittenFailRef.current && text && !/[\u0600-\u06FF]/.test(text)) {
+      try { window.speechSynthesis?.cancel(); } catch {}
+      const r = await speakKitten(text, vn.slice(7), tone);
+      if (r !== null) return r;
+    }
+    return speakSynth(text, tone);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [speakSynth]);
 
   // ---------- Sunna: 1) Whisper (laptop/Groq) 2) browser ki apni speech recognition ----------
   const listenWhisper = () => new Promise((resolve) => {
@@ -472,6 +515,7 @@ export default function Jarvis() {
           <label>Lehja
             <select value={voiceName} onChange={(e) => setVoiceName(e.target.value)} data-jarvis-voice>
               <option value="">Khud chuno ({gender === "male" ? "mard" : "aurat"})</option>
+              {lang !== "en" && (gender === "male" ? <option value="kitten:arjun">Kitten Urdu/Hindi (offline)</option> : <option value="kitten:priya">Kitten Urdu/Hindi (offline)</option>)}
               {voiceList.map((v) => <option key={v.name} value={v.name}>{v.name.replace(/Microsoft |Online \(Natural\) - /g, "")} · {v.lang}</option>)}
             </select>
           </label>

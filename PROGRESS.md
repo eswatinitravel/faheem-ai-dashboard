@@ -190,3 +190,15 @@
 - Kuch bhi ghalat ho (package nahi, model nahi, error) to chup chaap purani browser awaz, aur is session mein Kitten dobara try nahi.
 - Test: sandbox mein asli wav bani (3.9 s, 24 kHz, "Salam, main Friday hoon. Aaj kya karna hai?"); build EXIT 0.
 - Baaki: asli Windows par sun kar check; Roman Urdu -> Devanagari rules saade hain (t/d retroflex, "salam/salaam" jaise farq ghalat ho sakte hain).
+
+## 26 Nov 2026 — v3.27.0 (phone connect, status tiles + launcher, AI Team chat, haath se control, Penpot/n8n)
+- /connect "Phone se jodo": laptop ka LAN IP server khud dhoondta hai (Wi-Fi pehle, WSL/Hyper-V/VirtualBox aakhir), Base URL `http://<IP>:3000/api/v1`, phone key `fad-…` (data/phone.json), apna QR generator (lib/qr.js, v1-10, level M; 80 QR OpenCV se decode = 80/80). Maid / PocketPal AI / AI Edge Gallery ke Roman Urdu steps, Windows firewall command.
+- LAN guard (proxy.js, Next 16 proxy): `next start -H 0.0.0.0`; Wi-Fi se sirf /api/v1 + Bearer key jab Phone connect On; baqi sab 403. Pehle (v3.26) saara dashboard LAN par khula tha.
+- /api/v1 streaming: stream foran shuru + har 10s ": ping" (phone app timeout na ho); non-stream waisa hi.
+- /status: services (server, Ollama, Whisper, Kitten TTS, GitHub update, Phone) + har brain ka /models ping, ms, rang, 60s auto-refresh (server cache 45s, GitHub 10 min). App launcher: search, add/remove/order, data/launcher.json, sirf http(s) ya /page links.
+- Agent page "AI Team chat": Planner → Researcher → Coder → Reviewer (har ek alag brain, NDJSON stream). File/command sirf tajweez; server par hash ke saath, project-bound, 10 min, ek dafa; "Ijazat do" se runTool (write_file / run_command) aur audit log. Khatarnak commands blocked.
+- Jarvis "Haath se control" (default band): MediaPipe Tasks Vision 1.2.3 CDN se sirf On par; khula haath = Shuru/Band, swipe = theme/persona, pinch = click. CDN/camera fail par khud band + wajah.
+- Design: Penpot links. Workflows: n8n webhook tab (/api/n8n server-side POST, Pause All aur audit ke saath).
+- Test: build EXIT 0; npm run test:v327 27/27 (+13 HTTP = 40/40); test:ops 25/25; LAN guard curl 15 cases; phone jaisi request LAN IP se key ke saath models + chat (stream/non-stream) 200; AI Team chat asli free brains (Kilo, OVH, Pollinations, Free.ai) ~28s, file + command ijazat se chale, dobara/doosra project/fake id 409; n8n local echo webhook 200; headless Chromium 1366x768 screenshots (koi horizontal overflow nahi), MediaPipe asli CDN + fake camera se load, CDN band aur camera inkaar par fallback.
+- Baaki (Windows par unverified): asli phone se Maid/PocketPal; Windows Firewall prompt; asli haath ke ishare (sirf nakli landmarks se test); n8n asli instance.
+- Pata hai: Wi-Fi par koi jaan bujh kar Host + X-Forwarded-For dono jaali bheje to guard dhoka kha sakta hai (Next.js asli socket IP route ko nahi deta) — is liye firewall Private-only rakhein aur Phone connect kaam ke baad band.

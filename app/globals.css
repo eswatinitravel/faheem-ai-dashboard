@@ -1049,3 +1049,7 @@ tr:hover td { background: rgba(255,255,255,.04); }
 
 @media (pointer: coarse) { button, .icon-btn, .agentlink { min-height: 36px; } .icon-btn { width: 36px; height: 36px; } }
 @media (prefers-reduced-transparency: reduce) { .panel, .card, .room, .composer { background: rgba(8,12,28,.9); } }
+
+/* v3.27 Agent: Agent / AI Team chat tabs */
+.ag-panes { padding: 8px 10px 6px; flex: none; }
+.ag-panes button { display: inline-flex; gap: 6px; align-items: center; justify-content: center; }

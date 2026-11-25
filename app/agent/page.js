@@ -7,6 +7,7 @@ import VersionBadge from "../components/VersionBadge";
 import { prepareFiles } from "../../lib/attach";
 import { loadPrefs, savePrefs } from "../../lib/prefs";
 import ZipCard, { ZipHistory } from "../components/ZipCard";
+import TeamChat from "../components/TeamChat";
 
 const ICON = { list_files: <Icon name="folder" size={14} />, read_file: <Icon name="file" size={14} />, write_file: <Icon name="edit" size={14} />, edit_file: <Icon name="edit" size={14} />, delete_file: <Icon name="trash" size={14} />, search: <Icon name="search" size={14} />, run_command: <Icon name="play" size={14} />, check: <Icon name="dot" size={14} />, test: <Icon name="dot" size={14} />, web_fetch: <Icon name="globe" size={14} />, image_url: <Icon name="palette" size={14} /> };
 
@@ -27,6 +28,7 @@ export default function AgentPage() {
   const [team, setTeam] = useState(false); // v3.13 Team mode (default band)
   const [zipCard, setZipCard] = useState(null); // v3.16 ZIP button ka card
   const [zipBusy, setZipBusy] = useState(false);
+  const [pane, setPane] = useState("agent"); // v3.27: "agent" | "team" (AI Team group chat)
   const ctrlRef = useRef(null);
   const endRef = useRef(null);
   const fileRef = useRef(null);
@@ -62,6 +64,8 @@ export default function AgentPage() {
   }, [project, loadFiles]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [events]);
   useEffect(() => { setTeam(!!loadPrefs().teamMode); const f = (e) => setTeam(!!e.detail?.teamMode); window.addEventListener("faheem-prefs", f); return () => window.removeEventListener("faheem-prefs", f); }, []);
+  useEffect(() => { try { if (localStorage.getItem("faheem-agent-pane") === "team") setPane("team"); } catch {} }, []);
+  function pickPane(v) { setPane(v); try { localStorage.setItem("faheem-agent-pane", v); } catch {} }
   function toggleTeam(v) { setTeam(v); savePrefs({ ...loadPrefs(), teamMode: v }); }
 
   async function newProject() {
@@ -164,6 +168,11 @@ export default function AgentPage() {
         </aside>
 
         <section className="ag-chat panel">
+          <div className="ws-tabs ag-panes" role="tablist" aria-label="Agent ya AI Team">
+            <button role="tab" aria-selected={pane === "agent"} className={pane === "agent" ? "on" : ""} onClick={() => pickPane("agent")}><Icon name="bot" size={13} /> Agent</button>
+            <button role="tab" aria-selected={pane === "team"} className={pane === "team" ? "on" : ""} onClick={() => pickPane("team")} data-teamchat-tab><Icon name="users" size={13} /> AI Team chat</button>
+          </div>
+          {pane === "team" ? <TeamChat project={project} onFiles={() => { loadFiles(); setStamp(Date.now()); }} /> : <>
           <div className="ag-log">
             {events.length === 0 && (
               <div className="hello small">
@@ -202,6 +211,7 @@ export default function AgentPage() {
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); run(); } }} disabled={busy} rows={2} />
             {busy ? <button className="stopbtn" onClick={() => ctrlRef.current?.abort()}><Icon name="pause" size={13} /> Roko</button> : <button onClick={() => run()} disabled={!task.trim()}>Chalao <Icon name="send" size={13} /></button>}
           </div>
+          </>}
         </section>
 
         <section className="ag-view panel">

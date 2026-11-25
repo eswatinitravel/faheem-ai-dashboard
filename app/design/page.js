@@ -140,6 +140,16 @@ export default function Design() {
             </div>
           )}
         </section>
+        <section className="card panel" data-penpot>
+          <h3><Icon name="palette" size={16} /> Penpot · free open-source design tool</h3>
+          <p className="muted">Figma jaisa design aur prototype, browser mein, free. Yahan ka design system (rang + fonts) Penpot mein le ja kar screens banayein, phir HTML/CSS ya SVG export karke Agent ko dein.</p>
+          <div className="btnrow">
+            <a className="icon-btn agentlink" href="https://design.penpot.app" target="_blank" rel="noreferrer"><Icon name="external" size={13} /> Penpot kholo (web, free account)</a>
+            <a className="icon-btn agentlink" href="https://github.com/penpot/penpot" target="_blank" rel="noreferrer"><Icon name="github" size={13} /> GitHub</a>
+            <a className="icon-btn agentlink" href="https://help.penpot.app/technical-guide/getting-started/" target="_blank" rel="noreferrer"><Icon name="book" size={13} /> Laptop par (Docker) guide</a>
+          </div>
+          <p className="muted small-note">Penpot (Kaleidos, MPL-2.0) sirf link hai; is dashboard mein us ka code shamil nahi.</p>
+        </section>
         <p className="muted small">Data: UI UX Pro Max (MIT) · nextlevelbuilder/ui-ux-pro-max-skill · Checks: Impeccable (Apache-2.0) · pbakaus/impeccable</p>
       </div>
     </main>

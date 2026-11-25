@@ -4,9 +4,10 @@ import Link from "next/link";
 import Icon from "../components/Icon";
 import Background from "../components/Background";
 import ThemeBalls from "../components/ThemeBalls";
+import N8nWebhook from "../components/N8nWebhook";
 
 // v3.17 Workflows: har kaam ki timeline, ijazat (Approve/Reject), audit log, schedules, brains ki tarteeb, Pause All, export.
-const TABS = [["jobs", "Kaam"], ["approvals", "Ijazat"], ["schedules", "Schedule"], ["brains", "Brains ki tarteeb"], ["audit", "Audit log"]];
+const TABS = [["jobs", "Kaam"], ["approvals", "Ijazat"], ["schedules", "Schedule"], ["brains", "Brains ki tarteeb"], ["audit", "Audit log"], ["n8n", "n8n webhook"]];
 const ROLE_NAME = { coder: "Code", web: "Website", uiux: "UI/UX", writer: "Urdu & Content", business: "Business", travel: "Travel", research: "Research", general: "General" };
 const STATUS = { queued: "line mein", running: "chal raha", waiting_for_approval: "ijazat ka intezar", retrying: "dobara koshish", completed: "mukammal", failed: "fail", cancelled: "cancel", dead_letter: "fail (list)", pending: "intezar", approved: "manzoor", rejected: "na-manzoor", used: "istemal ho gayi", expired: "expire", active: "chalu", paused: "ruka", };
 const tone = (s) => (["completed", "approved", "used", "active"].includes(s) ? "ok" : ["dead_letter", "failed", "rejected", "expired"].includes(s) ? "bad" : ["running", "retrying", "pending", "waiting_for_approval"].includes(s) ? "run" : "");
@@ -134,6 +135,7 @@ export default function Workflows() {
           </div>)}</div>
         </section>}
 
+        {tab === "n8n" && <N8nWebhook />}
         {tab === "audit" && <section className="card panel">
           {!d?.audit?.length && <p className="muted">Abhi koi record nahi.</p>}
           <table className="wftable"><tbody>{d?.audit?.map((a, i) => <tr key={i}><td className="muted">{when(a.at)}</td><td><span className="chip">{a.event}</span></td><td>{a.summary}</td></tr>)}</tbody></table>

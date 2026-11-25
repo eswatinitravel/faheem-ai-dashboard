@@ -382,6 +382,8 @@ export default function Home() {
         <Link className="icon-btn agentlink" href="/design" title="Design Studio (UI UX Pro Max)"><Icon name="palette" size={16} /> Design</Link>
         <Link className="icon-btn agentlink" href="/skills" title="Saari skills: Hallmark, UI UX Pro Max, Impeccable, Agentation, Hermes"><Icon name="grid" size={16} /> Skills</Link>
         <div className="sn-group">Aur</div>
+        <Link className="icon-btn agentlink" href="/status" title="Status tiles: brains/services ki sehat + app launcher" data-nav-status><Icon name="monitor" size={16} /> Status</Link>
+        <Link className="icon-btn agentlink" href="/connect" title="Phone se jodo: Maid / PocketPal AI" data-nav-connect><Icon name="phone" size={16} /> Phone</Link>
         <Link className="icon-btn agentlink" href="/meta" title="Meta AI tasveer edit" aria-label="Meta AI tasveer edit"><Icon name="sparkle" /> Meta AI</Link>
         <Link className="icon-btn agentlink" href="/skills/guide" title="Skills guide (aasaan Roman Urdu)" aria-label="Skills guide"><Icon name="check" /> Guide</Link>
         <Link className="icon-btn agentlink" href="/gallery" title="Gallery (pictures/files)" aria-label="Gallery"><Icon name="image" /> Gallery</Link>

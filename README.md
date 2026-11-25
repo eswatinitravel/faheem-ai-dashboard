@@ -4,6 +4,22 @@ Free 3D AI assistant for Windows: likh kar ya bol kar baat karein. Jab ek free A
 
 **Order (v3.14, v3.17 mein har kaam ka apna order: /workflows > Brains ki tarteeb):** pehle aap ke key wale brains (Groq, Gemini, OpenRouter, Z.ai, Mistral, Cohere, NVIDIA, SambaNova, Cloudflare, Hugging Face, Hetzner, Nous, Requesty, Pollinations) → bina-key free brains (Kilo, OVHcloud, LLM7, Pollinations purana host, Free.ai) → live free list (stillworks, har ghanta) → AI Horde (dheema, aakhri sahara) → Ollama (laptop, bina limit). Puter.js browser mein backup brain hai (Brains Rooms / Meta page).
 
+## Naya v3.27 (phone, status, AI team, haath se control)
+
+- **Phone se jodo (sidebar > Phone, localhost:3000/connect):** phone par **Maid** ya **PocketPal AI** app se dashboard ke free brains istemal karein.
+  1. Page par **Phone connect** On karein (default band).
+  2. Phone aur laptop ek hi Wi-Fi par. Page par laptop ka IP, **Base URL** aur **API key** (`fad-...`) milte hain; QR code se phone camera mein copy.
+  3. **Maid:** Settings > API **OpenAI** > Base URL `http://<laptop-IP>:3000/api/v1` > API key `fad-...` > model **faheem-free**.
+  4. **PocketPal AI:** Models > + > OpenAI-compatible server > URL `http://<laptop-IP>:3000/api` > key `fad-...` > **faheem-free**.
+  5. Na jude: Windows Firewall mein port 3000 **Private** network par allow (page par command likhi hai), Wi-Fi profile Private, guest Wi-Fi nahi.
+  - Hifazat: Wi-Fi se ab sirf `/api/v1` khulta hai aur woh bhi key ke saath. Agent, files, keys sirf laptop par. "Poora dashboard phone par" Advanced mein alag toggle (default band).
+  - Server ab saaf `next start -H 0.0.0.0` se chalta hai (pehle bhi sab interfaces par sunta tha, ab yeh guard ke saath).
+- **Status + Launcher (sidebar > Status, localhost:3000/status):** Ollama, Whisper, Kitten awaz, GitHub update, Phone connect aur har free brain ki hari/peeli/laal light, ms mein raftar, "kitni der pehle" check. Har 60 second khud taaza; "Abhi check karo" foran. Sirf sasta `/models` ping (koi chat token kharch nahi). Neeche **App launcher**: tiles, talaash bar, "Badlo" se tile jodo/hatao/oopar-neeche; `data/launcher.json` mein save (update par mehfooz).
+- **AI Team chat (Agent page > "AI Team chat" tab):** Planner, Researcher, Coder, Reviewer ek hi chat mein baari baari jawab dete hain, har ek alag free brain se. Coder file ya command sirf **tajweez** karta hai; har tajweez ke neeche **Ijazat do / Mana karo**. Kuch bhi khud nahi chalta; ijazat isi project folder tak, ek dafa, 10 minute mein expire. Khatarnak commands (delete, format, shutdown, registry, `curl | sh`) dikhai bhi nahi jatin, "Roki gayi" likha aata hai.
+- **Jarvis "Haath se control" (button oopar, default band):** On karne par hi camera ki ijazat aur MediaPipe (internet se ek dafa ~8 MB). Khula haath ~1 second roko = sunna shuru/band · haath tezi se daayen/baayen = theme badlo (ya "Swipe: Persona") · shahadat ki ungli = cursor, angootha + ungli milao (pinch) = click. Internet/camera na ho to khud band aur wajah likh deta hai.
+- **Design page:** Penpot (free open-source design tool) ke links. **Workflows > n8n webhook:** n8n ka Webhook URL aur JSON daal kar "Webhook bhejo".
+- Test: `npm run test:v327` (27 checks, bina internet). Server chal raha ho to `BASE=http://localhost:3000 npm run test:v327` (40 checks).
+
 ## Naya v3.19 (GitHub)
 
  - **v3.19.1 Superpowers (obra/superpowers):** GitHub > Skill download > "Superpowers" chip se 15 skills install. Phir chat khud sahi skill chunti hai: "bug/error/fix" = systematic-debugging, "plan" = writing-plans, "test" = TDD, "idea/naya feature" = brainstorming, "review" = code review. "superpowers" likhein to poora tareeqa.

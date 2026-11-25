@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Icon from "../components/Icon";
 import ThemeBalls from "../components/ThemeBalls";
+import GestureControl from "../components/GestureControl";
+import { THEMES, applyTheme, savedTheme } from "../../lib/prefs";
 
 const FEMALE = /(zira|hazel|susan|heera|uzma|jenny|aria|sonia|libby|neerja|natasha|clara|emma|ava|michelle|samantha|karen|moira|tessa|fiona|veena|catherine|linda|eva|kalpana|swara|female|woman|salma|sara|zira|ana\b|maisie|mia|elena|joanna|amy|kimberly|ivy|kendra|salli|raveena|aditi|kajal|aurat)/i;
 const MALE = /(david|mark|george|ravi|asad|guy|ryan|thomas|prabhat|william|christopher|eric|brian|daniel|alex|fred|rishi|richard|james|sean|roger|steffan|andrew|liam|madhur|male|man\b|matthew|joey|justin|kevin|russell|arthur|oliver)/i;
@@ -33,6 +35,8 @@ export default function Jarvis() {
   const [aname, setAname] = useState("");
   const [saved, setSaved] = useState(false);
   const [idleChat, setIdleChat] = useState(false); // v3.26: user ki ijazat se hi khud baat chhere
+  const [hands, setHands] = useState(false); // v3.27 Haath se control: hamesha band se shuru (camera sirf On par)
+  const [swipeMode, setSwipeMode] = useState("theme");
   const idleRef = useRef({ last: Date.now(), lastIdle: 0 });
   const mouthRef = useRef(null);
   const [sys, setSys] = useState(null);
@@ -379,6 +383,15 @@ export default function Jarvis() {
   const CAPS = [["Chrome kholo", "globe"], ["YouTube par naat chalao", "play"], ["Downloads folder kholo", "folder"], ["Screenshot lo", "image"], ["Awaz kam karo", "mic"], ["Kitne baje hain", "clock"], ["TUIOS kholo", "grid"], ["WebBrain kholo", "brain"]];
   const EXAMPLES = ["Aaj ka plan banane mein madad karo", "Ek professional email ka jawab likhne ka tareeqa batao", "Mujhe thori tension hai, baat karo", "Python seekhna shuru kaise karoon"];
 
+  // v3.27 Haath ke ishare: khula haath = Shuru/Band, swipe = theme ya persona badlo, pinch = select.
+  const toggleRef = useRef(null); toggleRef.current = toggle;
+  const onSwipe = (dir) => {
+    if (swipeMode === "persona") { const ids = PERSONA.map((x) => x[0]); setRole((r) => ids[(ids.indexOf(r) + dir + ids.length) % ids.length]); return; }
+    const ids = THEMES.map((t) => t.id), cur = savedTheme();
+    const next = applyTheme(ids[(ids.indexOf(cur) + dir + ids.length) % ids.length]);
+    setNotice("Theme: " + (THEMES.find((t) => t.id === next)?.name || next));
+  };
+
   return (
     <main className="jv" style={{ "--jc": col }}>
       <style>{CSS}</style>
@@ -389,6 +402,8 @@ export default function Jarvis() {
         </div>
         <div className="jv-actions">
           <ThemeBalls />
+          <button className={"jv-improve jv-hands" + (hands ? " on" : "")} onClick={() => { setNotice(""); setHands((h) => !h); }} aria-pressed={hands} title="Haath se control (camera): khula haath = sunna shuru/band, swipe = theme/persona, pinch = select. Default band." data-jarvis-hands data-gesture-ignore><Icon name="target" size={15} /> Haath se control{hands ? ": On" : ""}</button>
+          {hands && <select className="jv-swipe" value={swipeMode} onChange={(e) => setSwipeMode(e.target.value)} aria-label="Swipe se kya badle" title="Swipe se kya badle"><option value="theme">Swipe: Theme</option><option value="persona">Swipe: Persona</option></select>}
           <span className={"jv-dot " + mode} title={mode} />
           <button className="jv-improve" onClick={improve} title="Self-Improve: Jarvis apni baat cheet parh kar khud behtar hota hai" data-jarvis-improve><Icon name="sparkle" size={16} /> Self-Improve</button>
         </div>
@@ -565,6 +580,7 @@ export default function Jarvis() {
           </div>
         </div>
       )}
+      <GestureControl enabled={hands} onPalm={() => toggleRef.current?.()} onSwipe={onSwipe} onStatus={setNotice} onOff={() => setHands(false)} />
     </main>
   );
 }
@@ -691,6 +707,7 @@ const CSS = `
 .jv-msg{font-size:12.5px;padding:7px 9px}.jv-type input{font-size:12.5px;min-height:38px}
 .jv-row label{font-size:11px}.jv-row input,.jv-row select{font-size:12px;min-height:34px;padding:7px}
 .jv-seg button,.jv-save,.jv-improve{font-size:12px;min-height:34px;padding:7px 12px}
+.jv-swipe{font-size:12px;min-height:30px;padding:4px 8px;border-radius:10px;max-width:130px}
 .jv-nav a{font-size:12px;min-height:34px;padding:6px 12px}
 .jv-badge{font-size:10.5px;padding:5px 10px;top:10px;left:10px}
 .jv-tags span{font-size:10.5px;padding:5px 10px}
@@ -790,4 +807,7 @@ const CSS = `
 @media (min-width:1101px){.jv-gauge svg{width:64px;height:64px}}
 @media (min-width:1101px) and (min-height:900px){.jv-gauge svg{width:84px;height:84px}}
 @media (prefers-reduced-motion: reduce){.jv-meters::before{animation:none}}
+/* v3.27 Haath se control: band = saada glass, On = chamakta */
+button.jv-improve.jv-hands{background:rgba(255,255,255,.05)!important;border:1px solid rgba(255,255,255,.18)!important;box-shadow:none!important;color:var(--text,#e6f0ff)}
+button.jv-improve.jv-hands.on{background:var(--grad)!important;color:#fff;box-shadow:0 0 18px rgba(var(--dot),.55)!important}
 `;

@@ -1,4 +1,4 @@
-# NOTICE — Third-party credits (Faheem AI Dashboard v3.17.0)
+# NOTICE — Third-party credits (Faheem AI Dashboard v3.27.0)
 
 Yeh dashboard in open-source projects ko istemal karta hai. Har ek ka license aur notice yahan mehfooz hai.
 
@@ -124,3 +124,16 @@ Sab apne lafzon mein chhota Roman Urdu khulasa (asal text copy nahi), lib/jarvis
 - Code ka tareeqa: https://github.com/KittenML/KittenTTS (kittenml 0.9.8, Apache-2.0). lib/jarvis/kitten_tts.py chhota apna runner hai; phoneme post-processing aur chunking kittenml ke `kittentts2_tiny` (jo misaki ka EspeakG2P vendor karta hai, Apache-2.0, https://github.com/hexgrad/misaki) ke hisaab se dobara likhi.
 - Runtime (user khud pip se lagata hai, repo mein bundle nahi): onnxruntime (MIT, Microsoft), numpy (BSD-3-Clause).
 - **GPL note:** Hindi phonemes ke liye eSpeak NG (GPL-3.0, https://github.com/espeak-ng/espeak-ng) aur phonemizer (GPL-3.0, https://github.com/bootphon/phonemizer), espeakng_loader (MIT wrapper, andar eSpeak NG GPL-3.0 library). Yeh sirf laptop par alag Python process mein chalte hain; is repo mein koi GPL code copy ya bundle nahi.
+
+## v3.27.0 — Phone connect, Status tiles + Launcher, AI Team chat, Haath se control, Penpot/n8n links
+Is version ka saara code apna hai. Neeche wale projects se sirf **ideas** liye (koi file ya code copy nahi):
+- **Maid** — Mobile-Artificial-Intelligence (https://github.com/Mobile-Artificial-Intelligence/maid), MIT, (c) 2023 Dane Madsen. Idea: phone app laptop ke OpenAI-compatible server se jude. `/connect` page sirf setup steps aur link deta hai.
+- **PocketPal AI** — a-ghorbani (https://github.com/a-ghorbani/pocketpal-ai), MIT, (c) 2024 Asghar Ghorbani. Idea wahi; PocketPal `<url>/v1/models` jorta hai, is liye Server URL `http://<IP>:3000/api`.
+- **Google AI Edge Gallery** (https://github.com/google-ai-edge/gallery), Apache-2.0 — sirf link (phone par offline model).
+- **Dashy** — Lissy93 (https://github.com/Lissy93/dashy), MIT; **Homarr** (https://github.com/homarr-labs/homarr), Apache-2.0; **Heimdall** — linuxserver (https://github.com/linuxserver/Heimdall), MIT. Idea: status dots + app launcher tiles + search. `/status`, `lib/status.js`, `lib/launcher.js` apna code.
+- **PiBot** — w01fb0ss (https://github.com/w01fb0ss/PiBot), Apache-2.0. Idea: kai naam wale bots ek group chat mein. `lib/agent/team-chat.js`, `app/components/TeamChat.js` apna code; ijazat (approve) ka tareeqa v3.17 wala apna.
+- **MediaPipe Hands / Tasks Vision** — Google (https://github.com/google-ai-edge/mediapipe, npm `@mediapipe/tasks-vision` 1.2.3), Apache-2.0. Repo mein bundle NAHI: "Haath se control" On karne par hi jsDelivr CDN se `vision_bundle.mjs` + wasm, aur `storage.googleapis.com` se `hand_landmarker.task` model browser mein aata hai. Gesture pehchan (`lib/jarvis/gestures.js`) apna code.
+- **Penpot** — Kaleidos (https://github.com/penpot/penpot), MPL-2.0 — Design page par sirf link.
+- **n8n** — n8n GmbH (https://github.com/n8n-io/n8n), fair-code (Sustainable Use License + n8n Enterprise License). Workflows page sirf user ke diye hue webhook URL par JSON POST karta hai; n8n ka code shamil nahi.
+- **QR code** — `lib/qr.js` apna chhota encoder (QR Code ISO/IEC 18004 ka aam algorithm: Reed-Solomon GF(256), mask penalty). "QR Code" DENSO WAVE ka registered trademark hai.
+- **Sirf hawala, istemal NAHI (GPL/AGPL):** ChatterUI (AGPL-3.0), Glance (AGPL-3.0), gethomepage/homepage (GPL-3.0), NotelyVoice (GPL-3.0) — in mein se koi code, file ya text copy nahi kiya gaya.

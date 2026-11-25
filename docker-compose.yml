@@ -3,7 +3,7 @@ services:
   dashboard:
     build: .
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000" # v3.27: sirf isi computer se (Docker ke andar LAN guard khud band hota hai)
     env_file: .env.local
     environment:
       - OLLAMA_URL=http://ollama:11434

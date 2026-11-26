@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   test:
-    name: safety + ops + v3.27 (bina server)
+    name: safety + ops + v3.27 + phase1 (bina server)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -26,6 +26,8 @@ jobs:
       - run: npm run test:ops
       # QR, phone/LAN guard helpers, launcher, AI team chat, gestures (BASE na ho to server wale tests skip)
       - run: npm run test:v327
+      # v3.29: schedules boot / chhoote runs, update backup + rollback, fetch timeouts
+      - run: npm run test:phase1
 
   full:
     # test:full khud `node server.mjs` (port 3177) chalata hai, is liye pehle build. Yeh suite internet (curl GitHub ZIPs,

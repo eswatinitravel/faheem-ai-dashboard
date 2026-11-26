@@ -66,6 +66,48 @@ await t("Project se bahar (../) rad", () => { try { T.safe(dir, "../x"); return 
 // ---- preview sandbox ----
 await t("Preview: CSP sandbox bina allow-same-origin", () => { const s = fs.readFileSync(path.join(ROOT_DIR, "app/api/agent/preview/[project]/[...path]/route.js"), "utf8"); const m = s.match(/"Content-Security-Policy": "([^"]+)"/); return !!m && /^sandbox\b/.test(m[1]) && /allow-scripts/.test(m[1]) && !/allow-same-origin/.test(m[1]) && /\.\.\.SANDBOX/.test(s); });
 
+// ---- LAN guard: asli TCP peer (Host / X-Forwarded-For jaali nahi chalte) ----
+const PH = await import("../lib/phone.js");
+const PE = await import("../lib/peer.js");
+const SEC = "a".repeat(48), pv = (ip) => `${SEC} ${ip}`;
+await t("Peer: sirf Host: localhost kaafi nahi", () => !PH.requestIsLocal({ host: "localhost:3000" }, SEC));
+await t("Peer: jaali X-Forwarded-For: 127.0.0.1 rad", () => !PH.requestIsLocal({ host: "localhost:3000", "x-forwarded-for": "127.0.0.1" }, SEC));
+await t("Peer: ghalat raaz wala header rad", () => !PH.requestIsLocal({ host: "localhost:3000", "x-faheem-peer": "b".repeat(48) + " 127.0.0.1" }, SEC) && !PH.requestIsLocal({ host: "localhost:3000", "x-faheem-peer": "127.0.0.1" }, SEC));
+await t("Peer: raaz na ho (server.mjs ke bagair) to local nahi", () => !PH.requestIsLocal({ host: "localhost:3000", "x-faheem-peer": pv("127.0.0.1") }, "") && PE.trustedPeer(pv("127.0.0.1"), "") === "");
+await t("Peer: asli loopback (127.x, ::1, ::ffff:127) local", () => ["127.0.0.1", "::1", "::ffff:127.0.0.1"].every((ip) => PH.requestIsLocal({ host: "localhost:3000", "x-faheem-peer": pv(ip) }, SEC)));
+await t("Peer: LAN socket + Host: localhost rad", () => !PH.requestIsLocal({ host: "localhost:3000", "x-faheem-peer": pv("192.168.1.50"), "x-forwarded-for": "127.0.0.1" }, SEC));
+await t("Peer: loopback socket + ajeeb Host (DNS-rebinding) rad", () => !PH.requestIsLocal({ host: "evil.com", "x-faheem-peer": pv("127.0.0.1") }, SEC));
+await t("server.mjs client ka peer header mita kar socket se likhta hai; npm start/dev isi se", () => {
+  const sv = fs.readFileSync(path.join(ROOT_DIR, "server.mjs"), "utf8");
+  const pk = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, "package.json"), "utf8"));
+  const df = fs.readFileSync(path.join(ROOT_DIR, "Dockerfile"), "utf8");
+  return /delete req\.headers\[PEER_HEADER\]/.test(sv) && /req\.socket\?\.remoteAddress/.test(sv) && /^node server\.mjs -H 0\.0\.0\.0$/.test(pk.scripts.start) && /server\.mjs/.test(pk.scripts.dev) && /CMD \["npm", "start"\]/.test(df);
+});
+await t("proxy.js peer header routes tak nahi bhejta", () => { const s = fs.readFileSync(path.join(ROOT_DIR, "proxy.js"), "utf8"); return /headers\.delete\(PEER_HEADER\)/.test(s) && !/NextResponse\.next\(\)/.test(s); });
+
+// Live: build mojood ho to server.mjs chala kar laptop ke LAN IP se "Host: localhost" + jaali XFF bhejte hain.
+const lanIp = Object.values(os.networkInterfaces()).flat().find((a) => a && (a.family === "IPv4" || a.family === 4) && !a.internal)?.address;
+const guardOff = fs.existsSync("/.dockerenv") || fs.existsSync(path.join(ROOT_DIR, "data", "lan-guard-off"));
+if (!fs.existsSync(path.join(ROOT_DIR, ".next", "BUILD_ID")) || !lanIp || guardOff) {
+  console.log(`  skip  Live LAN test (${!lanIp ? "LAN IP nahi" : guardOff ? "guard band (Docker / lan-guard-off)" : "pehle npm run build"})`);
+} else {
+  const http = await import("http");
+  const { spawn } = await import("child_process");
+  const LPORT = 3189;
+  const srv = spawn(process.execPath, ["server.mjs", "-H", "0.0.0.0", "-p", String(LPORT)], { cwd: ROOT_DIR, env: { ...process.env, NODE_ENV: "production" }, stdio: "ignore", detached: true });
+  const get = (ip, headers = {}) => new Promise((res) => {
+    const r = http.request({ host: ip, port: LPORT, path: "/", method: "GET", headers, timeout: 20000 }, (x) => { x.resume(); res(x.statusCode); });
+    r.on("error", () => res(0)); r.on("timeout", () => { r.destroy(); res(0); }); r.end();
+  });
+  try {
+    let up = 0; for (let i = 0; i < 60 && !up; i++) { await new Promise((r) => setTimeout(r, 500)); up = await get("127.0.0.1"); }
+    await t("Live: asli localhost theek (200)", async () => (await get("127.0.0.1", { host: `localhost:${LPORT}` })) === 200);
+    await t(`Live: LAN ${lanIp} se Host: localhost = 403`, async () => (await get(lanIp, { host: `localhost:${LPORT}` })) === 403);
+    await t("Live: LAN se Host: localhost + X-Forwarded-For: 127.0.0.1 = 403", async () => (await get(lanIp, { host: `localhost:${LPORT}`, "x-forwarded-for": "127.0.0.1" })) === 403);
+    await t("Live: LAN se jaali x-faheem-peer = 403", async () => (await get(lanIp, { host: `localhost:${LPORT}`, "x-forwarded-for": "::1", "x-faheem-peer": "x 127.0.0.1" })) === 403);
+  } finally { try { process.kill(-srv.pid, "SIGTERM"); } catch { try { srv.kill(); } catch {} } }
+}
+
 try { fs.rmSync(tmp, { recursive: true, force: true }); } catch {}
 console.log(`\nv3.28 safety tests: ${pass} pass, ${fail} fail`);
 process.exit(fail ? 1 : 0);

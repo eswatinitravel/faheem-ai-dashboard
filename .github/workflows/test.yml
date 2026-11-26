@@ -28,7 +28,7 @@ jobs:
       - run: npm run test:v327
 
   full:
-    # test:full khud `next start` (port 3177) chalata hai, is liye pehle build. Yeh suite internet (curl GitHub ZIPs,
+    # test:full khud `node server.mjs` (port 3177) chalata hai, is liye pehle build. Yeh suite internet (curl GitHub ZIPs,
     # free brains jaise Kilo) aur Chromium par bhi chalta hai aur hamesha exit 0 deta hai (nateeja TOTAL/FAIL line
     # aur data/test-results.json mein). Is liye yeh job sirf report hai, PR ko nahi rokta.
     name: full suite (report only)

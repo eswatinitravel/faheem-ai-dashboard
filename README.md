@@ -11,7 +11,8 @@ Free 3D AI assistant for Windows: likh kar ya bol kar baat karein. Jab ek free A
 - **Agent ki command (run_command):** sirf `node, npm, npx, python, python3, py, pip, git`, ek waqt mein ek command (`&& | ; > <` nahi). Install par ijazat pehle jaisi. Command ko ab aap ki API keys (env) nahi milti.
 - **Keys mehfooz:** Agent `.env`, `keys.json` aur `~/.faheem-ai` ki raaz files na parh sakta hai na dhoond sakta hai (shortcut / symlink se bhi nahi).
 - **Agent preview sandbox:** agent ki banai website preview mein alag "sandbox" mein chalti hai, dashboard ki APIs tak nahi pahunchti. (Preview mein localStorage nahi chalta; ZIP / asli project mein sab theek.)
-- Test: `npm run test:safety` (36 checks, bina internet). GitHub par har push / PR par tests khud chalte hain.
+- **Wi-Fi se "localhost" ban kar ghusna band:** pehle Wi-Fi par koi bhi `Host: localhost` aur jaali `X-Forwarded-For: 127.0.0.1` bhej kar poora dashboard khol sakta tha. Ab faisla asli connection (socket) ke pate se hota hai: `npm start` / START.bat ab `server.mjs` chalate hain jo har request par asli pata (raaz ke saath) likhta hai. Seedha `next start` se laptop par bhi 403 aata hai, is liye hamesha `npm start` (ya `npm run dev`) istemal karein. Docker / lan-guard-off pehle jaisa.
+- Test: `npm run test:safety` (45 checks bina internet; build mojood ho to 49 — asli server par LAN IP se live jaanch). GitHub par har push / PR par tests khud chalte hain.
 
 ## Naya v3.27 (phone, status, AI team, haath se control)
 

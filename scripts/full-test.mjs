@@ -707,9 +707,9 @@ await t("Readable overlay: shade gradient var(--bg) se (AA)", () => must(/\.bgsc
 await t("Version 3.16.0 + README/PROGRESS v3.16", () => must(["3.16.0", "3.17.0", "3.17.1", "3.17.2", "3.17.3"].includes(JSON.parse(rd("package.json")).version) && /v3\.16\.0/.test(rd("PROGRESS.md")) && /v3\.16/.test(rd("README.md"))));
 await t("Design audit script: har page score (Impeccable + Hallmark/UX)", async () => { const A = await import(path.join(ROOT, "scripts/design-audit.mjs")); return must(A.AUDIT_PAGES.length >= 10 && A.scoreOf({ warning: 2 }, 1) === 89); });
 
-sec("10. Live server (next start)");
+sec("10. Live server (server.mjs)");
 const PORT = 3177; const GDIR = path.join(tmp, "gallery"); const LMEM = path.join(tmp, "memory-live"); const env = { ...process.env, PORT: String(PORT), HOME: tmp, NODE_ENV: "production", FAHEEM_GALLERY_DIR: GDIR, FAHEEM_MEMORY_DIR: LMEM };
-const srv = spawn("npx", ["next", "start", "-p", String(PORT)], { cwd: ROOT, env, stdio: "ignore", detached: true });
+const srv = spawn(process.execPath, ["server.mjs", "-H", "127.0.0.1", "-p", String(PORT)], { cwd: ROOT, env, stdio: "ignore", detached: true });
 const base = `http://localhost:${PORT}`;
 for (let i = 0; i < 60; i++) { try { await realFetch(base + "/api/tools"); break; } catch { await new Promise((r) => setTimeout(r, 1000)); } }
 const get = (u) => realFetch(base + u, { cache: "no-store" });

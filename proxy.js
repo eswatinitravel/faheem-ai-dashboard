@@ -6,18 +6,25 @@
 import { NextResponse } from "next/server";
 import { readPhone, requestIsLocal, bearer, safeEqual, guardDisabled } from "./lib/phone.js";
 import { csrfCheck, hostOkWhenGuardOff } from "./lib/request-guard.js";
+import { PEER_HEADER } from "./lib/peer.js";
 
 let cache = { at: 0, v: null };
 function phone() {
   if (!cache.v || Date.now() - cache.at > 3000) cache = { at: Date.now(), v: readPhone() };
   return cache.v;
 }
+// v3.28: server.mjs wala raaz-bhara peer header aage routes tak nahi jata.
+function fwd(request) {
+  const headers = new Headers(request.headers);
+  headers.delete(PEER_HEADER);
+  return NextResponse.next({ request: { headers } });
+}
 const deny = (status, message) => NextResponse.json({ error: { message, type: "lan_guard" } }, { status });
 // v3.28: aage jane se pehle CSRF jaanch (doosri website ka POST, ghalat Content-Type) — lib/request-guard.js.
 function pass(request) {
   const bad = csrfCheck({ method: request.method, pathname: request.nextUrl.pathname, headers: request.headers });
   if (bad) return NextResponse.json({ error: { message: bad.message, type: "csrf_guard" } }, { status: bad.status });
-  return NextResponse.next();
+  return fwd(request);
 }
 
 export function proxy(request) {
@@ -30,13 +37,13 @@ export function proxy(request) {
   if (pathname.startsWith("/api/v1/") || pathname === "/api/v1") {
     if (!p.enabled) return deny(403, "Phone connect band hai. Laptop par localhost:3000/connect kholein aur 'Phone connect' On karein.");
     if (!safeEqual(bearer(request.headers), p.key)) return deny(401, "API key ghalat hai. /connect page wali key (fad-...) app mein daalein.");
-    return NextResponse.next();
+    return fwd(request);
   }
   if (p.enabled && p.fullLan) {
     const ck = request.cookies.get("fad_phone")?.value || "";
     const q = request.nextUrl.searchParams.get("key") || "";
     if (safeEqual(q, p.key)) {
-      const res = NextResponse.next();
+      const res = fwd(request);
       const bad = csrfCheck({ method: request.method, pathname, headers: request.headers });
       if (bad) return deny(bad.status, bad.message);
       res.cookies.set("fad_phone", p.key, { httpOnly: true, sameSite: "strict", path: "/", maxAge: 60 * 60 * 12 });
@@ -44,6 +51,8 @@ export function proxy(request) {
     }
     if (safeEqual(ck, p.key)) return pass(request);
   }
+  // server.mjs ke bagair (seedha `next start`) asli peer ka pata nahi — laptop wale ko bhi yahan rok kar raasta batate hain.
+  if (!request.headers.get(PEER_HEADER)) return deny(403, "Server ko `npm start` (server.mjs) se chalayein — seedha `next start` se LAN guard laptop ko pehchan nahi sakta.");
   return new NextResponse(
     "<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width'><title>Faheem AI</title><body style='font:16px system-ui;background:#05070f;color:#cfe8ff;padding:24px'><h2>Yeh dashboard sirf laptop par khulta hai</h2><p>Phone ke liye Maid ya PocketPal AI app mein Base URL aur key daalein (laptop par <b>localhost:3000/connect</b> dekhein).</p></body>",
     { status: 403, headers: { "Content-Type": "text/html; charset=utf-8" } },

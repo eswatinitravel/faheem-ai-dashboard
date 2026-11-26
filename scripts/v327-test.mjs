@@ -22,9 +22,11 @@ const ifs = { "vEthernet (WSL)": [{ family: "IPv4", address: "172.24.0.1", inter
 const ips = lanAddresses(ifs);
 ok(ips[0].address === "192.168.1.23" && ips.length === 2, "LAN IP: Wi-Fi first, WSL last, APIPA/loopback skipped");
 ok(isPrivateV4("10.0.0.2") && isPrivateV4("172.20.1.1") && !isPrivateV4("172.32.1.1") && !isPrivateV4("8.8.8.8"), "private ranges");
-ok(requestIsLocal({ host: "localhost:3000" }) && requestIsLocal({ host: "127.0.0.1:3000", "x-forwarded-for": "::ffff:127.0.0.1" }), "local requests");
-ok(!requestIsLocal({ host: "192.168.1.23:3000" }) && !requestIsLocal({ host: "localhost:3000", "x-forwarded-for": "::ffff:192.168.1.50" }), "LAN requests blocked");
-ok(hostName("[::1]:3000") === "[::1]" && requestIsLocal({ host: "[::1]:3000" }), "ipv6 loopback host");
+// v3.28: local ka faisla server.mjs ke "x-faheem-peer" (raaz + socket ka pata) se; Host/XFF akele kaafi nahi.
+const SEC = "s".repeat(48), peer = (ip) => `${SEC} ${ip}`;
+ok(requestIsLocal({ host: "localhost:3000", "x-faheem-peer": peer("127.0.0.1") }, SEC) && requestIsLocal({ host: "127.0.0.1:3000", "x-faheem-peer": peer("::ffff:127.0.0.1") }, SEC), "local requests");
+ok(!requestIsLocal({ host: "192.168.1.23:3000", "x-faheem-peer": peer("127.0.0.1") }, SEC) && !requestIsLocal({ host: "localhost:3000", "x-faheem-peer": peer("::ffff:192.168.1.50") }, SEC), "LAN requests blocked");
+ok(hostName("[::1]:3000") === "[::1]" && requestIsLocal({ host: "[::1]:3000", "x-faheem-peer": peer("::1") }, SEC), "ipv6 loopback host");
 ok(bearer({ authorization: "Bearer fad-abc" }) === "fad-abc" && bearer({ "x-api-key": "k" }) === "k", "bearer");
 ok(safeEqual("fad-1", "fad-1") && !safeEqual("fad-1", "fad-2") && !safeEqual("", ""), "safeEqual");
 

@@ -120,7 +120,7 @@ export default function Connect() {
           <ul className="cx-steps">
             <li><b>Windows Firewall:</b> pehli dafa "Allow access" poochhe to <b>Private networks</b> par tick karein. Na poochha ho to Admin PowerShell mein: <code>New-NetFirewallRule -DisplayName "Faheem AI 3000" -Direction Inbound -Protocol TCP -LocalPort 3000 -Action Allow -Profile Private</code></li>
             <li>Wi-Fi ka profile <b>Private</b> ho (Settings → Network → Wi-Fi → Private network). Public par firewall rok deta hai.</li>
-            <li>Server <b>0.0.0.0</b> par sunta hai (START.bat → <code>next start -H 0.0.0.0</code>). Phone ke browser mein <code>{d?.base ? d.base + "/models" : "http://<IP>:3000/api/v1/models"}</code> kholein: "key ghalat" wala JSON aaye to raasta theek hai.</li>
+            <li>Server <b>0.0.0.0</b> par sunta hai (START.bat → <code>npm start</code> → <code>server.mjs</code>). Phone ke browser mein <code>{d?.base ? d.base + "/models" : "http://<IP>:3000/api/v1/models"}</code> kholein: "key ghalat" wala JSON aaye to raasta theek hai.</li>
             <li>Router ka "AP/client isolation" ya guest Wi-Fi phone ko laptop se nahi milne deta. Ghar wala asli Wi-Fi istemal karein.</li>
             <li>IP badal jaye (router restart) to yeh page dobara kholein, naya Base URL phone mein daalein.</li>
           </ul>

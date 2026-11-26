@@ -4,6 +4,16 @@ Free 3D AI assistant for Windows: likh kar ya bol kar baat karein. Jab ek free A
 
 **Order (v3.14, v3.17 mein har kaam ka apna order: /workflows > Brains ki tarteeb):** pehle aap ke key wale brains (Groq, Gemini, OpenRouter, Z.ai, Mistral, Cohere, NVIDIA, SambaNova, Cloudflare, Hugging Face, Hetzner, Nous, Requesty, Pollinations) → bina-key free brains (Kilo, OVHcloud, LLM7, Pollinations purana host, Free.ai) → live free list (stillworks, har ghanta) → AI Horde (dheema, aakhri sahara) → Ollama (laptop, bina limit). Puter.js browser mein backup brain hai (Brains Rooms / Meta page).
 
+## Naya v3.28 (hifazat: Phase 1)
+
+- **Doosri website se request band (CSRF):** koi bhi website ab browser ke zariye `localhost:3000/api/*` par POST nahi bhej sakti (Agent, keys, settings, Jarvis "haan" sab). Sirf isi dashboard ke page ya browser extension (WebBrain) se, aur sirf JSON (Gallery / awaz upload par file bhi). `/api/v1` phone wali key se waisa hi chalta hai.
+- **DNS-rebinding guard:** Host mein koi ajeeb domain ho to request rad (Docker / lan-guard-off mein bhi sirf localhost ya seedha IP).
+- **Agent ki command (run_command):** sirf `node, npm, npx, python, python3, py, pip, git`, ek waqt mein ek command (`&& | ; > <` nahi). Install par ijazat pehle jaisi. Command ko ab aap ki API keys (env) nahi milti.
+- **Keys mehfooz:** Agent `.env`, `keys.json` aur `~/.faheem-ai` ki raaz files na parh sakta hai na dhoond sakta hai (shortcut / symlink se bhi nahi).
+- **Agent preview sandbox:** agent ki banai website preview mein alag "sandbox" mein chalti hai, dashboard ki APIs tak nahi pahunchti. (Preview mein localStorage nahi chalta; ZIP / asli project mein sab theek.)
+- **Wi-Fi se "localhost" ban kar ghusna band:** pehle Wi-Fi par koi bhi `Host: localhost` aur jaali `X-Forwarded-For: 127.0.0.1` bhej kar poora dashboard khol sakta tha. Ab faisla asli connection (socket) ke pate se hota hai: `npm start` / START.bat ab `server.mjs` chalate hain jo har request par asli pata (raaz ke saath) likhta hai. Seedha `next start` se laptop par bhi 403 aata hai, is liye hamesha `npm start` (ya `npm run dev`) istemal karein. Docker / lan-guard-off pehle jaisa.
+- Test: `npm run test:safety` (45 checks bina internet; build mojood ho to 49 — asli server par LAN IP se live jaanch). GitHub par har push / PR par tests khud chalte hain.
+
 ## Naya v3.27 (phone, status, AI team, haath se control)
 
 - **Phone se jodo (sidebar > Phone, localhost:3000/connect):** phone par **Maid** ya **PocketPal AI** app se dashboard ke free brains istemal karein.

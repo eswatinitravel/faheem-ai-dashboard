@@ -707,9 +707,9 @@ await t("Readable overlay: shade gradient var(--bg) se (AA)", () => must(/\.bgsc
 await t("Version 3.16.0 + README/PROGRESS v3.16", () => must(["3.16.0", "3.17.0", "3.17.1", "3.17.2", "3.17.3"].includes(JSON.parse(rd("package.json")).version) && /v3\.16\.0/.test(rd("PROGRESS.md")) && /v3\.16/.test(rd("README.md"))));
 await t("Design audit script: har page score (Impeccable + Hallmark/UX)", async () => { const A = await import(path.join(ROOT, "scripts/design-audit.mjs")); return must(A.AUDIT_PAGES.length >= 10 && A.scoreOf({ warning: 2 }, 1) === 89); });
 
-sec("10. Live server (next start)");
+sec("10. Live server (server.mjs)");
 const PORT = 3177; const GDIR = path.join(tmp, "gallery"); const LMEM = path.join(tmp, "memory-live"); const env = { ...process.env, PORT: String(PORT), HOME: tmp, NODE_ENV: "production", FAHEEM_GALLERY_DIR: GDIR, FAHEEM_MEMORY_DIR: LMEM };
-const srv = spawn("npx", ["next", "start", "-p", String(PORT)], { cwd: ROOT, env, stdio: "ignore", detached: true });
+const srv = spawn(process.execPath, ["server.mjs", "-H", "127.0.0.1", "-p", String(PORT)], { cwd: ROOT, env, stdio: "ignore", detached: true });
 const base = `http://localhost:${PORT}`;
 for (let i = 0; i < 60; i++) { try { await realFetch(base + "/api/tools"); break; } catch { await new Promise((r) => setTimeout(r, 1000)); } }
 const get = (u) => realFetch(base + u, { cache: "no-store" });
@@ -763,7 +763,7 @@ await t("/api/skills POST impeccable: side-tab pakra", async () => { const d = a
 await t("/api/skills POST impeccable: saaf page 0 warning", async () => { const d = await (await postJ("/api/skills", { id: "impeccable", html: CLEAN })).json(); return must(d.ok && d.counts.warning === 0 && d.counts.error === 0, JSON.stringify(d.counts)); });
 await t("/api/skills POST browser-tester: toota button pakra", async () => { const d = await (await postJ("/api/skills", { id: "browser-tester", html: '<html><body><button onclick="addToCart()">Buy</button></body></html>' })).json(); return must(d.ok && d.result && d.result.ok === false && d.result.errors.length > 0, JSON.stringify(d).slice(0, 150)); });
 await t("/api/skills POST browser-tester: achha page pass", async () => { const d = await (await postJ("/api/skills", { id: "browser-tester", html: '<html><body><button onclick="document.body.dataset.x=1">Buy</button></body></html>' })).json(); return must(d.ok && d.result.ok === true, JSON.stringify(d).slice(0, 150)); });
-await t("/api/skills POST: khali = 400, ghalat id = 404, ghalat JSON crash nahi", async () => { const a = await postJ("/api/skills", { id: "impeccable" }); const b = await postJ("/api/skills", { id: "x", html: "a" }); const c = await realFetch(base + "/api/skills", { method: "POST", body: "{bad" }); return must(a.status === 400 && b.status === 404 && c.status === 404, [a.status, b.status, c.status].join()); });
+await t("/api/skills POST: khali = 400, ghalat id = 404, ghalat JSON crash nahi", async () => { const a = await postJ("/api/skills", { id: "impeccable" }); const b = await postJ("/api/skills", { id: "x", html: "a" }); const c = await realFetch(base + "/api/skills", { method: "POST", body: "{bad" }); return must(a.status === 400 && b.status === 404 && (c.status === 404 || c.status === 415), [a.status, b.status, c.status].join()); });
 await t("/api/gallery GET: khali list + limits", async () => { const d = await (await get("/api/gallery")).json(); return must(d.ok && Array.isArray(d.files) && d.limits.maxBytes === 10485760); });
 const upl = (parts) => { const fd = new FormData(); for (const [n, data, type] of parts) fd.append("files", new Blob([data], { type }), n); return realFetch(base + "/api/gallery", { method: "POST", body: fd }); };
 let G = {};

@@ -1,0 +1,52 @@
+# v3.28: har push / pull request par tests (Linux). Windows-only cheezein (tray, .bat, PowerShell) yahan nahi chalti.
+name: test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: safety + ops + v3.27 (bina server)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # CSRF guard, run_command allowlist, raaz files, preview sandbox
+      - run: npm run test:safety
+      # queue / approvals / audit / schedules (temp HOME, bina server)
+      - run: npm run test:ops
+      # QR, phone/LAN guard helpers, launcher, AI team chat, gestures (BASE na ho to server wale tests skip)
+      - run: npm run test:v327
+
+  full:
+    # test:full khud `node server.mjs` (port 3177) chalata hai, is liye pehle build. Yeh suite internet (curl GitHub ZIPs,
+    # free brains jaise Kilo) aur Chromium par bhi chalta hai aur hamesha exit 0 deta hai (nateeja TOTAL/FAIL line
+    # aur data/test-results.json mein). Is liye yeh job sirf report hai, PR ko nahi rokta.
+    name: full suite (report only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:full
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-test-results
+          path: data/test-results.json
+          if-no-files-found: ignore

@@ -32,6 +32,22 @@ export default function VersionBadge() {
       else if (d === null) setMsg(`Update chal raha hai (${min} min)… server dobara ban raha hai, 2–4 minute.`);
     }, 10000);
   }
+  // v3.29: "Purane version par wapas" — aakhri update se pehle wala backup wapas (chats/keys mehfooz).
+  async function rollback() {
+    const b = u.backup;
+    if (!b || busy) return;
+    if (!window.confirm(`Purane version v${b.version} par wapas jayein? App band ho kar 2–4 minute mein dobara khulegi. Chats aur keys mehfooz rahengi.`)) return;
+    setBusy(true);
+    setMsg(`v${b.version} wapas lag raha hai… window khul rahi hai (2–4 minute).`);
+    const r = await fetch("/api/update", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "rollback" }) }).then((x) => x.json()).catch(() => ({ error: "Wapsi start nahi hui" }));
+    if (r.error) { setMsg(r.error + " — project folder mein ROLLBACK.bat double-click karein."); setBusy(false); return; }
+    const from = u.current, started = Date.now();
+    const poll = setInterval(async () => {
+      const d = await fetch("/api/update?local=1", { cache: "no-store" }).then((x) => x.json()).catch(() => null);
+      if (d && d.current !== from) { clearInterval(poll); setMsg(`v${d.current} wapas lag gaya`); setTimeout(() => location.reload(), 1500); return; }
+      if (Date.now() - started > 8 * 60000) { clearInterval(poll); setBusy(false); setMsg("Wapsi window nahi chali lagti. Project folder mein ROLLBACK.bat double-click karein."); }
+    }, 10000);
+  }
   return (
     <>
     {u.available && !busy && (
@@ -44,6 +60,9 @@ export default function VersionBadge() {
         </button>
       )}
       <div className="vline"><span>v{u.current}</span>{u.error ? <small title={u.error} style={{ color: "#f87171" }}>update check fail</small> : !u.available && <small>latest <Icon name="check" size={13} /></small>}</div>
+      {u.backup && u.backup.version !== u.current && !busy && (
+        <button type="button" className="rollback" data-rollback onClick={rollback} title={`Backup: ${u.backup.name}`}>Purane version (v{u.backup.version}) par wapas</button>
+      )}
       {msg && <small>{msg}</small>}
     </div>
     </>

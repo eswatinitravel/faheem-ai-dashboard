@@ -53,6 +53,48 @@ await t("server.mjs listen ke baad /api/ops?boot=1 bulata hai (opt-out FAHEEM_NO
   return /\/api\/ops\?boot=1/.test(s) && /wakeOps\(\)/.test(s) && /FAHEEM_NO_OPS_BOOT/.test(s) && /searchParams\.get\("boot"\) === "1"/.test(r);
 });
 
+// ---- 2. Update: backup + khud wapsi + "purane version par wapas" ----
+const U = await import("./update-backup.mjs");
+const app = path.join(tmp, "app");
+const w = (f, c) => { fs.mkdirSync(path.dirname(path.join(app, f)), { recursive: true }); fs.writeFileSync(path.join(app, f), c); };
+const r = (f) => fs.readFileSync(path.join(app, f), "utf8");
+w("package.json", JSON.stringify({ version: "3.28.0" })); w("lib/a.js", "purana"); w("app/page.js", "purana page");
+w("data/chats.json", "meri chats"); w("node_modules/x/index.js", "pkg"); w(".next/BUILD_ID", "b1"); w(".env.local", "KEY=raaz");
+let bk;
+await t("backup: app files copy, node_modules / data / .next / .env.local nahi", () => {
+  bk = U.backup(app, { now: new Date(2026, 10, 26, 22, 0, 0) });
+  const names = fs.readdirSync(bk.dir);
+  return path.basename(bk.dir) === "v3.28.0-2026-11-26_220000" && names.includes("lib") && names.includes("package.json")
+    && !["data", "node_modules", ".next", ".env.local", "backups"].some((n) => names.includes(n)) && U.listBackups(app)[0].version === "3.28.0";
+});
+await t("naya version lag kar fail -> restore: purani files wapas, nayi files hati, user data wahi", () => {
+  w("package.json", JSON.stringify({ version: "3.29.0" })); w("lib/a.js", "naya toota"); w("lib/naya.js", "sirf naye mein"); w("data/chats.json", "meri chats + nayi");
+  const res = U.restore(app, bk.dir);
+  return res.version === "3.28.0" && JSON.parse(r("package.json")).version === "3.28.0" && r("lib/a.js") === "purana" && !fs.existsSync(path.join(app, "lib/naya.js"))
+    && r("data/chats.json") === "meri chats + nayi" && r(".env.local") === "KEY=raaz" && r("node_modules/x/index.js") === "pkg" && r(".next/BUILD_ID") === "b1";
+});
+await t("rollback (backupDir ke baghair) sab se naya backup lagata hai", () => {
+  w("package.json", JSON.stringify({ version: "3.29.0" })); U.backup(app, { now: new Date(2026, 10, 27, 9, 0, 0) });
+  w("package.json", JSON.stringify({ version: "3.30.0" }));
+  return U.restore(app).version === "3.29.0" && JSON.parse(r("package.json")).version === "3.29.0";
+});
+await t("sirf aakhri 3 backups rehte hain; adhoora backup kabhi nahi chuna jata", () => {
+  for (let i = 0; i < 4; i++) U.backup(app, { now: new Date(2026, 11, 1 + i) });
+  fs.mkdirSync(path.join(app, "backups", "v9.9.9-adhoora"), { recursive: true });
+  const l = U.listBackups(app);
+  return l.length === 3 && !l.some((b) => b.name.includes("adhoora"));
+});
+await t("koi backup na ho to wapsi saaf error deti hai", () => { const e = path.join(tmp, "khali"); fs.mkdirSync(e); fs.writeFileSync(path.join(e, "package.json"), "{}"); try { U.restore(e); return false; } catch (x) { return /backup nahi mila/i.test(x.message); } });
+await t("update.ps1: backup pehle, fail par khud wapsi, -Rollback, ASCII (PowerShell 5.1)", () => {
+  const ps = read("scripts/update.ps1");
+  return /param\(\[switch\]\$Rollback\)/.test(ps) && ps.indexOf("backup `\"$root`\"") < ps.indexOf("Copy-Item -Path $_.FullName") && /Restore-Backup \$backupDir/.test(ps)
+    && /Start-And-Check/.test(ps) && /update-backup\.mjs/.test(ps) && !/[^\x00-\x7F]/.test(ps) && /\$keep = @\("data", ".env.local", "node_modules", ".next"\)/.test(ps);
+});
+await t("/api/update: rollback action + ?local=1 + ROLLBACK.bat", () => {
+  const up = read("app/api/update/route.js");
+  return /action === "rollback"/.test(up) && /isLocal\(req\)/.test(up) && /"local"\) === "1"/.test(up) && fs.existsSync(path.join(root, "ROLLBACK.bat")) && /-Rollback/.test(read("ROLLBACK.bat"));
+});
+
 console.log(`\n${pass} pass, ${fail} fail`);
 fs.rmSync(tmp, { recursive: true, force: true });
 process.exit(fail ? 1 : 0);

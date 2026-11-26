@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { spawn } from "child_process";
+import { fetchWithTimeout, TIMEOUTS } from "../../../lib/net.js";
 
 export const dynamic = "force-dynamic";
 
@@ -22,12 +23,12 @@ function isLocal(req) {
 async function latestVersion(repo) {
   const tries = [
     async () => {
-      const r = await fetch(`https://api.github.com/repos/${repo}/contents/package.json?ref=main&t=${Date.now()}`, { cache: "no-store", headers: { Accept: "application/vnd.github.raw+json", "User-Agent": "faheem-ai" } });
+      const r = await fetchWithTimeout(`https://api.github.com/repos/${repo}/contents/package.json?ref=main&t=${Date.now()}`, { cache: "no-store", headers: { Accept: "application/vnd.github.raw+json", "User-Agent": "faheem-ai" } }, { ms: TIMEOUTS.updateCheck, what: "GitHub (update check)" });
       if (!r.ok) throw new Error(`GitHub API ${r.status}`);
       return JSON.parse(await r.text()).version;
     },
     async () => {
-      const r = await fetch(`https://raw.githubusercontent.com/${repo}/main/package.json?t=${Date.now()}`, { cache: "no-store" });
+      const r = await fetchWithTimeout(`https://raw.githubusercontent.com/${repo}/main/package.json?t=${Date.now()}`, { cache: "no-store" }, { ms: TIMEOUTS.updateCheck, what: "GitHub (update check)" });
       if (!r.ok) throw new Error(`GitHub ${r.status}`);
       return (await r.json()).version;
     },

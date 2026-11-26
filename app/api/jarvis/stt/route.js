@@ -4,6 +4,7 @@ import os from "os";
 import path from "path";
 import { getConfig } from "../../../../lib/config";
 import { localSttReady, PY } from "../../../../lib/jarvis/stt.js";
+import { fetchWithTimeout, TIMEOUTS } from "../../../../lib/net.js";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -28,7 +29,9 @@ export async function POST(req) {
     out.append("file", audio, "speech.webm");
     out.append("model", "whisper-large-v3-turbo");
     if (lang === "en" || lang === "ur") out.append("language", lang);
-    const r = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", { method: "POST", headers: { Authorization: `Bearer ${GROQ_API_KEY.split(",")[0].trim()}` }, body: out });
+    let r;
+    try { r = await fetchWithTimeout("https://api.groq.com/openai/v1/audio/transcriptions", { method: "POST", headers: { Authorization: `Bearer ${GROQ_API_KEY.split(",")[0].trim()}` }, body: out }, { ms: TIMEOUTS.whisper, what: "Groq Whisper" }); }
+    catch (e) { return Response.json({ error: e.timeout ? e.message : `Groq Whisper se raabta nahi hua: ${String(e.message).slice(0, 120)}`, code: "browser" }, { status: 504 }); }
     if (r.ok) { const d = await r.json(); return Response.json({ text: (d.text || "").trim(), engine: "groq-whisper" }); }
   }
   return Response.json({ error: "Laptop par Whisper nahi aur Groq key bhi nahi.", code: "browser" }, { status: 400 });

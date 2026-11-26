@@ -95,6 +95,52 @@ await t("/api/update: rollback action + ?local=1 + ROLLBACK.bat", () => {
   return /action === "rollback"/.test(up) && /isLocal\(req\)/.test(up) && /"local"\) === "1"/.test(up) && fs.existsSync(path.join(root, "ROLLBACK.bat")) && /-Rollback/.test(read("ROLLBACK.bat"));
 });
 
+// ---- 3. Timeouts: atka hua server dashboard ko nahi rokta; streaming nahi tootti ----
+const http = await import("http");
+const N = await import("../lib/net.js");
+const srv = http.createServer((req, res) => {
+  if (req.url.startsWith("/hang")) return; // kabhi jawab nahi
+  if (req.url.startsWith("/stream")) { res.writeHead(200, { "Content-Type": "text/plain" }); let i = 0; const iv = setInterval(() => { res.write(`c${i}\n`); if (++i === 5) { clearInterval(iv); res.end(); } }, 120); return; }
+  res.end("ok");
+});
+await new Promise((ok) => srv.listen(0, "127.0.0.1", ok));
+const base = `http://127.0.0.1:${srv.address().port}`;
+await t("fetchWithTimeout: atka server -> saaf Roman Urdu timeout", async () => {
+  const t0 = Date.now();
+  try { await N.fetchWithTimeout(`${base}/hang`, {}, { ms: 300, what: "Test server" }); return false; }
+  catch (e) { return e.timeout === true && /Test server ne 0 second|Test server ne \d+ second mein jawab nahi diya \(timeout\)/.test(e.message) && Date.now() - t0 < 3000; }
+});
+await t("fetchWithTimeout: Stop (apna signal) timeout nahi kehlata", async () => {
+  const ac = new AbortController(); setTimeout(() => ac.abort(), 100);
+  try { await N.fetchWithTimeout(`${base}/hang`, { signal: ac.signal }, { ms: 5000 }); return false; } catch (e) { return !e.timeout; }
+});
+await t("fetchWithTimeout untilHeaders: stream had se lamba chale to bhi poora milta hai", async () => {
+  const r = await N.fetchWithTimeout(`${base}/stream`, {}, { ms: 250, untilHeaders: true });
+  const txt = await r.text(); return txt.split("\n").filter(Boolean).length === 5;
+});
+await t("brain call (providers) atke to saaf timeout paigham, 'timeout' lafz ke sath", async () => {
+  const P = await import("../lib/providers.js");
+  try { await P.callProvider({ id: "testbrain", name: "Test", base: `${base}/hang/v1`, model: "m", key: "k" }, [{ role: "user", content: "hi" }], 300); return false; }
+  catch (e) { return /Test brain ne/.test(e.message) && /timeout/.test(e.message) && !/aborted/i.test(e.message); }
+});
+srv.close();
+await t("server ki har bahar wali fetch() par had (signal) hai", () => {
+  const walk = (d, out = []) => { for (const f of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, f.name); if (f.isDirectory()) walk(p, out); else if (/\.js$/.test(f.name)) out.push(p); } return out; };
+  const files = [...walk(path.join(root, "lib")), ...walk(path.join(root, "app", "api"))];
+  const bare = [];
+  for (const f of files) {
+    const src = fs.readFileSync(f, "utf8");
+    for (const m of src.matchAll(/(?<![\w.])fetch\(/g)) {
+      const line = src.slice(src.lastIndexOf("\n", m.index) + 1, src.indexOf("\n", m.index));
+      if (/^\s*\/\//.test(line) || /fetchImpl/.test(line)) continue; // comment
+      let i = m.index + 6, d = 1; while (d && i < src.length) { const c = src[i++]; if (c === "(") d++; else if (c === ")") d--; }
+      if (!/signal/.test(src.slice(m.index, i))) bare.push(`${path.relative(root, f)}: ${line.trim().slice(0, 80)}`);
+    }
+  }
+  if (bare.length) throw new Error("bina had: " + bare.join(" | "));
+  return true;
+});
+
 console.log(`\n${pass} pass, ${fail} fail`);
 fs.rmSync(tmp, { recursive: true, force: true });
 process.exit(fail ? 1 : 0);

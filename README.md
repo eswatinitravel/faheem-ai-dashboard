@@ -4,6 +4,14 @@ Free 3D AI assistant for Windows: likh kar ya bol kar baat karein. Jab ek free A
 
 **Order (v3.14, v3.17 mein har kaam ka apna order: /workflows > Brains ki tarteeb):** pehle aap ke key wale brains (Groq, Gemini, OpenRouter, Z.ai, Mistral, Cohere, NVIDIA, SambaNova, Cloudflare, Hugging Face, Hetzner, Nous, Requesty, Pollinations) → bina-key free brains (Kilo, OVHcloud, LLM7, Pollinations purana host, Free.ai) → live free list (stillworks, har ghanta) → AI Horde (dheema, aakhri sahara) → Ollama (laptop, bina limit). Puter.js browser mein backup brain hai (Brains Rooms / Meta page).
 
+## Naya v3.29 (Phase 1 bugs: schedules, update wapsi, timeouts)
+
+- **Schedules restart ke baad khud chalte hain:** pehle dashboard dobara chalane ke baad schedules / kaam-queue tab tak sote rehte jab tak `/workflows` na khulta. Ab `server.mjs` shuru hote hi ops chalu karta hai (ek hi timer, dev hot-reload par bhi dobara nahi). Laptop band tha aur waqt guzar gaya? Har schedule sirf **ek dafa** chalta hai (sailaab nahi), history mein "chhoota hua" likha aata hai, phir agla waqt abhi se. Band karna ho to `FAHEEM_NO_OPS_BOOT=1`.
+- **Update se pehle backup, fail par khud wapsi:** naya version lagane se pehle purane ka backup `backups\v<version>-<tareekh>` mein (node_modules, data, .next, .env.local ke baghair; aakhri 3 rehte hain). npm install / build / start fail ho to purana version khud wapas lag kar chal jata hai. Chats aur keys (`data\`, `~/.faheem-ai`) kabhi nahi chhoote.
+- **Purane version par wapas:** neeche version ke paas **"Purane version (vX) par wapas"** button, ya project folder mein **ROLLBACK.bat** (ya `UPDATE.bat rollback`) — server na chal raha ho tab bhi.
+- **Timeouts:** Whisper (awaz), GitHub, update check, Uiverse aur Ollama model download ab hamesha ke liye nahi atakte; had guzarne par saaf paigham ("... ne 60 second mein jawab nahi diya (timeout)"). Brain aur web_fetch ka timeout bhi ab "operation aborted" ke bajaye Roman Urdu mein. Streaming waisi hi.
+- Test: `npm run test:phase1` (18 checks bina internet), GitHub CI mein bhi.
+
 ## Naya v3.28 (hifazat: Phase 1)
 
 - **Doosri website se request band (CSRF):** koi bhi website ab browser ke zariye `localhost:3000/api/*` par POST nahi bhej sakti (Agent, keys, settings, Jarvis "haan" sab). Sirf isi dashboard ke page ya browser extension (WebBrain) se, aur sirf JSON (Gallery / awaz upload par file bhi). `/api/v1` phone wali key se waisa hi chalta hai.
@@ -106,7 +114,7 @@ Har sawal Master Agent dekhta hai aur sahi expert ko deta hai: Code, Website, Ur
 
 ## Self-update
 
-App khulte hi GitHub (`eswatinitravel/faheem-ai-dashboard`) par naya version check karti hai. Naya ho to sidebar mein **Abhi update karein** aata hai. Keys aur chats mehfooz rehti hain. Haath se: **UPDATE.bat**.
+App khulte hi GitHub (`eswatinitravel/faheem-ai-dashboard`) par naya version check karti hai. Naya ho to sidebar mein **Abhi update karein** aata hai. Keys aur chats mehfooz rehti hain. Haath se: **UPDATE.bat**. v3.29 se har update se pehle backup banta hai; masla ho to khud purana version wapas, ya **ROLLBACK.bat**.
 
 ## Keys
 

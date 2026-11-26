@@ -33,4 +33,23 @@ http
   })
   .listen(port, hostname, () => {
     console.log(`> Faheem AI ${dev ? "dev" : "production"} server: http://localhost:${port} (sunta hai ${hostname}:${port})`);
+    if (process.env.FAHEEM_NO_OPS_BOOT !== "1") wakeOps();
   });
+
+// v3.29: pehle schedules / queue tab tak nahi chalte the jab tak /workflows na khulta. Ab server shuru hote hi
+// apne aap ko (127.0.0.1 se, isi laptop ki tarah) /api/ops?boot=1 bhejte hain. Boot isi route ke module mein hota hai
+// (wahi handlers), aur globalThis jhande ki wajah se dobara bulane par bhi ek hi timer. Fail ho to 3 dafa koshish.
+function wakeOps(attempt = 1) {
+  const local = ["0.0.0.0", "::", "localhost", "127.0.0.1"].includes(hostname) ? "127.0.0.1" : hostname;
+  const req = http.get({ host: local, port, path: "/api/ops?boot=1", headers: { host: `localhost:${port}` }, timeout: dev ? 120000 : 20000 }, (res) => {
+    res.resume();
+    if (res.statusCode === 200) console.log("> Schedules aur kaam-queue chalu (ops boot).");
+    else retry(`HTTP ${res.statusCode}`);
+  });
+  req.on("timeout", () => req.destroy(new Error("timeout")));
+  req.on("error", (e) => retry(e.message));
+  function retry(why) {
+    if (attempt >= 3) return console.error(`> Ops boot nahi hua (${why}). /workflows kholne par shuru ho jayega.`);
+    setTimeout(() => wakeOps(attempt + 1), attempt * 5000).unref?.();
+  }
+}

@@ -1,5 +1,6 @@
 import { boot as realBoot } from "../../../lib/ops/boot";
-// v3.17.1: server start par kuch nahi chalta; ops pehli dafa /workflows khulne par shuru (Windows par safe).
+// v3.17.1: ops pehli dafa /workflows khulne par shuru hota tha. v3.29: server.mjs listen ke baad /api/ops?boot=1 khud bulata hai
+// (isi route ke andar, taake handlers / queue wahi module istemal karein jo yeh route karta hai).
 const boot = () => { try { realBoot(); } catch (e) { console.error("[ops]", e?.message); } };
 import { listJobs, counts, enqueue, retryJob, cancelJob, resumeAfterApproval } from "../../../lib/ops/queue";
 import { listApprovals, decide } from "../../../lib/ops/approvals";
@@ -24,6 +25,8 @@ export async function GET(req) {
   if (!isLocal(req)) return bad("Sirf isi laptop par.", 403);
   boot();
   const url = new URL(req.url);
+  // v3.29: server.mjs ka halka "jagao" call — poora data nahi bhejte.
+  if (url.searchParams.get("boot") === "1") return Response.json({ ok: true, booted: !!globalThis.__faheemOps, since: globalThis.__faheemOpsBootedAt || null });
   if (url.searchParams.get("export") === "1") {
     audit("data_export", "Saara data export kiya");
     return new Response(JSON.stringify(exportAll(), null, 2), { headers: { "Content-Type": "application/json", "Content-Disposition": `attachment; filename="faheem-ai-export-${new Date().toISOString().slice(0, 10)}.json"` } });

@@ -5,6 +5,7 @@
 //    aur app phone wali key (Bearer) bheje. "Poora dashboard phone par" On ho to saare pages bhi (key cookie se).
 import { NextResponse } from "next/server";
 import { readPhone, requestIsLocal, bearer, safeEqual, guardDisabled } from "./lib/phone.js";
+import { csrfCheck, hostOkWhenGuardOff } from "./lib/request-guard.js";
 
 let cache = { at: 0, v: null };
 function phone() {
@@ -12,11 +13,18 @@ function phone() {
   return cache.v;
 }
 const deny = (status, message) => NextResponse.json({ error: { message, type: "lan_guard" } }, { status });
+// v3.28: aage jane se pehle CSRF jaanch (doosri website ka POST, ghalat Content-Type) — lib/request-guard.js.
+function pass(request) {
+  const bad = csrfCheck({ method: request.method, pathname: request.nextUrl.pathname, headers: request.headers });
+  if (bad) return NextResponse.json({ error: { message: bad.message, type: "csrf_guard" } }, { status: bad.status });
+  return NextResponse.next();
+}
 
 export function proxy(request) {
   // Docker mein har request bridge IP se aati hai; wahan compose file guard band karti hai (port sirf 127.0.0.1 par).
-  if (guardDisabled()) return NextResponse.next();
-  if (requestIsLocal(request.headers)) return NextResponse.next();
+  // v3.28: guard band ho tab bhi Host mein koi domain naam (DNS-rebinding) nahi chalega.
+  if (guardDisabled()) return hostOkWhenGuardOff(request.headers.get("host")) ? pass(request) : deny(403, "Host ghalat hai (DNS-rebinding guard). localhost:3000 se kholein.");
+  if (requestIsLocal(request.headers)) return pass(request);
   const p = phone();
   const { pathname } = request.nextUrl;
   if (pathname.startsWith("/api/v1/") || pathname === "/api/v1") {
@@ -29,10 +37,12 @@ export function proxy(request) {
     const q = request.nextUrl.searchParams.get("key") || "";
     if (safeEqual(q, p.key)) {
       const res = NextResponse.next();
+      const bad = csrfCheck({ method: request.method, pathname, headers: request.headers });
+      if (bad) return deny(bad.status, bad.message);
       res.cookies.set("fad_phone", p.key, { httpOnly: true, sameSite: "strict", path: "/", maxAge: 60 * 60 * 12 });
       return res;
     }
-    if (safeEqual(ck, p.key)) return NextResponse.next();
+    if (safeEqual(ck, p.key)) return pass(request);
   }
   return new NextResponse(
     "<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width'><title>Faheem AI</title><body style='font:16px system-ui;background:#05070f;color:#cfe8ff;padding:24px'><h2>Yeh dashboard sirf laptop par khulta hai</h2><p>Phone ke liye Maid ya PocketPal AI app mein Base URL aur key daalein (laptop par <b>localhost:3000/connect</b> dekhein).</p></body>",

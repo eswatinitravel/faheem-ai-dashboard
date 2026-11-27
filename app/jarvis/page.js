@@ -262,6 +262,23 @@ export default function Jarvis() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [speakSynth]);
 
+  // v3.40: subah ki report (aur aage aur elaan) yeh page khula ho to yahin achhi awaz mein bole.
+  useEffect(() => {
+    let stop = false;
+    const poll = async () => {
+      try {
+        const r = await fetch("/api/subah/say", { cache: "no-store" }).then((x) => x.json());
+        for (const it of r?.say || []) {
+          if (stop) break;
+          setTurns((t) => [...t, { role: "assistant", content: it.text, at: Date.now(), brain: it.title }]);
+          setMode("speaking"); await speak(it.text); setMode("idle");
+        }
+      } catch {}
+    };
+    poll(); const t = setInterval(poll, 20000);
+    return () => { stop = true; clearInterval(t); };
+  }, [speak]);
+
   // ---------- Sunna: 1) Whisper (laptop/Groq) 2) browser ki apni speech recognition ----------
   const listenWhisper = () => new Promise((resolve) => {
     const s = streamRef.current; if (!s) return resolve("");

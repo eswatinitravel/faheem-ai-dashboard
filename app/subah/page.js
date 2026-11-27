@@ -17,7 +17,10 @@ export default function Subah() {
   const [mode, setMode] = useState("idle");
   const [busy, setBusy] = useState("");
   const [msg, setMsg] = useState("");
-  const [setup, setSetup] = useState({ user: "nazfaheem121@gmail.com", pass: "" });
+  const [acc, setAcc] = useState({ email: "", pass: "", clientId: "", imapHost: "", smtpHost: "", label: "" });
+  const [prov, setProv] = useState("gmail");
+  const [ms, setMs] = useState(null); // { id, userCode, url }
+  const [guide, setGuide] = useState({});
   const [open, setOpen] = useState(null);
   const [drafts, setDrafts] = useState({});
 
@@ -36,6 +39,28 @@ export default function Subah() {
     const u = new SpeechSynthesisUtterance(t); u.lang = "en-IN"; u.rate = 1;
     u.onstart = () => setMode("speaking"); u.onend = () => setMode("idle");
     speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }
+  async function detect(email) {
+    if (!/@[^@\s]+\.[a-z]{2,}$/i.test(email)) return;
+    const r = await post({ action: "detect", email }); if (r.ok) setProv(r.provider);
+  }
+  async function msStart(id) {
+    const r = await act("ms" + id, { action: "ms_start", id });
+    if (!r.ok) return;
+    setMs({ id, userCode: r.userCode, url: r.url });
+    const until = Date.now() + (r.expiresIn || 900) * 1000;
+    const tick = async () => {
+      if (Date.now() > until) { setMs(null); return say("Code ka waqt khatam, dobara jodein."); }
+      const p = await post({ action: "ms_poll", id });
+      if (p.done || !p.ok) { setMs(null); say(p.ok ? "Hotmail jur gaya" : p.error || "Masla"); load(); return; }
+      setTimeout(tick, 5000);
+    };
+    setTimeout(tick, 5000);
+  }
+  async function addAcc(e) {
+    e.preventDefault();
+    const r = await act("add", { action: "account_add", account: { email: acc.email, pass: acc.pass, clientId: acc.clientId, provider: prov, imapHost: acc.imapHost, smtpHost: acc.smtpHost, label: acc.label } }, "Account jur gaya");
+    if (r.account) { setAcc({ email: "", pass: "", clientId: "", imapHost: "", smtpHost: "", label: "" }); if (r.next === "ms_login") msStart(r.account.id); }
   }
   async function send(it) {
     const text = drafts[it.id] ?? it.draft;
@@ -57,7 +82,7 @@ export default function Subah() {
         <div className="sb-tags">
           <span>FOCUS {aw?.ok ? fmt(aw.totalMin) : "--"}</span>
           <span>BOARD {b?.board ? b.board.by.todo + " baqi" : "--"}</span>
-          <span>MAIL {mail?.setUp ? (mail.counts.drafted + " tayar") : "band"}</span>
+          <span>MAIL {mail?.setUp ? `${mail.accounts.length} acc · ${mail.counts.drafted} zaroori` : "band"}</span>
           <span>{d?.schedule ? "ROZ " + d.schedule.every.replace("daily@", "") : "ROZ: band"}</span>
         </div>
       </header>
@@ -90,7 +115,7 @@ export default function Subah() {
             <button onClick={speak} disabled={!b}>Suno</button>
             <label className="sr" htmlFor="sb-when">Roz kab</label>
             <select id="sb-when" value={d?.schedule?.every || ""} onChange={(e) => act("sch", { action: "schedule", every: e.target.value }, e.target.value ? "Roz report chalu" : "Roz report band")}>
-              <option value="">Roz: band</option><option value="daily@07:00">Roz 7 baje</option><option value="daily@08:00">Roz 8 baje</option><option value="daily@09:00">Roz 9 baje</option>
+              <option value="">Roz: band</option><option value="daily@07:00">Roz 7 baje</option><option value="daily@08:00">Roz 8 baje</option><option value="daily@09:00">Roz 9 baje</option><option value="daily@10:00">Roz 10 baje</option>
             </select>
             <label className="sr" htmlFor="sb-look">Jarvis ki shakal</label>
             <select id="sb-look" value={look} onChange={(e) => { setLook(e.target.value); saveLook(e.target.value); }}>
@@ -106,42 +131,76 @@ export default function Subah() {
             {b?.urgent?.length > 0 && <ul className="sb-list">{b.urgent.map((u) => <li key={u}><b>!</b> {u}</li>)}</ul>}
             <Link className="sb-link" href="/board">Board kholo</Link>
           </div>
-          <div className="sb-panel">
-            <h2>Gmail</h2>
-            {mail?.setUp ? (<>
-              <p className="sb-muted">{mail.user} · aakhri check {mail.lastCheck ? time(mail.lastCheck) : "abhi nahi"}</p>
-              {mail.lastError && <p className="sb-err">{mail.lastError}</p>}
-              <div className="sb-kpis"><div><b>{mail.counts.new}</b>nayi</div><div><b>{mail.counts.drafted}</b>jawab tayar</div><div><b>{mail.counts.sent}</b>bheje</div></div>
-              <button onClick={() => act("mail", { action: "mail_refresh" }, "Emails parh li, jawab tayar")} disabled={!!busy}>{busy === "mail" ? "Parh raha…" : "Abhi parho"}</button>
-              <button className="sb-ghostbtn" onClick={() => confirm("Gmail ka login hata dun?") && act("forget", { action: "mail_forget" }, "Gmail hata diya")}>Hatao</button>
-            </>) : (
-              <form onSubmit={(e) => { e.preventDefault(); act("setup", { action: "mail_setup", ...setup }, "Gmail jur gaya").then(() => setSetup({ ...setup, pass: "" })); }}>
-                <p className="sb-muted">Google App Password chahiye (asal password nahi). myaccount.google.com → Security → 2-Step Verification on → App passwords → naam "Jarvis" → 16 haroof yahan.</p>
-                <label htmlFor="sb-u">Gmail</label><input id="sb-u" value={setup.user} onChange={(e) => setSetup({ ...setup, user: e.target.value })} autoComplete="off" />
-                <label htmlFor="sb-p">App Password</label><input id="sb-p" type="password" value={setup.pass} onChange={(e) => setSetup({ ...setup, pass: e.target.value })} autoComplete="new-password" placeholder="abcd efgh ijkl mnop" />
-                <button type="submit" disabled={!!busy}>{busy === "setup" ? "Check…" : "Jodo"}</button>
-              </form>
+          <div className="sb-panel" data-mail-accounts>
+            <h2>Email accounts</h2>
+            {(mail?.accounts || []).map((a) => (
+              <div key={a.id} className={"sb-acc" + (a.enabled ? "" : " off")}>
+                <div><b>{a.email}</b><span className="sb-muted"> {a.providerName}</span></div>
+                <div className="sb-muted">{a.lastError ? <span className="sb-err">{a.lastError}</span> : a.connected ? (a.lastCheck ? "theek · " + time(a.lastCheck) : "jura hua") : "sign-in baqi"}</div>
+                <div className="sb-actions left">
+                  {a.auth === "oauth_ms" && !a.connected && <button onClick={() => msStart(a.id)}>Microsoft se jodo</button>}
+                  <button className="sb-ghostbtn" onClick={() => act("t" + a.id, { action: "account_test", id: a.id }, "Theek jur raha hai")}>Test</button>
+                  <button className="sb-ghostbtn" onClick={() => act("g" + a.id, { action: "account_toggle", id: a.id }, a.enabled ? "Band" : "Chalu")}>{a.enabled ? "Band karo" : "Chalu karo"}</button>
+                  <button className="sb-ghostbtn" onClick={() => confirm(`${a.email} hata dun?`) && act("r" + a.id, { action: "account_remove", id: a.id }, "Hata diya")}>Hatao</button>
+                </div>
+              </div>
+            ))}
+            {ms && (
+              <div className="sb-ms" role="status">
+                <p>Microsoft par jayein: <a href={ms.url} target="_blank" rel="noreferrer">{ms.url}</a> aur yeh code daalein:</p>
+                <div className="sb-code">{ms.userCode}</div>
+                <p className="sb-muted">Allow karne ke baad yeh khud jur jayega.</p>
+              </div>
             )}
+            {mail?.accounts?.length > 0 && <button onClick={() => act("mail", { action: "mail_refresh" }, "Sab emails parh li, jawab tayar")} disabled={!!busy}>{busy === "mail" ? "Parh raha…" : "Abhi sab parho"}</button>}
+            <form className="sb-addacc" onSubmit={addAcc}>
+              <h3>+ Account jodo</h3>
+              <label htmlFor="sb-e">Email</label>
+              <input id="sb-e" value={acc.email} onChange={(e) => { setAcc({ ...acc, email: e.target.value }); detect(e.target.value); }} placeholder="naam@gmail.com / hotmail.com / yahoo.com" autoComplete="off" required />
+              <label htmlFor="sb-pv">Kis ka</label>
+              <select id="sb-pv" value={prov} onChange={(e) => setProv(e.target.value)}>{Object.entries(mail?.presets || {}).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</select>
+              <p className="sb-muted">{mail?.presets?.[prov]?.help}</p>
+              {prov === "outlook" ? (<>
+                <label htmlFor="sb-ci">Microsoft Client ID</label>
+                <input id="sb-ci" value={acc.clientId} onChange={(e) => setAcc({ ...acc, clientId: e.target.value })} placeholder="1234abcd-...." autoComplete="off" />
+                <details className="sb-muted"><summary>Client ID kaise banayein (ek dafa)</summary>
+                  <ol><li>entra.microsoft.com → App registrations → New registration.</li><li>Naam "Jarvis"; account types: "Personal Microsoft accounts only".</li><li>Authentication → "Allow public client flows" = Yes.</li><li>API permissions → Add → APIs my organization uses → "Office 365 Exchange Online" → Delegated: IMAP.AccessAsUser.All, SMTP.Send.</li><li>Overview se "Application (client) ID" yahan daalein.</li></ol></details>
+              </>) : (<>
+                <label htmlFor="sb-pw">App Password</label>
+                <input id="sb-pw" type="password" value={acc.pass} onChange={(e) => setAcc({ ...acc, pass: e.target.value })} autoComplete="new-password" placeholder="abcd efgh ijkl mnop" />
+              </>)}
+              {prov === "other" && (<>
+                <label htmlFor="sb-ih">IMAP server</label><input id="sb-ih" value={acc.imapHost} onChange={(e) => setAcc({ ...acc, imapHost: e.target.value })} placeholder="mail.example.com" />
+                <label htmlFor="sb-sh">SMTP server</label><input id="sb-sh" value={acc.smtpHost} onChange={(e) => setAcc({ ...acc, smtpHost: e.target.value })} placeholder="mail.example.com" />
+              </>)}
+              <label htmlFor="sb-lb">Naam (marzi)</label>
+              <input id="sb-lb" value={acc.label} onChange={(e) => setAcc({ ...acc, label: e.target.value })} placeholder="Shop, Zaati, Kaam" />
+              <button type="submit" disabled={!!busy}>{busy === "add" ? "Jor raha…" : "Jodo"}</button>
+            </form>
           </div>
         </aside>
       </section>
 
       {mail?.setUp && (
         <section className="sb-panel sb-mail" aria-label="Emails">
-          <h2>Emails · Jarvis ke tayar jawab <span className="sb-muted">(bhejna sirf aap ke kehne par)</span></h2>
+          <h2>Emails · sab accounts · Jarvis ke tayar jawab <span className="sb-muted">(bhejna sirf aap ke kehne par)</span></h2>
+          {(mail.errors || []).map((e) => <p key={e} className="sb-err">{e}</p>)}
           {!items.length && <p className="sb-muted">Koi email nahi. "Abhi parho" dabayein.</p>}
           {items.map((it) => (
             <article key={it.id} className={"sb-mailrow " + it.status}>
               <button className="sb-mailhead" onClick={() => setOpen(open === it.id ? null : it.id)} aria-expanded={open === it.id}>
-                <b>{it.from.replace(/<.*>/, "").trim() || it.replyTo}</b><span>{it.subject}</span><em>{it.status === "drafted" ? "jawab tayar" : it.status === "new" ? "nayi" : it.status}</em>
+                <b>{it.n ? `${it.n}. ` : ""}{it.from.replace(/<.*>/, "").trim() || it.replyTo}</b><span>{it.subject} <small className="sb-muted">· {it.accountLabel || it.account}</small></span><em className={"u-" + it.urgency}>{it.status === "drafted" ? (it.urgency === "high" ? "bohat zaroori" : "jawab tayar") : it.status === "new" ? "nayi" : it.status === "info" ? "sirf khabar" : it.status}</em>
               </button>
               {open === it.id && (
                 <div className="sb-mailbody">
+                  {it.summary && <p className="sb-sum">{it.summary}</p>}
                   <pre>{it.text}</pre>
                   <label htmlFor={"dr-" + it.id}>Jawab ({it.replyTo})</label>
                   <textarea id={"dr-" + it.id} rows={7} value={drafts[it.id] ?? it.draft ?? ""} onChange={(e) => setDrafts({ ...drafts, [it.id]: e.target.value })} placeholder="Jarvis se tayar karwayein ya khud likhein" />
                   <div className="sb-actions left">
-                    <button onClick={() => act("dr" + it.id, { action: "mail_draft", id: it.id }, "Naya jawab tayar").then(() => setDrafts({ ...drafts, [it.id]: undefined }))} disabled={!!busy}>Jarvis se likhwao</button>
+                    <label htmlFor={"gd-" + it.id} className="sr">Jarvis ko hidayat</label>
+                    <input id={"gd-" + it.id} className="sb-guide" value={guide[it.id] || ""} onChange={(e) => setGuide({ ...guide, [it.id]: e.target.value })} placeholder="Jarvis ko batayein: jaise kal tak bhej denge" />
+                    <button onClick={() => act("dr" + it.id, { action: "mail_draft", id: it.id, guidance: guide[it.id] || "" }, "Naya jawab tayar").then(() => setDrafts({ ...drafts, [it.id]: undefined }))} disabled={!!busy}>Jarvis se likhwao</button>
                     <button className="sb-send" onClick={() => send(it)} disabled={!!busy || !String(drafts[it.id] ?? it.draft ?? "").trim()}>Bhejo</button>
                     <button className="sb-ghostbtn" onClick={() => act("sk" + it.id, { action: "mail_skip", id: it.id }, "Chhor di")}>Jawab nahi chahiye</button>
                   </div>

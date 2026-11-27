@@ -289,3 +289,11 @@
 - Naye Jarvis looks: Crystal hummingbird, Fluffy dost.
 - Settings API ab TOKEN/PASSWORD bhi chhupata hai.
 - Test: npm run test:v339 (23), CI mein.
+
+## 27 Nov 2026 — v3.40.0 (Jarvis khud: roz 9 baje sab emails)
+- Jitne chahein email accounts: Gmail, Yahoo (App Password), Hotmail/Outlook.com (Microsoft sign-in, device code; Microsoft 16 Sep 2024 se password nahi leta), ya koi bhi IMAP. File: ~/.faheem-ai/mail-accounts.json (0600). Purana v3.39 Gmail khud account ban jata hai.
+- Roz 9 baje khud (pehli dafa khud chalu; band karein to band): sab accounts parhta hai, har email samajhta hai (jawab zaroori? kitna zaroori? Roman Urdu tafseel), zaroori ke jawab tayar.
+- Report bol kar: Jarvis page khula ho to wahi achhi awaz mein, warna laptop Windows awaz mein. Har zaroori email: kis ne, kis account par, kya chahiye.
+- Awaz: "kaun si emails zaroori hain", "email 1 ki tafseel", "email 1 ka jawab sunao", "email 1 ka jawab likho ke ...", "email 1 ka jawab bhejo" + "haan". Jawab usi account se jata hai jahan email aayi.
+- Page: accounts list (test, band/chalu, hatao), "+ Account jodo", Hotmail ka code, har email par tafseel + Jarvis ko hidayat.
+- Test: npm run test:v340 (27), CI mein.

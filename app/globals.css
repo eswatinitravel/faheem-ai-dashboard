@@ -1060,3 +1060,28 @@ tr:hover td { background: rgba(255,255,255,.04); }
 .st-add textarea, .st-add input, .st-add select { width: 100%; font-family: inherit; }
 .st-add textarea { font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; }
 .mcp-out { white-space: pre-wrap; max-height: 320px; overflow: auto; padding: 10px; border-radius: 10px; background: rgba(127,127,127,.12); font-size: 13px; margin-top: 8px; }
+
+/* v3.38 Task board */
+.bd-add { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bd-add input { flex: 1 1 260px; min-width: 0; }
+.bd-cols { display: grid; grid-template-columns: repeat(5, minmax(200px, 1fr)); gap: 10px; overflow-x: auto; padding-bottom: 6px; margin-top: 10px; }
+.bd-col { background: rgba(127,127,127,.08); border-radius: 12px; padding: 8px; min-height: 160px; }
+.bd-col h3 { font-size: 14px; margin: 2px 4px 8px; display: flex; justify-content: space-between; }
+.bd-review { outline: 1px dashed rgba(245, 158, 11, .6); }
+.bd-card { background: var(--card, rgba(255,255,255,.06)); border-radius: 10px; padding: 8px; margin-bottom: 8px; border-left: 3px solid transparent; cursor: grab; }
+.bd-card.p-high { border-left-color: #ef4444; } .bd-card.p-low { opacity: .8; } .bd-card.on { box-shadow: 0 0 0 2px rgba(99,102,241,.6); }
+.bd-title { all: unset; cursor: pointer; font-weight: 600; display: block; overflow-wrap: anywhere; }
+.bd-title:focus-visible { outline: 2px solid #6366f1; border-radius: 4px; }
+.bd-meta { font-size: 12px; margin-top: 3px; }
+.bd-need { font-size: 12px; color: #f59e0b; margin-top: 4px; }
+.bd-btns { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.bd-btns button { font-size: 12px; padding: 3px 8px; }
+.bd-detail { margin-top: 12px; display: grid; gap: 6px; }
+.bd-detail textarea, .bd-detail input { width: 100%; }
+.bd-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bd-row input { flex: 1 1 240px; }
+.bd-log { max-height: 360px; overflow: auto; display: grid; gap: 6px; }
+.bd-c { padding: 6px 8px; border-radius: 8px; background: rgba(127,127,127,.1); }
+.bd-c.by-jarvis { background: rgba(99,102,241,.12); }
+.bd-c p { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 900px) { .bd-cols { grid-template-columns: repeat(5, 78vw); scroll-snap-type: x mandatory; } .bd-col { scroll-snap-align: start; } }

@@ -269,3 +269,12 @@
 - Jarvis: jude hue MCP tools khud dekhta hai (5 min cache) aur <<ACTION mcp>> se chalata hai.
 - Recipes (Goose recipe jaisa JSON, idea only): title, prompt, parameters {{naam}}, extensions (MCP servers), retry.checks (contains / mcp). Built-in: Website check, Folder ka khulasa, Vestire post likho. Apni recipes: .faheem-ai\\recipes.
 - Test: npm run test:v337 (18), CI mein shamil.
+
+## 27 Nov 2026 — v3.38.0 (Task Board)
+- Naya page /board (menu mein "Board"): Backlog, Karna hai, Chal raha, Review, Done. Multica ka idea, apna code.
+- Card mera ya Jarvis ka. Jarvis card "Chalao" se chalta hai: recipe (MCP tools) ya seedha AI. Natija card par note, card Review mein; aap Approve karein to Done, "Wapas" se dobara.
+- Tool chahiye ho to card Review mein "Ijazat chahiye" dikhata hai; "Haan, chalao" sirf usi dafa ki ijazat.
+- Autopilot: Jarvis card khud chale (har 30 min, 2 ghante, roz 9 ya 6 baje). Workflows schedule se, natija notification mein, phir bhi Review par aap ki haan.
+- Awaz: "board par likho: ...", "Jarvis ke liye board par daalo ...", "board par kya hai".
+- Drag-and-drop columns, phone par columns side scroll.
+- Test: npm run test:v338 (17), CI mein shamil.

@@ -1,6 +1,6 @@
 {
   "name": "faheem-ai-dashboard",
-  "version": "3.30.1",
+  "version": "3.35.0",
   "private": true,
   "scripts": {
     "dev": "node server.mjs --dev",

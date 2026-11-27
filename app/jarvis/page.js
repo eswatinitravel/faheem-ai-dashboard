@@ -6,8 +6,10 @@ import Link from "next/link";
 import Icon from "../components/Icon";
 import ThemeBalls from "../components/ThemeBalls";
 import GestureControl from "../components/GestureControl";
+import JarvisPhone from "../components/JarvisPhone";
 import JarvisVisual, { JV_LOOKS, savedLook, saveLook } from "../components/JarvisVisual";
 import { THEMES, applyTheme, savedTheme } from "../../lib/prefs";
+import { prepareFiles } from "../../lib/attach";
 
 const FEMALE = /(zira|hazel|susan|heera|uzma|jenny|aria|sonia|libby|neerja|natasha|clara|emma|ava|michelle|samantha|karen|moira|tessa|fiona|veena|catherine|linda|eva|kalpana|swara|female|woman|salma|sara|zira|ana\b|maisie|mia|elena|joanna|amy|kimberly|ivy|kendra|salli|raveena|aditi|kajal|aurat)/i;
 const MALE = /(david|mark|george|ravi|asad|guy|ryan|thomas|prabhat|william|christopher|eric|brian|daniel|alex|fred|rishi|richard|james|sean|roger|steffan|andrew|liam|madhur|male|man\b|matthew|joey|justin|kevin|russell|arthur|oliver)/i;
@@ -27,6 +29,7 @@ export default function Jarvis() {
   const [emotion, setEmotion] = useState("neutral");
   const [status, setStatus] = useState(null);
   const [notice, setNotice] = useState("");
+  const [phoneOpen, setPhoneOpen] = useState(false); // v3.32 Jarvis Phone QR
   const [typed, setTyped] = useState("");
   const [imp, setImp] = useState(null); // Self-Improve panel
   const [engine, setEngine] = useState("auto"); // auto (Whisper) | browser
@@ -34,7 +37,11 @@ export default function Jarvis() {
   const [look, setLook] = useState("torus"); // v3.30 Jarvis ka look
   useEffect(() => { setLook(savedLook()); }, []);
   const [role, setRole] = useState("assistant");
-  const [tone, setToneSel] = useState("friendly");
+  const [tone, setToneSel] = useState("professional"); // v3.31: default professional andaaz
+  const [pics, setPics] = useState([]); const picsRef = useRef([]); picsRef.current = pics; // v3.31 lagi hui tasveeren
+  const noiseRef = useRef(0.01);
+  const [routes, setRoutes] = useState(false); const [phones, setPhones] = useState(false); // v3.31.2 tez routes, headphones mode
+  const fastRef = useRef({ routes: false, phones: false }); fastRef.current = { routes, phones }; // v3.31 kamre ka shor (mic calibration)
   const [aname, setAname] = useState("");
   const [saved, setSaved] = useState(false);
   const [idleChat, setIdleChat] = useState(false); // v3.26: user ki ijazat se hi khud baat chhere
@@ -81,6 +88,8 @@ export default function Jarvis() {
   const analyserRef = useRef(null);
   const recRef = useRef(null);
   const bargeRef = useRef(0);
+  // v3.33 barge-in capture: Jarvis bolte waqt user ki awaz shuru hote hi recording; beech mein roka to wahi clip agla sawal.
+  const bargeRecRef = useRef(null);
   const playCtxRef = useRef(null);
   const kittenSrcRef = useRef(null);
   const engineRef = useRef("auto"); engineRef.current = engine;
@@ -89,14 +98,14 @@ export default function Jarvis() {
 
   // Pasand yaad rakhein.
   useEffect(() => {
-    try { const s = JSON.parse(localStorage.getItem("faheem-jarvis") || "{}"); if (s.gender) setGender(s.gender); if (s.lang) setLang(s.lang); if (s.voiceName) setVoiceName(s.voiceName); if (s.engine) setEngine(s.engine); if (s.role) setRole(s.role); if (s.tone) setToneSel(s.tone); if (s.aname) setAname(s.aname); if (s.idleChat) setIdleChat(true); setTurns(JSON.parse(localStorage.getItem("faheem-jarvis-chat") || "[]")); } catch {}
+    try { const s = JSON.parse(localStorage.getItem("faheem-jarvis") || "{}"); if (s.gender) setGender(s.gender); if (s.lang) setLang(s.lang); if (s.voiceName) setVoiceName(s.voiceName); if (s.engine) setEngine(s.engine); if (s.role) setRole(s.role); if (s.tone) setToneSel(s.tone); if (s.aname) setAname(s.aname); if (s.idleChat) setIdleChat(true); if (s.routes) setRoutes(true); if (s.phones) setPhones(true); setTurns(JSON.parse(localStorage.getItem("faheem-jarvis-chat") || "[]")); } catch {}
     fetch("/api/jarvis").then((r) => r.json()).then(setStatus).catch(() => {});
     const load = () => setVoices(window.speechSynthesis?.getVoices() || []);
     load(); if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = load;
     return () => stopAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  useEffect(() => { try { localStorage.setItem("faheem-jarvis", JSON.stringify({ gender, lang, voiceName, engine, role, tone, aname, idleChat })); } catch {} }, [gender, lang, voiceName, engine, role, tone, aname, idleChat]);
+  useEffect(() => { try { localStorage.setItem("faheem-jarvis", JSON.stringify({ gender, lang, voiceName, engine, role, tone, aname, idleChat, routes, phones })); } catch {} }, [gender, lang, voiceName, engine, role, tone, aname, idleChat, routes, phones]);
 
   // Lip-sync: har lafz (speech boundary) par honth syllables ke hisaab se khulte band hote hain; boundary na aaye to narm flap.
   useEffect(() => {
@@ -140,6 +149,10 @@ export default function Jarvis() {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const an = ctx.createAnalyser(); an.fftSize = 1024; ctx.createMediaStreamSource(s).connect(an);
       streamRef.current = s; ctxRef.current = ctx; analyserRef.current = an;
+      // v3.31: aadha second kamre ka shor naapo, taake sunne aur beech mein rokne ki had is laptop ke mic ke mutabiq ho.
+      try { if (ctx.state === "suspended") await ctx.resume(); const t0 = performance.now(); let sum = 0, n = 0;
+        while (performance.now() - t0 < 500) { sum += rms(); n++; await new Promise((r) => setTimeout(r, 25)); }
+        noiseRef.current = Math.min(0.04, Math.max(0.004, n ? sum / n : 0.01)); } catch {}
       return true;
     } catch { setNotice("Mic ki ijazat nahi mili. Browser mein mic Allow karein."); return false; }
   }
@@ -149,13 +162,30 @@ export default function Jarvis() {
     let s = 0; for (let i = 0; i < buf.length; i++) { const v = (buf[i] - 128) / 128; s += v * v; }
     return Math.sqrt(s / buf.length);
   };
+  // v3.31: had shor ke hisaab se. Sunna: shor ka ~3.5 guna. Beech mein rokna: kam az kam 0.14 (speaker ki goonj se khud na ruke).
+  const hearThr = () => Math.min(0.05, Math.max(0.015, noiseRef.current * 3.5));
+  // Headphones mode: speaker ki goonj nahi, is liye halki awaz par bhi foran rukna.
+  const bargeThr = () => fastRef.current.phones ? Math.max(0.05, noiseRef.current * 3.5) : Math.max(0.14, noiseRef.current * 7);
+  const bargeFrames = () => (fastRef.current.phones ? 6 : 15);
+  // v3.33: pehli tez awaz par recorder chalu (Whisper engine par). Awaz ruk jaye to phenk do; Jarvis ruka to rakh lo.
+  const bargeHint = (loud) => {
+    if (engineRef.current === "browser" || !streamRef.current || typeof MediaRecorder === "undefined") return;
+    const B = bargeRecRef.current;
+    if (loud > 0 && !B) {
+      try { const rec = new MediaRecorder(streamRef.current); const chunks = []; rec.ondataavailable = (e) => e.data.size && chunks.push(e.data); rec.start(200); bargeRecRef.current = { rec, chunks, keep: false }; } catch {}
+    } else if (loud === 0 && B && !B.keep) dropBarge();
+  };
+  const dropBarge = () => { const B = bargeRecRef.current; if (!B || B.keep) return; bargeRecRef.current = null; try { B.rec.ondataavailable = null; B.rec.stop(); } catch {} };
+  const keepBarge = () => { if (bargeRecRef.current) bargeRecRef.current.keep = true; };
   function stopAll() {
     try { window.speechSynthesis?.cancel(); } catch {}
     try { kittenSrcRef.current?.stop(); } catch {}
     try { recRef.current?.stop?.(); } catch {}
     try { recRef.current?.abort?.(); } catch {}
     recRef.current = null;
+    try { streamAbortRef.current?.abort(); } catch {}
     cancelAnimationFrame(bargeRef.current);
+    try { const B = bargeRecRef.current; bargeRecRef.current = null; if (B) { B.rec.ondataavailable = null; B.rec.stop(); } } catch {}
     streamRef.current?.getTracks().forEach((t) => t.stop()); streamRef.current = null;
     try { ctxRef.current?.close(); } catch {} ctxRef.current = null; analyserRef.current = null;
   }
@@ -175,8 +205,9 @@ export default function Jarvis() {
     let interrupted = false, loud = 0;
     const watch = () => {
       const r = rms(); setLevel(Math.min(1, r * 6));
-      if (r > 0.09) loud++; else loud = Math.max(0, loud - 1);
-      if (loud > 8) { interrupted = true; synth.cancel(); return; } // ~250ms awaz = user bol raha hai
+      if (r > bargeThr()) loud++; else loud = Math.max(0, loud - 1);
+      bargeHint(loud);
+      if (loud > bargeFrames()) { interrupted = true; keepBarge(); synth.cancel(); return; } // ~250ms awaz = user bol raha hai
       bargeRef.current = requestAnimationFrame(watch);
     };
     u.onboundary = (e) => {
@@ -208,8 +239,9 @@ export default function Jarvis() {
       const T = talkRef.current; let interrupted = false, loud = 0;
       const watch = () => {
         const q = rms(); setLevel(Math.min(1, q * 6));
-        if (q > 0.09) loud++; else loud = Math.max(0, loud - 1);
-        if (loud > 8) { interrupted = true; try { src.stop(); } catch {} return; }
+        if (q > bargeThr()) loud++; else loud = Math.max(0, loud - 1);
+        bargeHint(loud);
+        if (loud > bargeFrames()) { interrupted = true; keepBarge(); try { src.stop(); } catch {} return; }
         bargeRef.current = requestAnimationFrame(watch);
       };
       kittenSrcRef.current = src;
@@ -224,22 +256,24 @@ export default function Jarvis() {
     if (vn.startsWith("kitten:") && !kittenFailRef.current && text && !/[\u0600-\u06FF]/.test(text)) {
       try { window.speechSynthesis?.cancel(); } catch {}
       const r = await speakKitten(text, vn.slice(7), tone);
-      if (r !== null) return r;
+      if (r !== null) { if (!r) dropBarge(); return r; }
     }
-    return speakSynth(text, tone);
+    const r2 = await speakSynth(text, tone); if (!r2) dropBarge(); return r2;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [speakSynth]);
 
   // ---------- Sunna: 1) Whisper (laptop/Groq) 2) browser ki apni speech recognition ----------
   const listenWhisper = () => new Promise((resolve) => {
     const s = streamRef.current; if (!s) return resolve("");
-    const rec = new MediaRecorder(s); const chunks = []; recRef.current = rec;
-    let heard = false, lastLoud = performance.now(); const t0 = performance.now(); let raf;
+    // v3.33: Jarvis ko beech mein roka tha? To wahi chalti recording jari (pehle lafz zaya nahi).
+    const B = bargeRecRef.current && bargeRecRef.current.keep ? bargeRecRef.current : null; bargeRecRef.current = null;
+    const rec = B ? B.rec : new MediaRecorder(s); const chunks = B ? B.chunks : []; recRef.current = rec;
+    let heard = !!B, lastLoud = performance.now(); const t0 = performance.now(); let raf;
     rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
     const tick = () => {
       const r = rms(); setLevel(Math.min(1, r * 6)); const now = performance.now();
-      if (r > 0.035) { heard = true; lastLoud = now; }
-      if ((heard && now - lastLoud > 1300) || now - t0 > 30000 || (!heard && now - t0 > 12000) || !onRef.current) { try { rec.stop(); } catch {} return; }
+      if (r > hearThr()) { heard = true; lastLoud = now; }
+      if ((heard && now - lastLoud > 800) || now - t0 > 30000 || (!heard && now - t0 > 12000) || !onRef.current) { try { rec.stop(); } catch {} return; }
       raf = requestAnimationFrame(tick);
     };
     rec.onstop = async () => {
@@ -249,30 +283,38 @@ export default function Jarvis() {
       try {
         const fd = new FormData(); fd.append("audio", new Blob(chunks, { type: rec.mimeType || "audio/webm" }), "speech.webm"); fd.append("lang", settingsRef.current.lang === "en" ? "en" : "ur");
         const r = await fetch("/api/jarvis/stt", { method: "POST", body: fd }); const d = await r.json();
-        if (!r.ok) { if (d.code === "browser") { setEngine("browser"); setNotice("Laptop par Whisper nahi mila, ab browser khud sunega. Offline ke liye: pip install faster-whisper"); return resolve("__retry__"); } throw new Error(d.error); }
+        if (!r.ok) { if (d.code === "browser") { engineRef.current = "browser"; setEngine("browser"); setNotice((d.error ? d.error + " " : "") + "Ab browser khud sunega. Offline ke liye: pip install faster-whisper"); return resolve("__retry__"); } throw new Error(d.error); }
         resolve(d.text || "");
       } catch (e) { setNotice("Sunne mein ghalti: " + e.message); resolve(""); }
     };
-    rec.start(); setMode("listening"); tick();
+    if (!B) rec.start(); setMode("listening"); tick();
   });
   const listenBrowser = () => new Promise((resolve) => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { setNotice("Is browser mein speech recognition nahi. Chrome/Edge istemal karein ya pip install faster-whisper."); return resolve(""); }
     const r = new SR(); recRef.current = r;
-    r.lang = settingsRef.current.lang === "en" ? "en-US" : "ur-PK"; r.interimResults = false; r.maxAlternatives = 1;
+    r.lang = settingsRef.current.lang === "en" ? "en-US" : "ur-PK"; r.interimResults = true; r.maxAlternatives = 1; // v3.32 live captions
     let got = "";
-    r.onresult = (e) => { got = e.results[0]?.[0]?.transcript || ""; };
-    r.onerror = () => {};
-    r.onend = () => { recRef.current = null; resolve(got); };
+    r.onresult = (e) => { let fin = "", live = ""; for (let i = 0; i < e.results.length; i++) { const t = e.results[i]?.[0]?.transcript || ""; if (e.results[i].isFinal) fin += t; else live += t; } got = (fin || got); if (live) setNotice("🎙 " + (fin + " " + live).trim()); };
+    let err = "";
+    r.onerror = (e) => { err = e?.error || ""; };
+    r.onend = () => {
+      recRef.current = null; setNotice((n) => (String(n).startsWith("🎙") ? "" : n));
+      if (err === "not-allowed" || err === "service-not-allowed") { setNotice("Browser ne mic ya speech ki ijazat nahi di. Address bar mein mic Allow karein."); onRef.current = false; setOn(false); }
+      else if (err === "network") setNotice("Browser ki speech ko internet chahiye. Internet check karein, ya offline ke liye: pip install faster-whisper");
+      else if (err === "language-not-supported") setNotice("Is browser mein yeh zubaan nahi. Settings mein English chunein ya faster-whisper lagayein.");
+      resolve(got);
+    };
     try { r.start(); setMode("listening"); } catch { resolve(""); }
   });
 
   // ---------- Jarvis se jawab ----------
-  const ask = useCallback(async (text) => {
+  const ask = useCallback(async (text, opts = {}) => {
     const u = { role: "user", content: text, at: Date.now() };
-    setTurns((t) => [...t, u]); setMode("thinking");
+    if (!opts.skipUser) setTurns((t) => [...t, u]); setMode("thinking");
     try {
-      const r = await fetch("/api/jarvis", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, history: turnsRef.current.slice(-10), gender: settingsRef.current.gender, lang: settingsRef.current.lang, pending: pendingRef.current, role: settingsRef.current.role, tone: settingsRef.current.tone, name: settingsRef.current.aname }) });
+      const r = await fetch("/api/jarvis", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, history: turnsRef.current.slice(-10), gender: settingsRef.current.gender, lang: settingsRef.current.lang, pending: pendingRef.current, role: settingsRef.current.role, tone: settingsRef.current.tone, name: settingsRef.current.aname, preferLocal: !fastRef.current.routes, images: opts.images || picsRef.current.map((p) => p.dataUrl) }) });
+      if (picsRef.current.length) setPics([]);
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || r.status);
       pendingRef.current = d.pending || null;
@@ -281,6 +323,59 @@ export default function Jarvis() {
       return d;
     } catch (e) { setNotice("Ghalti: " + e.message); return null; }
   }, []);
+
+  // v3.31.1: stream: pehla jumla aate hi bolna, baqi qatar mein. Beech mein user bole to sab ruk jaye.
+  const streamAbortRef = useRef(null);
+  const askAndSpeak = useCallback(async (text, live = false) => {
+    setTurns((t) => [...t, { role: "user", content: text, at: Date.now() }]); setMode("thinking");
+    const imgs = picsRef.current.map((p) => p.dataUrl); if (imgs.length) setPics([]);
+    const ac = new AbortController(); streamAbortRef.current = ac;
+    const queue = []; let wake = null, finished = false, interrupted = false, heardAny = false;
+    const stopNow = () => live && !onRef.current;
+    const speaker = (async () => {
+      for (;;) {
+        if (stopNow()) { queue.length = 0; return; }
+        if (!queue.length) { if (finished) return; await new Promise((r) => { wake = r; }); wake = null; continue; }
+        const cut = await speak(queue.shift(), {});
+        if (cut || stopNow()) { interrupted = !!cut; queue.length = 0; try { ac.abort(); } catch {} return; }
+      }
+    })();
+    const push = (s) => { queue.push(s); if (wake) wake(); };
+    let done = null;
+    try {
+      const r = await fetch("/api/jarvis/stream", { method: "POST", headers: { "Content-Type": "application/json" }, signal: ac.signal, body: JSON.stringify({ text, images: imgs, history: turnsRef.current.slice(-10), gender: settingsRef.current.gender, lang: settingsRef.current.lang, pending: pendingRef.current, role: settingsRef.current.role, tone: settingsRef.current.tone, name: settingsRef.current.aname, preferLocal: !fastRef.current.routes }) });
+      if (!r.ok || !r.body) throw new Error("stream " + r.status);
+      const reader = r.body.getReader(); const dec = new TextDecoder(); let buf = "";
+      for (;;) {
+        const { value, done: end } = await reader.read(); if (end) break;
+        buf += dec.decode(value, { stream: true }); let i;
+        while ((i = buf.indexOf("\n")) >= 0) {
+          const line = buf.slice(0, i); buf = buf.slice(i + 1); if (!line.trim()) continue;
+          let o; try { o = JSON.parse(line); } catch { continue; }
+          if (o.type === "sentence") { heardAny = true; push(o.text); }
+          else if (o.type === "done") done = o;
+          else if (o.type === "error") throw new Error(o.error);
+        }
+      }
+    } catch (e) {
+      if (!interrupted && !heardAny && !done) {
+        // Stream na chala: purana tareeqa (ek dafa poora jawab).
+        finished = true; if (wake) wake(); await speaker;
+        const d = await ask(text, { skipUser: true, images: imgs });
+        if (d?.reply && !stopNow()) await speak(d.reply, d.tone);
+        return d;
+      }
+    }
+    if (done) {
+      pendingRef.current = done.pending || null;
+      setEmotion(done.emotion || "neutral");
+      setTurns((t) => [...t, { role: "assistant", content: done.reply, at: Date.now(), brain: done.brain, action: done.action?.name, emotion: done.emotion }]);
+      if (done.tail && !interrupted) push(done.tail);
+    }
+    finished = true; if (wake) wake(); await speaker;
+    return done;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ask, speak]);
 
   // v3.26: khamoshi mein ek halki baat (user turn chat mein nahi dikhta).
   const askIdle = useCallback(async () => {
@@ -295,6 +390,7 @@ export default function Jarvis() {
   // ---------- Guftagu ka loop ----------
   const loop = useCallback(async () => {
     while (onRef.current) {
+      const roundStart = Date.now();
       let text = engineRef.current === "browser" ? await listenBrowser() : await listenWhisper();
       if (text === "__retry__") continue;
       if (!onRef.current) break;
@@ -306,16 +402,16 @@ export default function Jarvis() {
           I.lastIdle = now; I.last = now;
           const d = await askIdle(); if (d?.reply && onRef.current) await speak(d.reply, d.tone);
         }
+        if (Date.now() - roundStart < 1500) await new Promise((r) => setTimeout(r, 800)); // v3.31: ghalti par tez chakkar na lage
         setMode("listening"); continue;
       }
       idleRef.current.last = Date.now();
       if (/^(bas|stop|ruk\s*jao|band\s*karo|goodbye|allah\s*hafiz|khuda\s*hafiz)\b/i.test(text)) { await speak(settingsRef.current.gender === "female" ? "Theek hai Boss, jab zaroorat ho bula lijiye." : "Ji Sir, jab zaroorat ho bula lijiye."); setOn(false); break; }
-      const d = await ask(text);
-      if (d?.reply && onRef.current) await speak(d.reply, d.tone);
+      await askAndSpeak(text, true);
     }
     setMode("idle");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ask, speak]);
+  }, [askAndSpeak, speak]);
 
   async function toggle() {
     if (on) { setOn(false); onRef.current = false; stopAll(); setMode("idle"); return; }
@@ -328,8 +424,8 @@ export default function Jarvis() {
     loop();
   }
   async function sendTyped(e) {
-    e.preventDefault(); const t = typed.trim(); if (!t) return; setTyped("");
-    const d = await ask(t); if (d?.reply) { await ensureMic(); await speak(d.reply, d.tone); } setMode(on ? "listening" : "idle");
+    e.preventDefault(); const t = typed.trim() || (picsRef.current.length ? "Is tasveer mein kya hai?" : ""); if (!t) return; setTyped("");
+    await ensureMic(); await askAndSpeak(t); setMode(on ? "listening" : "idle");
   }
 
   // ---------- Self-Improve ----------
@@ -406,6 +502,8 @@ export default function Jarvis() {
         <div className="jv-actions">
           <ThemeBalls />
           <button className={"jv-improve jv-hands" + (hands ? " on" : "")} onClick={() => { setNotice(""); setHands((h) => !h); }} aria-pressed={hands} title="Haath se control (camera): khula haath = sunna shuru/band, swipe = theme/persona, pinch = select. Default band." data-jarvis-hands data-gesture-ignore><Icon name="target" size={15} /> Haath se control{hands ? ": On" : ""}</button>
+          <button className="jv-improve" onClick={() => setPhoneOpen(true)} title="Phone se Jarvis: QR scan karein" data-gesture-ignore><Icon name="grid" size={15} /> Jarvis Phone</button>
+          {phoneOpen && <JarvisPhone onClose={() => setPhoneOpen(false)} />}
           {hands && <select className="jv-swipe" value={swipeMode} onChange={(e) => setSwipeMode(e.target.value)} aria-label="Swipe se kya badle" title="Swipe se kya badle"><option value="theme">Swipe: Theme</option><option value="persona">Swipe: Persona</option></select>}
           <span className={"jv-dot " + mode} title={mode} />
           <button className="jv-improve" onClick={improve} title="Self-Improve: Jarvis apni baat cheet parh kar khud behtar hota hai" data-jarvis-improve><Icon name="sparkle" size={16} /> Self-Improve</button>
@@ -439,12 +537,8 @@ export default function Jarvis() {
 
         {/* Beech: hologram avatar (lip-sync) */}
         <section className="jv-stage">
-          <div className={"jv-holo look-" + look}>
-            <JarvisVisual look={look} mode={on ? mode : "idle"} level={level} />
+          <div className="jv-holo">
             <div className="jv-badge"><Icon name="sparkle" size={15} /> {name.toUpperCase()}</div>
-            <div className="jv-looks" role="radiogroup" aria-label="Jarvis ka look">
-            {JV_LOOKS.map((l) => <button key={l.id} role="radio" aria-checked={look === l.id} className={"jv-look" + (look === l.id ? " on" : "")} onClick={() => { setLook(l.id); saveLook(l.id); }} data-jv-look-btn={l.id}>{l.name}</button>)}
-            </div>
             <div className="jv-avatar">
               <img src={`/jarvis/${P}-closed.jpg`} alt={`${name} avatar`} className="jv-face" />
               <img ref={mouthRef} src={`/jarvis/${P}-open.jpg`} alt="" aria-hidden="true" className="jv-face jv-mouth" style={{ WebkitMaskImage: `radial-gradient(${mouthBox}, #000 55%, transparent 100%)`, maskImage: `radial-gradient(${mouthBox}, #000 55%, transparent 100%)`, opacity: 0 }} />
@@ -460,11 +554,15 @@ export default function Jarvis() {
               <span><Icon name="check" size={14} /> Laptop par</span>
             </div>
           </div>
-          <div className="jv-pad">
-            <div className="jv-ring r1" /><div className="jv-ring r2" />
+          <div className={"jv-pad" + (look !== "classic" ? " has-look" : "")}>
+            <JarvisVisual look={look} mode={on ? mode : "idle"} level={level} />
+            {look === "classic" && <><div className="jv-ring r1" /><div className="jv-ring r2" /></>}
             <button className={"jv-core " + mode} style={{ transform: `scale(${1 + (mode === "listening" ? level * 0.3 : 0)})` }} onClick={toggle} aria-label={on ? "Band karein" : "Baat shuru karein"} data-jarvis-mic>
               <Icon name={on ? "mic" : "play"} size={26} /><span>{stateText}</span>
             </button>
+          </div>
+          <div className="jv-looks" role="radiogroup" aria-label="Jarvis ka look">
+            {JV_LOOKS.map((l) => <button key={l.id} role="radio" aria-checked={look === l.id} className={"jv-look" + (look === l.id ? " on" : "")} onClick={() => { setLook(l.id); saveLook(l.id); }} data-jv-look-btn={l.id}>{l.name}</button>)}
           </div>
           <div className="jv-meters" aria-label="Laptop ka load">
             <Gauge label="CPU" icon="chip" v={sys?.cpu} sub={sys ? `${sys.cores} cores` : ""} />
@@ -499,8 +597,14 @@ export default function Jarvis() {
             </div>
             <form className="jv-type" onSubmit={sendTyped}>
               <input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder={`${name} ko likhein...`} aria-label="Likh kar bhejein" />
+              <label className="jv-attach" title="Tasveer lagayein, Jarvis parh kar batayega" aria-label="Tasveer lagayein">
+                <Icon name="image" size={16} />
+                <input type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={async (e) => { const f = await prepareFiles(e.target.files); setPics(f.filter((x) => x.kind === "image" && x.dataUrl).slice(0, 3)); e.target.value = ""; }} />
+              </label>
+              <button type="button" className="jv-attach" title="Meri screen parho" aria-label="Screen parho" onClick={async () => { await ensureMic(); await askAndSpeak("Meri screen parho"); setMode(on ? "listening" : "idle"); }}><Icon name="monitor" size={16} /></button>
               <button type="submit" aria-label="Bhejein"><Icon name="send" size={16} /></button>
             </form>
+            {pics.length > 0 && <div className="jv-pics">{pics.map((p, i) => <span key={i}><img src={p.dataUrl} alt={p.name} /><button type="button" onClick={() => setPics(pics.filter((_, j) => j !== i))} aria-label="Hatao">×</button></span>)}<small>{pics.length} tasveer lagi. Ab poochein ya bolein.</small></div>}
           </div>
           <div className="jv-card" data-jarvis-inbox>
             <div className="jv-chathead"><h3>Agent Inbox{attn ? <span className="jv-attn">{attn}</span> : null}</h3>
@@ -554,6 +658,12 @@ export default function Jarvis() {
           <label className="jv-idle" title="Aap der tak chup rahein to Jarvis kabhi kabhi khud ek halki baat chhere">
             <span><input type="checkbox" checked={idleChat} onChange={(e) => setIdleChat(e.target.checked)} data-jarvis-idlechat /> Khud baat chhero</span>
           </label>
+          <label className="jv-idle" title="Chhoti baat tez brain (Groq), mushkil kaam Gemini, private baat laptop (Ollama). Band ho to pehle Ollama.">
+            <span><input type="checkbox" checked={routes} onChange={(e) => setRoutes(e.target.checked)} data-jarvis-routes /> Tez routes</span>
+          </label>
+          <label className="jv-idle" title="Headphones lagay hon to on karein: Jarvis halki awaz par bhi foran ruk jata hai">
+            <span><input type="checkbox" checked={phones} onChange={(e) => setPhones(e.target.checked)} data-jarvis-phones /> Headphones</span>
+          </label>
           <button className="jv-save" onClick={() => { setSaved(true); setTimeout(() => setSaved(false), 1500); speak(gender === "female" ? `Salam, main ${name} hoon.` : `Salam, main ${name} hoon.`, {}); }}>{saved ? "Save ho gaya" : "Save aur suno"}</button>
         </div>
       </details>
@@ -598,6 +708,7 @@ const CSS = `
 .jv-top h1{margin:0;font-size:28px;line-height:1.15;font-weight:700}.jv-top h1 em{font-style:normal;color:var(--vio)}
 .jv-top p{margin:6px 0 0;color:var(--muted);font-size:14px;max-width:520px}
 .jv-actions{display:flex;gap:10px;align-items:center}
+.jv-attach{display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:36px;border-radius:10px;cursor:pointer;background:transparent;border:1px solid rgba(255,255,255,.12);color:inherit}.jv-attach:hover{border-color:rgba(255,255,255,.3)}.jv-pics{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}.jv-pics span{position:relative}.jv-pics img{width:48px;height:48px;object-fit:cover;border-radius:8px}.jv-pics button{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;border:0;background:#222;color:#fff;font-size:12px;line-height:18px;cursor:pointer}.jv-pics small{opacity:.75}
 .jv-dot{width:10px;height:10px;border-radius:50%;background:#4a4f77}.jv-dot.listening{background:#5dffa8;box-shadow:0 0 10px #5dffa8}.jv-dot.thinking{background:#ffc95c}.jv-dot.speaking{background:var(--vio);box-shadow:0 0 10px var(--vio)}
 .jv-improve{display:inline-flex;gap:6px;align-items:center;background:var(--grad);border:0;color:#fff;border-radius:12px;padding:10px 14px;font-weight:600;cursor:pointer;min-height:40px;box-shadow:0 6px 24px rgba(var(--dot),.35)}
 .jv-grid{display:grid;grid-template-columns:260px minmax(0,1fr) 340px;gap:16px;align-items:start}
@@ -678,22 +789,20 @@ const CSS = `
 @keyframes jvpulse{50%{box-shadow:0 0 60px var(--jc)}}
 @media (max-width:1100px){.jv-grid{grid-template-columns:1fr 1fr}.jv-stage{grid-column:1/-1;order:-1}}
 @media (max-width:700px){.jv-grid{grid-template-columns:1fr}.jv-bubble{position:static;max-width:none;margin-top:8px}.jv-top h1{font-size:22px}}
-.jv-holo{position:relative}
-.jvv{position:absolute;inset:0;z-index:0;pointer-events:none;display:grid;place-items:center;overflow:hidden;border-radius:inherit}
-.jv-holo>.jv-looks,.jv-holo>.jv-tags,.jv-holo>.jv-pad{position:relative;z-index:3}
-.jv-holo>.jv-avatar{z-index:1}
+.jv-pad.has-look{height:230px;max-width:560px}
+.jvv{position:absolute;inset:0;z-index:1;pointer-events:none;display:grid;place-items:center}
 .jvv-canvas{position:absolute;inset:0}.jvv-canvas canvas{width:100%!important;height:100%!important;display:block}
-.jvv.ghost{z-index:2}
-.jvv-ghost{height:min(78%,420px);filter:drop-shadow(0 0 22px rgba(79,210,255,.45));animation:jvfloat 3.2s ease-in-out infinite}
+.jvv-ghost{height:92%;filter:drop-shadow(0 0 18px rgba(79,210,255,.35));animation:jvfloat 3.2s ease-in-out infinite}
 .jvv-ghost.thinking{animation-duration:1.4s}
 @keyframes jvfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-.jv-holo.look-torus .jv-avatar,.jv-holo.look-wave .jv-avatar{opacity:.55}
-.jv-holo.look-ghost .jv-avatar{visibility:hidden}
-.jv-looks{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:0 0 6px}
+.jv-pad.has-look .jv-core{width:78px;height:78px;background:rgba(8,10,30,.35);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);margin-top:150px}
+.jv-pad.has-look.ghost-on .jv-core{margin-top:170px}
+.jv-looks{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:6px 0 2px}
 .jv-look{font-size:11.5px;min-height:30px;padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);color:var(--text,#e6f0ff);cursor:pointer}
 .jv-look.on{background:var(--grad);color:#fff;border-color:transparent}
 .jv-look:focus-visible{outline:2px solid #fff;outline-offset:2px}
 @media (prefers-reduced-motion: reduce){.jvv-ghost{animation:none!important}}
+@media (max-width:700px){.jv-pad.has-look{height:200px}.jv-pad.has-look .jv-core{margin-top:120px}}
 @media (prefers-reduced-motion: reduce){.jv-scan,.jv-ring,.jv-core{animation:none!important;transition:none!important}}
 /* v3.24.2 glass: sab kuch shafaf, hologram background mein ghula hua */
 .jv{background:radial-gradient(ellipse at 50% 30%,rgba(var(--dot),.35) 0%,transparent 55%),radial-gradient(ellipse at 15% 85%,rgba(0,190,255,.18) 0%,transparent 50%),radial-gradient(ellipse at 90% 10%,rgba(190,80,255,.2) 0%,transparent 45%),transparent}

@@ -202,3 +202,56 @@
 - Test: build EXIT 0; npm run test:v327 27/27 (+13 HTTP = 40/40); test:ops 25/25; LAN guard curl 15 cases; phone jaisi request LAN IP se key ke saath models + chat (stream/non-stream) 200; AI Team chat asli free brains (Kilo, OVH, Pollinations, Free.ai) ~28s, file + command ijazat se chale, dobara/doosra project/fake id 409; n8n local echo webhook 200; headless Chromium 1366x768 screenshots (koi horizontal overflow nahi), MediaPipe asli CDN + fake camera se load, CDN band aur camera inkaar par fallback.
 - Baaki (Windows par unverified): asli phone se Maid/PocketPal; Windows Firewall prompt; asli haath ke ishare (sirf nakli landmarks se test); n8n asli instance.
 - Pata hai: Wi-Fi par koi jaan bujh kar Host + X-Forwarded-For dono jaali bheje to guard dhoka kha sakta hai (Next.js asli socket IP route ko nahi deta) — is liye firewall Private-only rakhein aur Phone connect kaam ke baad band.
+
+## 26 Nov 2026 — v3.31.0 (Jarvis live baat-cheet theek + professional andaaz + aankh)
+- Live fix: Whisper/Groq fail par browser par foran switch (pehle 1-2 baatein zaya hoti thin, engineRef render ka intezar karta tha).
+- Browser speech ki ghaltiyan ab screen par: mic ijazat nahi, internet nahi, zubaan nahi. Khali round ke baad 0.8s waqfa (tez chakkar band).
+- Groq 401/403 par saaf paigham "key expire ya ghalat", 429 par "limit poori".
+- Mic calibration: shuru mein 0.5s kamre ka shor naap kar sunne ki had (0.015-0.05) aur beech mein rokne ki had (kam az kam 0.14, ~250ms) khud set. Speaker ki goonj se Jarvis khud nahi rukta.
+- Jawab ki raftar: Ollama 60s, baqi brains 30s (pehle 90/45).
+- Professional andaaz default: seedha jawab, ek kaam ka agla qadam, filler aur baar baar maafi nahi.
+- Aankh (vision): Jarvis page par tasveer lagao (3 tak) ya "meri screen parho" bolo / screen button dabao. Screen ki chhoti JPEG temp mein, foran mit jati hai. Gemini ya Groq vision key chahiye.
+- Baaki: asli Windows par mic, speaker, screen capture aur vision ka test.
+
+## 27 Nov 2026 — v3.31.1 (Jarvis foran bolta hai: streaming)
+- Naya /api/jarvis/stream (NDJSON): AI ka har mukammal jumla aate hi bheja jata hai; Jarvis pehla jumla bolna shuru kar deta hai, baqi qatar mein.
+- lib/providers.js callProviderStream: OpenAI-jaisi stream (Ollama, Groq, Gemini waghera). Stream na ho ya pehle tukre se pehle ghalti ho to purana callProvider.
+- ACTION tag aur markdown bolne se pehle hat jate hain; laptop kaam aakhir mein chalta hai, ijazat/ghalti ka paigham aakhir mein bola jata hai.
+- Beech mein user bole to awaz ruk jati hai, stream band, qatar khali.
+- Stream ka endpoint fail ho to purana /api/jarvis (ek dafa poora jawab).
+- Test: build EXIT 0; mock streaming brain se 3 jumle ~0.5s ke faasle par alag alag aaye, tag hat gaya, action chala.
+- Baaki: asli Windows par sun kar check (Kitten har jumle ke liye alag request karta hai, thora waqfa ho sakta hai).
+
+## 27 Nov 2026 — v3.31.2 (Tez routes + Headphones mode)
+- Jarvis settings mein "Tez routes" (default band, taake pehle Ollama wali shart qaim rahe): chhoti baat Groq, mushkil kaam (plan, code, business, explain) Gemini/SambaNova, private baat (password, bank, raaz) sirf laptop Ollama. Brain label mein route dikhta hai.
+- "Headphones" toggle: beech mein rokne ki had halki (0.05) aur ~100ms; speaker par purani mazboot had.
+- Test: build; mock se private jumla "Ollama (local) · local" route par gaya.
+
+## 27 Nov 2026 — v3.32.0 (Live awaz server + Jarvis Phone + ActivityWatch)
+- Voice server (lib/jarvis/voice_server.py, sirf 127.0.0.1:5577): Whisper aur Kitten EK dafa load. Pehle har baat par naya Python + model load hota tha. Dashboard khud chalata hai; na chale to purana tareeqa. 30 min khali rahe to khud band.
+- Kitten model ab yaad rehta hai (_load cache).
+- Sunna tez: chup ka intezar 1.3s se 0.8s. Browser speech mein live captions (interimResults).
+- Jarvis Phone: Jarvis page par "Jarvis Phone" button > QR. Phone camera se scan = Jarvis Remote (/m.html), Add to Home screen se icon. Hukum /api/v1/jarvis par phone key ke saath; khatarnak kaam par "haan" chahiye. Wi-Fi par sirf m.html, manifest, icons aur /api/v1 khulte hain.
+- ActivityWatch: "aaj kitna kaam kiya" = localhost:5600 se aaj ka khulasa (top 3 apps). Sirf khulasa, poori history AI ko nahi.
+- Test: node --check JS files; Windows par asli test baqi (voice server, phone QR, ActivityWatch).
+- Baaki: beech mein bolne par user ke pehle lafz record karna; Parakeet/sherpa-onnx (OpenWhispr wala engine) option.
+
+## 27 Nov 2026 — v3.33.0 (Live Jarvis Pro)
+- Asli barge-in: Jarvis bolte waqt aap ki awaz shuru hote hi chhoti recording chalu (Whisper engine). Jarvis ruka to wahi recording agla sawal banti hai, pehle lafz zaya nahi. Awaz khud ruk jaye to recording phenk di jati hai.
+- Scoped qawaid (Parlant ka idea, apna code): laptop actions ki list sirf tab AI ko jati hai jab baat mein kaam ka ishara ho; comfort skill sirf jab jazbaat neutral na hon. Prompt chhota, jawab tez.
+- Agent "Plan pehle" (Plannotator ka idea, apna code, default On): Agent pehle /api/agent/plan se 3-8 qadam ka plan + Risk deta hai, koi file nahi badalti. Plan badal kar "Approve aur chalao". Team mode aur tasveer wale kaam par seedha chalta hai.
+- Parakeet nahi lagaya: Parakeet v2 sirf English aur v3 European zubanen; Urdu/Roman Urdu nahi. Tez sunne ke liye Options > WHISPER_MODEL = base.
+- Test: node --check, esbuild JSX parse. Windows par asli test baqi.
+- Baaki: phone page ka apna mic (HTTPS chahiye), NeonClipping/Meetily launcher.
+
+## 27 Nov 2026 — v3.34.0 (Free tools hub)
+- Jarvis ab free tools kholta hai: "reels banao" (NeonClipping), "meeting notes kholo" (Meetily), "duplicate files dhoondo" (Krokiet), "screen recording karo" (ShareX), "video chhoti karo" (HandBrake), "pdf se excel karo" (Stirling-PDF), "ActivityWatch kholo". Start Menu / Desktop shortcut dhoondta hai; na mile to download page.
+- TOOLS.bat: ShareX, HandBrake, ActivityWatch winget se; baqi ke download page.
+- Sirf kholna aur links; in tools ka code shamil nahi (NeonClipping AGPL-3.0, alag app).
+- Test: node --check; detectLaptop mock se 7 jumle sahi route. Windows par shortcut talash ka test baqi.
+- Baaki: phone page ka apna mic (HTTPS), Excel chart/report.
+
+## 27 Nov 2026 — v3.35.0 (Phone mic HTTPS + Excel Report)
+- PHONE-HTTPS.bat (scripts/phone-https.ps1): laptop ke Wi-Fi IP ka apna certificate (data\phone-cert.pfx, git se bahar), firewall Private 3443. server.mjs certificate ho to 3443 par HTTPS bhi chalata hai. Jarvis Phone QR khud https wala. Phone page par 🎤 button (Urdu speech, bolna khatam = khud bhejna).
+- Excel Report (/excel, home par "Excel" button, Jarvis "excel ki report banao"): .xlsx/.csv browser mein parhta hai (apna chhota reader, koi naya package nahi), khali/duplicate rows, extra spaces, har column ka khulasa, group/sum chart, saaf CSV aur HTML report download.
+- Test (Linux par): next build EXIT 0; production server: /, /jarvis, /agent, /excel, /connect, /m.html 200; HTTPS m.html 200 (LAN par bhi), LAN /jarvis 403; /api/v1/jarvis bina key 401, key ke saath jawab; shutdown par "haan/nahi"; safety tests 49/49; xlsx reader test (shared strings, rich text, inline, khali row, duplicate). Windows par certificate script aur asli phone mic test baqi.

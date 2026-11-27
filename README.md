@@ -4,6 +4,35 @@ Free 3D AI assistant for Windows: likh kar ya bol kar baat karein. Jab ek free A
 
 **Order (v3.14, v3.17 mein har kaam ka apna order: /workflows > Brains ki tarteeb):** pehle aap ke key wale brains (Groq, Gemini, OpenRouter, Z.ai, Mistral, Cohere, NVIDIA, SambaNova, Cloudflare, Hugging Face, Hetzner, Nous, Requesty, Pollinations) → bina-key free brains (Kilo, OVHcloud, LLM7, Pollinations purana host, Free.ai) → live free list (stillworks, har ghanta) → AI Horde (dheema, aakhri sahara) → Ollama (laptop, bina limit). Puter.js browser mein backup brain hai (Brains Rooms / Meta page).
 
+## Naya v3.35.0 (Phone mic + Excel Report)
+- **Phone par seedha mic:** dashboard folder mein PHONE-HTTPS.bat ek dafa chalayein, dashboard restart. Jarvis Phone ka QR https wala hoga; phone par pehli dafa "Not secure" > Advanced > Proceed, phir 🎤.
+- **Excel Report:** home par Excel button. File daalein: safai ki jaanch, chart, saaf CSV aur report download. File laptop se bahar nahi jati.
+
+## Naya v3.34.0 (Free tools hub)
+- Jarvis se kahein: "reels banao", "meeting notes kholo", "duplicate files dhoondo", "screen recording karo", "video chhoti karo", "pdf se excel karo". Tool laga ho to khulta hai, warna download page.
+- **TOOLS.bat** se ShareX, HandBrake aur ActivityWatch ek click mein.
+
+## Naya v3.33.0 (Live Jarvis Pro)
+- **Beech mein bolein:** Jarvis ko tok kar baat karein, aap ke pehle lafz bhi sune jate hain.
+- **Agent Plan pehle:** bara kaam shuru hone se pehle plan dikhta hai, aap badal kar Approve karein. Band karna ho to Agent mein "Plan pehle" checkbox.
+- **Tez jawab:** AI ko har baar sirf zaroori qawaid jate hain.
+
+## Naya v3.32.0 (live awaz + Jarvis Phone)
+- **Tez awaz:** Whisper aur Kitten ab ek dafa load hote hain (voice server, sirf laptop par). Jarvis 0.8s chup ke baad sunna band karta hai.
+- **Jarvis Phone:** Jarvis page > **Jarvis Phone** > QR. Phone camera se scan karein, Chrome menu > Add to Home screen. Phone aur laptop ek Wi-Fi par.
+- **"Aaj kitna kaam kiya?"** ActivityWatch (free) laga ho to Jarvis aaj ka khulasa batata hai.
+
+## Naya v3.31.1
+
+ - **Jarvis foran bolta hai:** AI ka pehla jumla aate hi bolna shuru, baqi saath saath. Intezar kaafi kam.
+
+## Naya v3.31 (Jarvis: live baat-cheet theek, professional andaaz, tasveer/screen parhna)
+
+ - **Live baat-cheet theek:** Whisper na mile to browser foran sunta hai (koi baat zaya nahi), har ghalti screen par saaf likhi aati hai, Groq key expire ho to bata deta hai.
+ - **Mic khud set:** shuru mein kamre ka shor naap kar sunne ki had set; Jarvis apni hi awaz se nahi rukta.
+ - **Professional andaaz (default):** seedha jawab, ek agla qadam, faltu baatein nahi.
+ - **Aankh:** tasveer lagao ya "meri screen parho" bolo; Jarvis likha hua parh kar batata hai (Gemini ya Groq vision key).
+
 ## Naya v3.29 (Phase 1 bugs: schedules, update wapsi, timeouts)
 
 - **Schedules restart ke baad khud chalte hain:** pehle dashboard dobara chalane ke baad schedules / kaam-queue tab tak sote rehte jab tak `/workflows` na khulta. Ab `server.mjs` shuru hote hi ops chalu karta hai (ek hi timer, dev hot-reload par bhi dobara nahi). Laptop band tha aur waqt guzar gaya? Har schedule sirf **ek dafa** chalta hai (sailaab nahi), history mein "chhoota hua" likha aata hai, phir agla waqt abhi se. Band karna ho to `FAHEEM_NO_OPS_BOOT=1`.

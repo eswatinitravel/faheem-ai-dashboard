@@ -132,13 +132,25 @@ def chunks(ps, maxlen=350):
     return parts
 
 
+_CACHE = {}
+
+
+def _load():
+    if "m" not in _CACHE:
+        import numpy as np, onnxruntime as ort
+        fetch()
+        vocab = json.load(open(os.path.join(DIR, FILES[0]), encoding="utf-8"))
+        sess = ort.InferenceSession(os.path.join(DIR, FILES[1]), providers=["CPUExecutionProvider"])
+        with np.load(os.path.join(DIR, FILES[2])) as z:
+            packs = {k: z[k].astype(np.float32) for k in z.files}
+        _CACHE["m"] = (vocab, sess, packs)
+    return _CACHE["m"]
+
+
 def synth(text, voice="priya", speed=1.0):
-    import numpy as np, onnxruntime as ort
-    fetch()
-    vocab = json.load(open(os.path.join(DIR, FILES[0]), encoding="utf-8"))
-    sess = ort.InferenceSession(os.path.join(DIR, FILES[1]), providers=["CPUExecutionProvider"])
-    with np.load(os.path.join(DIR, FILES[2])) as z:
-        pack = z[voice if voice in z.files else "priya"].astype(np.float32)
+    import numpy as np
+    vocab, sess, packs = _load()  # v3.32: model ek dafa load, voice server mein yaad rehta hai
+    pack = packs.get(voice, packs["priya"])
     out, gap = [], np.zeros(int(0.15 * SR), dtype=np.float32)
     for k, ps in enumerate(chunks(phonemize(roman_to_dev(text)))):
         tok = [0] + [vocab[c] if c in vocab else vocab[","] for c in ps if c in vocab or c in "()"] + [10, 0]

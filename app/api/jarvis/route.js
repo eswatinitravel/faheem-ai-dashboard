@@ -19,8 +19,8 @@ export async function POST(req) {
   const text = String(b?.text || "").trim().slice(0, 2000);
   if (b?.prefs) return Response.json({ prefs: savePrefs(b.prefs) });
   const idle = b?.idle === true;
-  if (!text && !idle) return Response.json({ error: "Kuch kahiye." }, { status: 400 });
+  if (!text && !idle && !(Array.isArray(b?.images) && b.images.length)) return Response.json({ error: "Kuch kahiye." }, { status: 400 });
   try { if (isPaused()) return Response.json({ reply: "Pause All chalu hai. Pehle Resume dabayein.", emotion: "neutral" }); } catch {}
-  const out = await jarvisTurn({ text, history: Array.isArray(b.history) ? b.history : [], gender: b.gender === "female" ? "female" : "male", lang: ["en", "ur-script", "roman"].includes(b.lang) ? b.lang : "roman", pending: b.pending || null, preferLocal: b.preferLocal !== false, role: String(b.role || "assistant"), tone: String(b.tone || "friendly"), name: String(b.name || ""), idle });
+  const out = await jarvisTurn({ text, history: Array.isArray(b.history) ? b.history : [], gender: b.gender === "female" ? "female" : "male", lang: ["en", "ur-script", "roman"].includes(b.lang) ? b.lang : "roman", pending: b.pending || null, preferLocal: b.preferLocal !== false, role: String(b.role || "assistant"), tone: String(b.tone || "friendly"), name: String(b.name || ""), idle, images: Array.isArray(b.images) ? b.images.filter((x) => typeof x === "string").slice(0, 3) : [] });
   return Response.json(out);
 }

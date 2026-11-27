@@ -28,6 +28,7 @@ jobs:
       - run: npm run test:v327
       # v3.29: schedules boot / chhoote runs, update backup + rollback, fetch timeouts
       - run: npm run test:phase1
+      - run: npm run test:v336
 
   full:
     # test:full khud `node server.mjs` (port 3177) chalata hai, is liye pehle build. Yeh suite internet (curl GitHub ZIPs,

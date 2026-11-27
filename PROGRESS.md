@@ -255,3 +255,9 @@
 - PHONE-HTTPS.bat (scripts/phone-https.ps1): laptop ke Wi-Fi IP ka apna certificate (data\phone-cert.pfx, git se bahar), firewall Private 3443. server.mjs certificate ho to 3443 par HTTPS bhi chalata hai. Jarvis Phone QR khud https wala. Phone page par 🎤 button (Urdu speech, bolna khatam = khud bhejna).
 - Excel Report (/excel, home par "Excel" button, Jarvis "excel ki report banao"): .xlsx/.csv browser mein parhta hai (apna chhota reader, koi naya package nahi), khali/duplicate rows, extra spaces, har column ka khulasa, group/sum chart, saaf CSV aur HTML report download.
 - Test (Linux par): next build EXIT 0; production server: /, /jarvis, /agent, /excel, /connect, /m.html 200; HTTPS m.html 200 (LAN par bhi), LAN /jarvis 403; /api/v1/jarvis bina key 401, key ke saath jawab; shutdown par "haan/nahi"; safety tests 49/49; xlsx reader test (shared strings, rich text, inline, khali row, duplicate). Windows par certificate script aur asli phone mic test baqi.
+
+## 27 Nov 2026 — v3.36.0 (Phone aur voice server ki hifazat)
+- Khatarnak kaam (shutdown, restart, lock) ki "haan" ab sirf server ke apne yaad rakhe hukum par chalti hai. Jarvis page aur phone sirf ek token wapas bhejte hain (2 minute, ek dafa). Nakli pending bhej kar shutdown ab nahi hota. Phone par haan/nahi pehle jaisa chalta hai.
+- Voice server (127.0.0.1:5577) par taala: data\\voice-token (git se bahar) ke bagair koi POST nahi. Koi website browser se Whisper/Kitten nahi chala sakti.
+- Test: npm run test:v336 (7), CI mein shamil.
+- Note: purana voice server chal raha ho to laptop restart (ya 30 min baad woh khud band), phir naya taale wala chalega.

@@ -2,13 +2,15 @@
 # Pehle har jumle par naya Python khulta tha aur model dobara load hota tha (live baat-cheet ki sab se bari der).
 # Sirf 127.0.0.1 par sunta hai (Wi-Fi se band). 30 min koi request na aaye to khud band.
 # Use: python voice_server.py [port]   (dashboard khud chalata hai, port 5577)
-import io, json, os, sys, tempfile, threading, time, wave
+import hmac, io, json, os, sys, tempfile, threading, time, wave
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 5577
 IDLE_MAX = 30 * 60
+# v3.36: dashboard ka raaz (data/voice-token). Iske bagair koi POST nahi.
+TOKEN = os.environ.get("JARVIS_VOICE_TOKEN", "")
 state = {"last": time.time(), "whisper": {}, "lock": threading.Lock()}
 
 
@@ -41,6 +43,9 @@ class H(BaseHTTPRequestHandler):
         self._send(404, {"error": "not found"})
 
     def do_POST(self):
+        got = self.headers.get("X-Voice-Token") or ""
+        if not TOKEN or not hmac.compare_digest(got, TOKEN):
+            return self._send(403, {"error": "forbidden"})
         state["last"] = time.time()
         u = urlparse(self.path)
         q = parse_qs(u.query)

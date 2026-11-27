@@ -1,0 +1,25 @@
+{
+  "servers": {
+    "files": {
+      "type": "stdio",
+      "cmd": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "C:\\Users\\Faheem\\Documents", "C:\\Users\\Faheem\\Downloads"],
+      "auto_tools": ["list_directory", "read_text_file", "search_files", "get_file_info"],
+      "timeout": 60
+    },
+    "fetch": {
+      "type": "stdio",
+      "cmd": "uvx",
+      "args": ["mcp-server-fetch"],
+      "auto_tools": ["fetch"],
+      "timeout": 60
+    },
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": { "Authorization": "Bearer ${GITHUB_TOKEN}" },
+      "env_keys": ["GITHUB_TOKEN"],
+      "timeout": 60
+    }
+  }
+}

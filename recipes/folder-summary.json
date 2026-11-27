@@ -1,0 +1,9 @@
+{
+  "version": "1.0.0",
+  "title": "Folder ka khulasa",
+  "description": "Folder ki files dekh kar batao kya hai, sab se bari aur nayi files (files MCP server chahiye).",
+  "instructions": "List the folder with the filesystem tools. Summarise in Roman Urdu: how many files, main types, the 5 newest or biggest you can see. Do not change any file.",
+  "prompt": "Is folder ka khulasa do: {{folder}}",
+  "parameters": [{ "key": "folder", "input_type": "string", "requirement": "required", "description": "Jaise C:\\Users\\Faheem\\Downloads" }],
+  "extensions": ["files"]
+}

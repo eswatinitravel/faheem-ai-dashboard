@@ -1,0 +1,10 @@
+{
+  "version": "1.0.0",
+  "title": "Website check",
+  "description": "Ek website khol kar dekho chal rahi hai ya nahi, aur ek line mein batao (fetch MCP server chahiye).",
+  "instructions": "Use the fetch tool to open the URL. Report in Roman Urdu: is it up, the page title, and anything broken. Keep it to 3 short lines.",
+  "prompt": "Yeh website check karo: {{url}}",
+  "parameters": [{ "key": "url", "input_type": "string", "requirement": "required", "description": "Poora link, jaise https://vestire.pk" }],
+  "extensions": ["fetch"],
+  "retry": { "max_retries": 1, "checks": [] }
+}

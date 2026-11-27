@@ -1054,3 +1054,9 @@ tr:hover td { background: rgba(255,255,255,.04); }
 /* v3.27 Agent: Agent / AI Team chat tabs */
 .ag-panes { padding: 8px 10px 6px; flex: none; }
 .ag-panes button { display: inline-flex; gap: 6px; align-items: center; justify-content: center; }
+
+/* v3.37 MCP + Recipes */
+.st-add { display: grid; gap: 6px; margin-top: 10px; max-width: 720px; }
+.st-add textarea, .st-add input, .st-add select { width: 100%; font-family: inherit; }
+.st-add textarea { font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; }
+.mcp-out { white-space: pre-wrap; max-height: 320px; overflow: auto; padding: 10px; border-radius: 10px; background: rgba(127,127,127,.12); font-size: 13px; margin-top: 8px; }

@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "title": "Vestire post likho",
+  "description": "Naye suit ke liye Instagram/Facebook caption (bina tool).",
+  "instructions": "Write 2 caption options for a Pakistani women's clothing boutique (Vestire Collection). Roman Urdu mixed with simple English, warm and classy, 3-4 lines each, price in Rs, end with 5 relevant hashtags. No emojis overload (max 2).",
+  "prompt": "Product: {{product}}. Qeemat: {{price}}. Khaas baat: {{detail}}",
+  "parameters": [
+    { "key": "product", "input_type": "string", "requirement": "required", "description": "Jaise 3-piece lawn suit" },
+    { "key": "price", "input_type": "string", "requirement": "required", "description": "Jaise Rs 4,500" },
+    { "key": "detail", "input_type": "string", "requirement": "optional", "default": "", "description": "Rang, kapra, embroidery" }
+  ]
+}

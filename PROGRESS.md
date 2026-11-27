@@ -261,3 +261,11 @@
 - Voice server (127.0.0.1:5577) par taala: data\\voice-token (git se bahar) ke bagair koi POST nahi. Koi website browser se Whisper/Kitten nahi chala sakti.
 - Test: npm run test:v336 (7), CI mein shamil.
 - Note: purana voice server chal raha ho to laptop restart (ya 30 min baad woh khud band), phir naya taale wala chalega.
+
+## 27 Nov 2026 — v3.37.0 (MCP client + Recipes)
+- Naya page /mcp (home menu mein "MCP"): Goose / Claude Code / Cursor wale MCP servers jodo (stdio ya HTTP), "Test + tools", tool aazmao.
+- Servers ki list: C:\\Users\\<naam>\\.faheem-ai\\mcp-servers.json (update par nahi mitti). Namoona: mcp-servers.example.json (files, fetch, github).
+- Hifazat: server ko sirf zaroori Windows env + jo keys aap env_keys mein likhein; baqi keys nahi jati. Jarvis har MCP tool se pehle "haan" poochta hai (server token, phone par bhi), siwaye auto_tools ke.
+- Jarvis: jude hue MCP tools khud dekhta hai (5 min cache) aur <<ACTION mcp>> se chalata hai.
+- Recipes (Goose recipe jaisa JSON, idea only): title, prompt, parameters {{naam}}, extensions (MCP servers), retry.checks (contains / mcp). Built-in: Website check, Folder ka khulasa, Vestire post likho. Apni recipes: .faheem-ai\\recipes.
+- Test: npm run test:v337 (18), CI mein shamil.

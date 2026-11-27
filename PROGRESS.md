@@ -278,3 +278,14 @@
 - Awaz: "board par likho: ...", "Jarvis ke liye board par daalo ...", "board par kya hai".
 - Drag-and-drop columns, phone par columns side scroll.
 - Test: npm run test:v338 (17), CI mein shamil.
+
+## 27 Nov 2026 — v3.39.0 (Subah ki report + Gmail + naye Jarvis looks)
+- Naya page /subah (menu mein "Subah"), pins ka design: kaala mission-control, glass holo panel, beech mein Jarvis gol pad par.
+- Kal ka focus ActivityWatch se (localhost:5600, AFK hata kar): kul waqt, top apps, top windows. AW band ho to report phir bhi banti hai.
+- Board ka khulasa + zaroori kaam.
+- Gmail (nazfaheem121@gmail.com): Google App Password se (Options keys GMAIL_USER, GMAIL_APP_PASSWORD; sirf laptop par). Jarvis emails PARHTA hai (readonly, "parhi hui" nahi banti), promotions/social/noreply chhorta hai, har aham email ka jawab TAYAR karta hai. Bhejta sirf "Bhejo" + haan par.
+- Roz report: 7, 8 ya 9 baje (ops schedule "briefing"), notification mein bhi. "Suno" button report bol kar sunata hai.
+- Awaz/phone: "subah ki report sunao", "emails parho", "email 1 ka jawab sunao", "email 1 ka jawab bhejo" (phir "haan", server token wala).
+- Naye Jarvis looks: Crystal hummingbird, Fluffy dost.
+- Settings API ab TOKEN/PASSWORD bhi chhupata hai.
+- Test: npm run test:v339 (23), CI mein.

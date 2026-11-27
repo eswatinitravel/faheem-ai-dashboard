@@ -6,11 +6,14 @@ import * as THREE from "three";
 //  "torus" = mission-control particle chhalla (Jarvis ka dimaagh)
 //  "wave"  = kaali/safed particle lehar, awaz ke saath uthti hai
 //  "ghost" = safed ghost, chamakti neeli aankhein (bolte waqt tez)
+//  "bird"  = crystal hummingbird (v3.39), "fluffy" = safed hooded dost (v3.39)
 //  "classic" = purana gola (koi 3D nahi)
 export const JV_LOOKS = [
   { id: "torus", name: "Orb chhalla" },
   { id: "wave", name: "Particle lehar" },
   { id: "ghost", name: "Ghost dost" },
+  { id: "bird", name: "Crystal hummingbird" },
+  { id: "fluffy", name: "Fluffy dost" },
   { id: "classic", name: "Classic" },
 ];
 const KEY = "jv-look";
@@ -120,11 +123,64 @@ function Ghost({ mode, level }) {
   );
 }
 
+// v3.39 pin: kaala hummingbird, neele/amber crystal par. Par awaz/bolne par tez phar-pharate hain.
+function Bird({ mode, level }) {
+  const speed = mode === "speaking" ? 0.12 : mode === "listening" ? Math.max(0.14, 0.4 - level * 2) : mode === "thinking" ? 0.22 : 0.5;
+  const shard = (x, y, w, h, r, c1, c2, k) => (
+    <polygon key={k} points={`${x},${y} ${x + w * 0.5},${y - h} ${x + w},${y} ${x + w * 0.5},${y + h * 0.15}`} fill={`url(#${c1})`} stroke={c2} strokeWidth="0.6" transform={`rotate(${r} ${x} ${y})`} opacity=".95" />
+  );
+  return (
+    <svg className={"jvv-bird " + mode} viewBox="0 0 160 150" aria-hidden="true" data-jv-look="bird" style={{ "--flap": speed + "s" }}>
+      <defs>
+        <linearGradient id="jvb-blue" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stopColor="#0b2a8a" /><stop offset=".5" stopColor="#3f7cff" /><stop offset="1" stopColor="#d7ecff" /></linearGradient>
+        <linearGradient id="jvb-amber" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stopColor="#7a2a00" /><stop offset=".5" stopColor="#ff8a1f" /><stop offset="1" stopColor="#ffe2a8" /></linearGradient>
+        <radialGradient id="jvb-body" cx="40%" cy="35%" r="70%"><stop offset="0" stopColor="#6b6f78" /><stop offset="1" stopColor="#1d1f24" /></radialGradient>
+        <radialGradient id="jvb-eye"><stop offset="0" stopColor="#ffd9a0" /><stop offset=".5" stopColor="#8a3d10" /><stop offset="1" stopColor="#140600" /></radialGradient>
+      </defs>
+      <g className="jvb-wing back">{[0, 1, 2, 3].map((i) => shard(70, 62, 13, 34 - i * 4, -70 + i * 22, i < 2 ? "jvb-amber" : "jvb-blue", "#cfe3ff", "b" + i))}</g>
+      <g className="jvb-tail">{[0, 1, 2].map((i) => shard(62, 96, 9, 30, 160 + i * 14, "jvb-blue", "#cfe3ff", "t" + i))}</g>
+      <ellipse cx="72" cy="80" rx="20" ry="17" fill="url(#jvb-body)" />
+      <circle cx="90" cy="62" r="14" fill="url(#jvb-body)" />
+      <path d="M102 60 L150 50 L103 65 Z" fill="#9aa3b5" />
+      <circle cx="94" cy="60" r="4.2" fill="url(#jvb-eye)" /><circle cx="95.3" cy="58.6" r="1.2" fill="#fff" />
+      <g className="jvb-wing front">{[0, 1, 2, 3, 4].map((i) => shard(74, 66, 15, 42 - i * 4, -60 + i * 20, i % 2 ? "jvb-amber" : "jvb-blue", "#e8f2ff", "f" + i))}</g>
+      <ellipse cx="72" cy="142" rx={22 + (mode === "speaking" ? 6 : 0)} ry="3" fill="#3f7cff" opacity=".35" />
+    </svg>
+  );
+}
+
+// v3.39 pin: safed rooyi wala hooded dost, bari neeli aankhein; sunte waqt aankhein bari, bolte waqt muskurahat hilti hai.
+function Fluffy({ mode, level }) {
+  const eye = mode === "listening" ? 13 + Math.min(4, level * 20) : mode === "thinking" ? 11 : 12;
+  return (
+    <svg className={"jvv-fluffy " + mode} viewBox="0 0 140 160" aria-hidden="true" data-jv-look="fluffy">
+      <defs>
+        <radialGradient id="jvf-fur" cx="45%" cy="30%" r="75%"><stop offset="0" stopColor="#ffffff" /><stop offset=".7" stopColor="#eef0f6" /><stop offset="1" stopColor="#c4c9d8" /></radialGradient>
+        <radialGradient id="jvf-face" cx="50%" cy="45%" r="60%"><stop offset="0" stopColor="#ffffff" /><stop offset="1" stopColor="#e9ecf4" /></radialGradient>
+        <radialGradient id="jvf-iris" cx="45%" cy="40%"><stop offset="0" stopColor="#bfe6ff" /><stop offset=".45" stopColor="#2f7de1" /><stop offset=".8" stopColor="#0b2d6b" /><stop offset="1" stopColor="#050a18" /></radialGradient>
+        <filter id="jvf-soft"><feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" result="n" /><feDisplacementMap in="SourceGraphic" in2="n" scale="3" /></filter>
+      </defs>
+      <path d="M70 6c-34 0-52 26-52 58 0 18 4 30 10 40-6 10-8 26 2 40 10 12 30 12 40 12s30 0 40-12c10-14 8-30 2-40 6-10 10-22 10-40C122 32 104 6 70 6z" fill="url(#jvf-fur)" filter="url(#jvf-soft)" />
+      <ellipse cx="70" cy="74" rx="34" ry="30" fill="url(#jvf-face)" />
+      {[54, 86].map((x) => (
+        <g key={x}>
+          <circle cx={x} cy="70" r={eye} fill="url(#jvf-iris)" />
+          <circle cx={x - eye * 0.3} cy={70 - eye * 0.35} r={eye * 0.28} fill="#fff" />
+          <circle cx={x + eye * 0.35} cy={70 + eye * 0.3} r={eye * 0.1} fill="#fff" opacity=".8" />
+        </g>
+      ))}
+      <path d={mode === "speaking" ? `M62 92 Q70 ${100 + Math.random() * 5} 78 92` : "M63 92 Q70 98 77 92"} stroke="#6c7286" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+      <ellipse cx="44" cy="86" rx="6" ry="3" fill="#ffc6d3" opacity=".5" /><ellipse cx="96" cy="86" rx="6" ry="3" fill="#ffc6d3" opacity=".5" />
+      <ellipse cx="52" cy="122" rx="14" ry="10" fill="url(#jvf-fur)" filter="url(#jvf-soft)" /><ellipse cx="88" cy="122" rx="14" ry="10" fill="url(#jvf-fur)" filter="url(#jvf-soft)" />
+    </svg>
+  );
+}
+
 export default function JarvisVisual({ look, mode, level }) {
   if (look === "classic") return null;
   return (
     <div className={"jvv " + look}>
-      {look === "ghost" ? <Ghost mode={mode} level={level} /> : <ParticleScene kind={look} mode={mode} level={level} />}
+      {look === "ghost" ? <Ghost mode={mode} level={level} /> : look === "bird" ? <Bird mode={mode} level={level} /> : look === "fluffy" ? <Fluffy mode={mode} level={level} /> : <ParticleScene kind={look} mode={mode} level={level} />}
     </div>
   );
 }

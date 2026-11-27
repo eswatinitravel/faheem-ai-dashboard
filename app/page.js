@@ -384,6 +384,7 @@ export default function Home() {
         <div className="sn-group">Aur</div>
         <Link className="icon-btn agentlink" href="/status" title="Status tiles: brains/services ki sehat + app launcher" data-nav-status><Icon name="monitor" size={16} /> Status</Link>
         <Link className="icon-btn agentlink" href="/connect" title="Phone se jodo: Maid / PocketPal AI" data-nav-connect><Icon name="phone" size={16} /> Phone</Link>
+        <Link className="icon-btn agentlink" href="/subah" title="Subah ki report: kal ka focus, board, emails ke tayar jawab" data-nav-subah><Icon name="clock" size={16} /> Subah</Link>
         <Link className="icon-btn agentlink" href="/board" title="Task Board: mere aur Jarvis ke kaam, Review par meri haan" data-nav-board><Icon name="check" size={16} /> Board</Link>
         <Link className="icon-btn agentlink" href="/mcp" title="MCP servers + Recipes: Jarvis ke naye tools" data-nav-mcp><Icon name="layers" size={16} /> MCP</Link>
         <Link className="icon-btn agentlink" href="/excel" title="Excel Report: safai, chart, saaf CSV" data-nav-excel><Icon name="grid" size={16} /> Excel</Link>

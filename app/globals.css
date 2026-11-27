@@ -1161,3 +1161,19 @@ tr:hover td { background: rgba(255,255,255,.04); }
 .sb-mailbody pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;font-size:12.5px;color:#b7c4e6;background:rgba(5,10,25,.5);border-radius:8px;padding:10px;max-height:240px;overflow:auto}
 @media (max-width:1000px){.sb-main{grid-template-columns:1fr}.sb-stage{order:-1;min-height:0}.sb-tags{margin-left:0}.sb-mailhead{grid-template-columns:1fr auto}.sb-mailhead span{grid-column:1/-1;grid-row:2}}
 @media (prefers-reduced-motion: reduce){.sb-pad i{animation:none!important}}
+
+/* v3.40 kai email accounts */
+.sb-acc{border:1px solid rgba(120,160,255,.18);border-radius:10px;padding:8px;margin-bottom:8px;font-size:12.5px;overflow-wrap:anywhere}
+.sb-acc.off{opacity:.55}
+.sb-acc .sb-actions{margin-top:6px}
+.sb-acc .sb-actions button{padding:4px 9px;min-height:28px;font-size:11.5px}
+.sb-addacc{margin-top:10px;border-top:1px dashed rgba(120,160,255,.25);padding-top:10px}
+.sb-addacc h3{font-size:12px;margin:0 0 6px;color:#9fd0ff}
+.sb-addacc details{margin:0 0 8px}.sb-addacc ol{padding-left:18px;margin:6px 0}
+.sb-ms{border:1px solid rgba(93,255,168,.4);border-radius:10px;padding:10px;margin:8px 0;font-size:12.5px}
+.sb-ms a{color:#9fd0ff}
+.sb-code{font-size:26px;letter-spacing:.2em;font-weight:700;color:#5dffa8;text-align:center;margin:6px 0}
+.sb-sum{font-size:13.5px;color:#eef4ff;margin:2px 0 8px}
+.sb-guide{flex:1 1 220px;width:auto!important;margin-bottom:0!important}
+.sb-mailhead em.u-high{color:#ff8a8a}
+.sb-mailhead small{font-size:11px}

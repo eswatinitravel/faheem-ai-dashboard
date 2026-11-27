@@ -1,0 +1,35 @@
+<!doctype html><html lang="ur"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Jarvis Remote</title><meta name="theme-color" content="#05070f"><link rel="manifest" href="/jarvis-manifest.json"><link rel="icon" href="/icon-192.png"><link rel="apple-touch-icon" href="/icon-192.png"><meta name="mobile-web-app-capable" content="yes">
+<style>
+*{box-sizing:border-box}body{margin:0;font:16px system-ui;background:#05070f;color:#cfe8ff;display:flex;flex-direction:column;height:100vh}
+header{padding:14px 16px;border-bottom:1px solid #123;font-weight:700}header small{font-weight:400;color:#6b8aa8;margin-left:6px}
+#log{flex:1;overflow:auto;padding:12px}.m{max-width:85%;padding:10px 12px;border-radius:14px;margin:6px 0;white-space:pre-wrap}
+.u{margin-left:auto;background:#1b3a6b}.j{background:#0f1c2e;border:1px solid #1e3550}.s{color:#6b8aa8;font-size:13px;text-align:center}
+form{display:flex;gap:8px;padding:10px;border-top:1px solid #123}input{flex:1;padding:14px;border-radius:12px;border:1px solid #234;background:#0a1220;color:#fff;font-size:16px}
+#mic.on{background:#e5484d}button{padding:0 16px;border:0;border-radius:12px;background:#2f7cff;color:#fff;font-size:16px;min-width:56px}
+#cfg{padding:16px}#cfg input{width:100%;margin:8px 0}
+</style></head><body>
+<header>Jarvis Remote <small id="st"></small></header>
+<div id="cfg" hidden><p>Laptop ke /connect page wali key (fad-...) yahan daalein:</p><input id="k" placeholder="fad-..."><button id="save">Save</button></div>
+<div id="log"></div>
+<form id="f"><button type="button" id="mic" hidden aria-label="Bolein">🎤</button><input id="t" placeholder="Jarvis ko hukum dein..." autocomplete="off"><button>➤</button></form>
+<script>
+const $=(i)=>document.getElementById(i);let key=localStorage.getItem("fadKey")||"",pending=null,hist=[];
+const h=location.hash.match(/k=(fad-[a-f0-9]+)/);if(h){key=h[1];localStorage.setItem("fadKey",key);history.replaceState(null,"",location.pathname);}
+if(!key){$("cfg").hidden=false;}
+$("save").onclick=()=>{key=$("k").value.trim();localStorage.setItem("fadKey",key);$("cfg").hidden=true;};
+const add=(c,t)=>{const d=document.createElement("div");d.className="m "+c;d.textContent=t;$("log").appendChild(d);d.scrollIntoView();};
+const say=(t)=>{try{const u=new SpeechSynthesisUtterance(t);u.lang="hi-IN";speechSynthesis.cancel();speechSynthesis.speak(u);}catch{}};
+const SRc=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(window.isSecureContext&&SRc){$("mic").hidden=false;add("s","🎤 dabayein aur bolein. Jarvis sun kar khud bhej dega.");}
+else add("s","Phone aur laptop ek hi Wi-Fi par hon. Bolne ke liye keyboard ka mic istemal karein (seedhe mic ke liye laptop par PHONE-HTTPS.bat).");
+$("mic").onclick=()=>{try{const r=new SRc();r.lang="ur-PK";r.interimResults=true;$("mic").classList.add("on");let fin="";
+ r.onresult=(e)=>{let live="";for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)fin+=e.results[i][0].transcript;else live+=e.results[i][0].transcript;}$("t").value=(fin+" "+live).trim();};
+ r.onerror=(e)=>{add("s","Mic: "+(e.error||"ghalti"));};
+ r.onend=()=>{$("mic").classList.remove("on");if($("t").value.trim())$("f").requestSubmit();};r.start();}catch(err){add("s","Mic nahi chala: "+err.message);}};
+$("f").onsubmit=async(e)=>{e.preventDefault();const text=$("t").value.trim();if(!text||!key)return;$("t").value="";add("u",text);$("st").textContent="soch raha...";
+ try{const r=await fetch("/api/v1/jarvis",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({text,pending,history:hist})});
+  const d=await r.json();if(!r.ok){add("j",(d.error&&(d.error.message||d.error))||("Ghalti "+r.status));if(r.status===401){localStorage.removeItem("fadKey");$("cfg").hidden=false;}return;}
+  pending=d.pending||null;hist.push({role:"user",content:text},{role:"assistant",content:d.reply});hist=hist.slice(-10);add("j",d.reply);say(d.reply);
+ }catch(err){add("j","Laptop se raabta nahi: "+err.message);}finally{$("st").textContent="";}};
+</script></body></html>

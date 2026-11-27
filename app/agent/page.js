@@ -26,6 +26,7 @@ export default function AgentPage() {
   const [imgs, setImgs] = useState([]);
   const [stamp, setStamp] = useState(Date.now());
   const [team, setTeam] = useState(false); // v3.13 Team mode (default band)
+  const [planFirst, setPlanFirst] = useState(true); // v3.33 Plan pehle (default On)
   const [zipCard, setZipCard] = useState(null); // v3.16 ZIP button ka card
   const [zipBusy, setZipBusy] = useState(false);
   const [pane, setPane] = useState("agent"); // v3.27: "agent" | "team" (AI Team group chat)
@@ -65,6 +66,25 @@ export default function AgentPage() {
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [events]);
   useEffect(() => { setTeam(!!loadPrefs().teamMode); const f = (e) => setTeam(!!e.detail?.teamMode); window.addEventListener("faheem-prefs", f); return () => window.removeEventListener("faheem-prefs", f); }, []);
   useEffect(() => { try { if (localStorage.getItem("faheem-agent-pane") === "team") setPane("team"); } catch {} }, []);
+  useEffect(() => { try { if (localStorage.getItem("faheem-agent-planfirst") === "0") setPlanFirst(false); } catch {} }, []);
+  function togglePlan(v) { setPlanFirst(v); try { localStorage.setItem("faheem-agent-planfirst", v ? "1" : "0"); } catch {} }
+
+  // v3.33: pehle plan, aap ki ijazat ke baad kaam.
+  async function askPlan(t) {
+    setBusy(true); setTask("");
+    setEvents((e) => [...e, { type: "user", text: t }, { type: "thought", text: "Plan bana raha hoon..." }]);
+    try {
+      const d = await fetch("/api/agent/plan", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project, task: t }) }).then((r) => r.json());
+      if (d.error) throw new Error(d.error);
+      setEvents((e) => [...e, { type: "plan", task: t, plan: d.plan, brain: d.brain }]);
+    } catch (err) { setEvents((e) => [...e, { type: "error", text: err.message }]); }
+    setBusy(false);
+  }
+  function approvePlan(i, edited) {
+    const ev = events[i]; if (!ev) return;
+    setEvents((e) => e.map((x, k) => (k === i ? { ...x, approved: true } : x)));
+    run(`${ev.task}\n\nApproved plan (follow it step by step):\n${edited}`, { approved: true });
+  }
   function pickPane(v) { setPane(v); try { localStorage.setItem("faheem-agent-pane", v); } catch {} }
   function toggleTeam(v) { setTeam(v); savePrefs({ ...loadPrefs(), teamMode: v }); }
 
@@ -75,9 +95,10 @@ export default function AgentPage() {
     await loadProjects(); setProject(d.name);
   }
 
-  async function run(text) {
-    const t = (text ?? task).trim();
+  async function run(text, opts = {}) {
+    const t = (typeof text === "string" ? text : task).trim();
     if (!t || busy || !project) return;
+    if (planFirst && !team && !opts.approved && !imgs.length) return askPlan(t);
     setBusy(true); setTask("");
     setEvents((e) => [...e, { type: "user", text: t, imgs: imgs.map((i) => i.dataUrl) }]);
     const sendImgs = imgs; setImgs([]);
@@ -143,6 +164,7 @@ export default function AgentPage() {
             {projects.map((p) => <option key={p.name} value={p.name}>{p.name}</option>)}
           </select>
           <label className="teamtoggle" title="Team mode: Designer → Coder → Tester → Reviewer (sirf bare kaam: website/store). Brains limit par hon to khud single agent."><input type="checkbox" checked={team} onChange={(e) => toggleTeam(e.target.checked)} disabled={busy} data-team-toggle /><Icon name="users" size={15} /> Team</label>
+          <label className="teamtoggle" title="Plan pehle: Agent pehle plan dikhata hai, aap Approve karein to kaam shuru."><input type="checkbox" checked={planFirst} onChange={(e) => togglePlan(e.target.checked)} disabled={busy} data-plan-toggle /><Icon name="check" size={15} /> Plan pehle</label>
           <button className="icon-btn" title="Naya project" aria-label="Naya project" onClick={newProject} disabled={busy}><Icon name="plus" /></button>
           <button className="icon-btn" title="Aakhri run wapas (Undo)" aria-label="Undo" onClick={undo} disabled={busy}><Icon name="undo" /></button>
           <button className="icon-btn agentlink" title="Is project ka ZIP (INSTALL.bat + README ke sath)" aria-label="Project ZIP" onClick={makeZip} disabled={busy || zipBusy || !project} data-agent-zip><Icon name="box" size={15} /> {zipBusy ? "ZIP..." : "ZIP"}</button>
@@ -186,6 +208,7 @@ export default function AgentPage() {
             )}
             {events.map((e, i) => {
               if (e.type === "user") return <div key={i} className="ag-user">{e.text}{e.imgs?.length > 0 && <div className="ag-imgs">{e.imgs.map((u, k) => <img key={k} src={u} alt="" />)}</div>}</div>;
+              if (e.type === "plan") return <PlanCard key={i} ev={e} busy={busy} onApprove={(txt) => approvePlan(i, txt)} onCancel={() => setEvents((x) => x.map((y, k) => (k === i ? { ...y, approved: "cancel" } : y)))} />;
               if (e.type === "thought") return <div key={i} className="ag-thought"><Icon name="chat" size={14} /> {e.text}</div>;
               if (e.type === "brain") return <div key={i} className="ag-brain">{e.text}</div>;
               if (e.type === "handoff" || e.type === "team") return <div key={i} className="ag-handoff">{e.text}</div>;
@@ -229,5 +252,19 @@ export default function AgentPage() {
       </div>
       <VersionBadge />
     </main>
+  );
+}
+
+
+// v3.33 Plan card: plan badlein, phir Approve.
+function PlanCard({ ev, busy, onApprove, onCancel }) {
+  const [txt, setTxt] = useState(ev.plan);
+  const done = ev.approved === true, cancelled = ev.approved === "cancel";
+  return (
+    <div className="ag-thought" style={{ display: "grid", gap: 6 }} data-plan-card>
+      <b>Plan{ev.brain ? ` · ${ev.brain}` : ""}{done ? " · Approved" : cancelled ? " · Cancel" : ""}</b>
+      <textarea value={txt} onChange={(e) => setTxt(e.target.value)} rows={Math.min(12, txt.split("\n").length + 1)} disabled={done || cancelled} style={{ width: "100%", font: "inherit", background: "transparent", color: "inherit", border: "1px solid var(--line, #334)", borderRadius: 8, padding: 8 }} />
+      {!done && !cancelled && <div style={{ display: "flex", gap: 8 }}><button className="btn primary" disabled={busy} onClick={() => onApprove(txt)}>Approve aur chalao</button><button className="btn" disabled={busy} onClick={onCancel}>Cancel</button></div>}
+    </div>
   );
 }

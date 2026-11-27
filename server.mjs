@@ -5,6 +5,9 @@
 // Yahan har request par socket ka asli pata ek header mein likhte hain (client wala mita kar),
 // saath ek per-process raaz taake bahar se yeh header jaali na banaya ja sake. proxy.js isi ko maanta hai.
 import http from "http";
+import https from "https";
+import fs from "fs";
+import path from "path";
 import crypto from "crypto";
 import next from "next";
 import { PEER_HEADER, peerSecretKey } from "./lib/peer.js";
@@ -23,14 +26,28 @@ const app = next({ dev, hostname: hostname === "0.0.0.0" ? "localhost" : hostnam
 const handle = app.getRequestHandler();
 await app.prepare();
 
+const onReq = (req, res) => {
+  // Client ke bheje hue "peer" header kabhi nahi maante; socket ka asli pata likhte hain.
+  delete req.headers[PEER_HEADER];
+  const ip = req.socket?.remoteAddress || "";
+  req.headers[PEER_HEADER] = `${secret} ${ip}`;
+  handle(req, res);
+};
+
+// v3.35 Phone HTTPS (phone page ka apna mic): PHONE-HTTPS.bat data\phone-cert.pfx banata hai. Ho to 3443 par HTTPS bhi.
+const PFX = path.join(process.cwd(), "data", "phone-cert.pfx"), PASS = path.join(process.cwd(), "data", "phone-cert.pass");
+const httpsPort = Number(process.env.HTTPS_PORT) || 3443;
+if (fs.existsSync(PFX) && fs.existsSync(PASS)) {
+  try {
+    https.createServer({ pfx: fs.readFileSync(PFX), passphrase: fs.readFileSync(PASS, "utf8").trim() }, onReq)
+      .on("error", (e) => console.error("> Phone HTTPS band:", e.message))
+      .listen(httpsPort, hostname, () => console.log(`> Phone HTTPS: https://<laptop-ip>:${httpsPort}/m.html`));
+    globalThis.__faheemHttpsPort = httpsPort;
+  } catch (e) { console.error("> Phone HTTPS certificate parh nahi saka:", e.message); }
+}
+
 http
-  .createServer((req, res) => {
-    // Client ke bheje hue "peer" header kabhi nahi maante; socket ka asli pata likhte hain.
-    delete req.headers[PEER_HEADER];
-    const ip = req.socket?.remoteAddress || "";
-    req.headers[PEER_HEADER] = `${secret} ${ip}`;
-    handle(req, res);
-  })
+  .createServer(onReq)
   .listen(port, hostname, () => {
     console.log(`> Faheem AI ${dev ? "dev" : "production"} server: http://localhost:${port} (sunta hai ${hostname}:${port})`);
     if (process.env.FAHEEM_NO_OPS_BOOT !== "1") wakeOps();

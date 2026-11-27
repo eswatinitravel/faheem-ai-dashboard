@@ -439,8 +439,12 @@ export default function Jarvis() {
 
         {/* Beech: hologram avatar (lip-sync) */}
         <section className="jv-stage">
-          <div className="jv-holo">
+          <div className={"jv-holo look-" + look}>
+            <JarvisVisual look={look} mode={on ? mode : "idle"} level={level} />
             <div className="jv-badge"><Icon name="sparkle" size={15} /> {name.toUpperCase()}</div>
+            <div className="jv-looks" role="radiogroup" aria-label="Jarvis ka look">
+            {JV_LOOKS.map((l) => <button key={l.id} role="radio" aria-checked={look === l.id} className={"jv-look" + (look === l.id ? " on" : "")} onClick={() => { setLook(l.id); saveLook(l.id); }} data-jv-look-btn={l.id}>{l.name}</button>)}
+            </div>
             <div className="jv-avatar">
               <img src={`/jarvis/${P}-closed.jpg`} alt={`${name} avatar`} className="jv-face" />
               <img ref={mouthRef} src={`/jarvis/${P}-open.jpg`} alt="" aria-hidden="true" className="jv-face jv-mouth" style={{ WebkitMaskImage: `radial-gradient(${mouthBox}, #000 55%, transparent 100%)`, maskImage: `radial-gradient(${mouthBox}, #000 55%, transparent 100%)`, opacity: 0 }} />
@@ -456,15 +460,11 @@ export default function Jarvis() {
               <span><Icon name="check" size={14} /> Laptop par</span>
             </div>
           </div>
-          <div className={"jv-pad" + (look !== "classic" ? " has-look" : "")}>
-            <JarvisVisual look={look} mode={on ? mode : "idle"} level={level} />
-            {look === "classic" && <><div className="jv-ring r1" /><div className="jv-ring r2" /></>}
+          <div className="jv-pad">
+            <div className="jv-ring r1" /><div className="jv-ring r2" />
             <button className={"jv-core " + mode} style={{ transform: `scale(${1 + (mode === "listening" ? level * 0.3 : 0)})` }} onClick={toggle} aria-label={on ? "Band karein" : "Baat shuru karein"} data-jarvis-mic>
               <Icon name={on ? "mic" : "play"} size={26} /><span>{stateText}</span>
             </button>
-          </div>
-          <div className="jv-looks" role="radiogroup" aria-label="Jarvis ka look">
-            {JV_LOOKS.map((l) => <button key={l.id} role="radio" aria-checked={look === l.id} className={"jv-look" + (look === l.id ? " on" : "")} onClick={() => { setLook(l.id); saveLook(l.id); }} data-jv-look-btn={l.id}>{l.name}</button>)}
           </div>
           <div className="jv-meters" aria-label="Laptop ka load">
             <Gauge label="CPU" icon="chip" v={sys?.cpu} sub={sys ? `${sys.cores} cores` : ""} />
@@ -678,20 +678,22 @@ const CSS = `
 @keyframes jvpulse{50%{box-shadow:0 0 60px var(--jc)}}
 @media (max-width:1100px){.jv-grid{grid-template-columns:1fr 1fr}.jv-stage{grid-column:1/-1;order:-1}}
 @media (max-width:700px){.jv-grid{grid-template-columns:1fr}.jv-bubble{position:static;max-width:none;margin-top:8px}.jv-top h1{font-size:22px}}
-.jv-pad.has-look{height:230px;max-width:560px}
-.jvv{position:absolute;inset:0;z-index:1;pointer-events:none;display:grid;place-items:center}
+.jv-holo{position:relative}
+.jvv{position:absolute;inset:0;z-index:0;pointer-events:none;display:grid;place-items:center;overflow:hidden;border-radius:inherit}
+.jv-holo>.jv-looks,.jv-holo>.jv-tags,.jv-holo>.jv-pad{position:relative;z-index:3}
+.jv-holo>.jv-avatar{z-index:1}
 .jvv-canvas{position:absolute;inset:0}.jvv-canvas canvas{width:100%!important;height:100%!important;display:block}
-.jvv-ghost{height:92%;filter:drop-shadow(0 0 18px rgba(79,210,255,.35));animation:jvfloat 3.2s ease-in-out infinite}
+.jvv.ghost{z-index:2}
+.jvv-ghost{height:min(78%,420px);filter:drop-shadow(0 0 22px rgba(79,210,255,.45));animation:jvfloat 3.2s ease-in-out infinite}
 .jvv-ghost.thinking{animation-duration:1.4s}
 @keyframes jvfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-.jv-pad.has-look .jv-core{width:78px;height:78px;background:rgba(8,10,30,.35);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);margin-top:150px}
-.jv-pad.has-look.ghost-on .jv-core{margin-top:170px}
-.jv-looks{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:6px 0 2px}
+.jv-holo.look-torus .jv-avatar,.jv-holo.look-wave .jv-avatar{opacity:.55}
+.jv-holo.look-ghost .jv-avatar{visibility:hidden}
+.jv-looks{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:0 0 6px}
 .jv-look{font-size:11.5px;min-height:30px;padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);color:var(--text,#e6f0ff);cursor:pointer}
 .jv-look.on{background:var(--grad);color:#fff;border-color:transparent}
 .jv-look:focus-visible{outline:2px solid #fff;outline-offset:2px}
 @media (prefers-reduced-motion: reduce){.jvv-ghost{animation:none!important}}
-@media (max-width:700px){.jv-pad.has-look{height:200px}.jv-pad.has-look .jv-core{margin-top:120px}}
 @media (prefers-reduced-motion: reduce){.jv-scan,.jv-ring,.jv-core{animation:none!important;transition:none!important}}
 /* v3.24.2 glass: sab kuch shafaf, hologram background mein ghula hua */
 .jv{background:radial-gradient(ellipse at 50% 30%,rgba(var(--dot),.35) 0%,transparent 55%),radial-gradient(ellipse at 15% 85%,rgba(0,190,255,.18) 0%,transparent 50%),radial-gradient(ellipse at 90% 10%,rgba(190,80,255,.2) 0%,transparent 45%),transparent}

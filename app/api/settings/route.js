@@ -13,7 +13,7 @@ export async function GET(req) {
   if (!isLocal(req)) return Response.json({ error: "Settings sirf isi laptop par." }, { status: 403 });
   const c = getConfig();
   const out = {};
-  for (const k of FIELDS) out[k] = k.endsWith("_KEY") ? { set: !!c[k], preview: mask(c[k] || "") } : c[k] || "";
+  for (const k of FIELDS) out[k] = /(_KEY|TOKEN|PASSWORD)$/.test(k) ? { set: !!c[k], preview: mask(c[k] || "") } : c[k] || "";
   out._file = KEYS_FILE;
   return Response.json(out);
 }

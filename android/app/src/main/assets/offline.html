@@ -1,0 +1,15 @@
+<!doctype html><html lang="ur"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="style.css"><title>Jarvis</title></head><body>
+<div class="orb" style="filter:grayscale(.7)"></div><h1>Laptop nahi mila</h1><p class="muted" id="where"></p>
+<div class="card"><ol>
+<li>Laptop on hai aur dashboard chal raha hai (START.bat)?</li>
+<li>Phone aur laptop <b>ek hi Wi-Fi</b> par hain?</li>
+<li>Laptop par <b>Phone se jodo</b> page par "Phone connect" On hai?</li>
+<li>Router restart hua ho to laptop ka IP badal jata hai: QR dobara scan karein.</li></ol></div>
+<button id="r">Dobara koshish</button>
+<button class="ghost" id="u">Naye sire se jodo</button>
+<script>
+const N=window.JarvisNative,$=(i)=>document.getElementById(i);
+try{const i=JSON.parse(N.info());$("where").textContent="Laptop: "+i.host+":"+i.port;}catch(e){}
+$("r").onclick=()=>N.retry();$("u").onclick=()=>N.unpair();
+setTimeout(()=>N.retry(),15000);
+</script></body></html>

@@ -1,0 +1,18 @@
+<!doctype html><html lang="ur"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="style.css"><title>Jarvis</title></head><body>
+<div class="orb"></div><h1>Jarvis</h1><p class="muted">Faheem AI laptop se jodein</p>
+<div class="card"><b>QR se jodna (aasaan)</b>
+<ol><li>Laptop par dashboard kholein, menu se <b>Phone se jodo</b>.</li>
+<li>Phone ke camera se wahan wala <b>Jarvis App</b> QR scan karein.</li>
+<li>Khulne wale page par <b>App se jodo</b> dabayein. Bas.</li></ol>
+<p class="muted">Phone aur laptop ek hi Wi-Fi par hon.</p></div>
+<div class="card"><b>Haath se jodna</b>
+<input id="h" placeholder="Laptop ka IP, jaise 192.168.1.5" inputmode="decimal" autocomplete="off">
+<input id="p" placeholder="Port (3000)" inputmode="numeric" autocomplete="off">
+<input id="k" placeholder="Key (fad-...)" autocomplete="off" autocapitalize="none">
+<button id="go">Jodo</button><p class="err" id="e"></p></div>
+<p class="muted" id="v"></p>
+<script>
+const N=window.JarvisNative,$=(i)=>document.getElementById(i);
+try{const i=JSON.parse(N.info());$("v").textContent="Jarvis app "+i.version+" · "+i.device;}catch(e){}
+$("go").onclick=()=>{const ok=N&&N.pair($("h").value.trim(),$("p").value.trim()||"3000",$("k").value.trim());if(!ok)$("e").textContent="IP ya key ghalat lagti hai. Laptop ke Phone se jodo page se dobara dekhein.";};
+</script></body></html>

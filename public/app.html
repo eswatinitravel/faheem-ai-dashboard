@@ -1,0 +1,39 @@
+<!doctype html><html lang="ur"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Jarvis App</title><meta name="theme-color" content="#05070f"><link rel="icon" href="/icon-192.png">
+<!-- v3.41 Phone ka pehla page: laptop ke /connect QR se khulta hai. APK download + "App se jodo" (faheemjarvis://pair). Key sirf # mein (server tak nahi jati). -->
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font:16px system-ui,sans-serif;background:radial-gradient(120% 70% at 50% 0%,#0e2340 0%,#05070f 60%);color:#cfe8ff;padding:28px 18px 40px;display:flex;flex-direction:column;gap:16px;max-width:520px;margin:auto}
+.orb{width:104px;height:104px;margin:6px auto 0;border-radius:50%;background:radial-gradient(circle at 35% 30%,#bfe6ff,#2f7cff 45%,#0a1a3a 75%);box-shadow:0 0 40px #2f7cff88,0 0 90px #2f7cff33;animation:p 2.6s ease-in-out infinite}
+@keyframes p{50%{transform:scale(1.06);box-shadow:0 0 60px #2f7cffaa,0 0 120px #2f7cff44}}
+h1{margin:0;text-align:center;font-size:28px}.sub{margin:0;text-align:center;color:#7d9bb8;font-size:14px}
+.step{background:#0a1220cc;border:1px solid #1e3550;border-radius:18px;padding:16px;display:grid;gap:10px}
+.step h2{margin:0;font-size:17px;display:flex;align-items:center;gap:10px}.n{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#2f7cff;color:#fff;font-size:14px;flex:none}
+.step p,.step li{margin:0;color:#a9c3dc;font-size:14px;line-height:1.5}.step ol{margin:0;padding-left:20px;display:grid;gap:4px}
+a.btn{display:block;text-align:center;padding:15px;border-radius:12px;background:#2f7cff;color:#fff;font-weight:600;text-decoration:none;font-size:16px}
+a.btn.ghost{background:transparent;border:1px solid #2f7cff;color:#9cc4ff}.small{color:#6b8aa8;font-size:12px;text-align:center}
+.bad{background:#2a1015;border-color:#5a2030;color:#ffb3b3}
+</style></head><body>
+<div class="orb"></div><h1>Jarvis</h1><p class="sub">Faheem AI laptop ka Jarvis, ab aap ke phone par</p>
+<div id="nokey" class="step bad" hidden><p>Is link mein key nahi hai. Laptop par "Phone se jodo" page ka QR dobara scan karein.</p></div>
+<div class="step"><h2><span class="n">1</span>App download karein</h2>
+<a class="btn" id="dl" href="/download/jarvis">Jarvis App (APK) download</a>
+<ol><li>Chrome "file harmful ho sakti hai" kahe to <b>Download anyway</b>.</li>
+<li>File kholein, pehli dafa <b>Settings &gt; Is source se ijazat (Allow from this source)</b> on karein, phir <b>Install</b>.</li>
+<li>Play Protect pooche to <b>More details &gt; Install anyway</b> (yeh app aap ke apne laptop se aayi hai).</li></ol></div>
+<div class="step"><h2><span class="n">2</span>Laptop se jodein</h2>
+<p>Install ke baad wapas is page par aa kar dabayein:</p>
+<a class="btn" id="pair" href="#">App se jodo</a>
+<p>App khud is laptop se jur jaye gi. Phir mic daba kar bolein, kaam laptop par hoga, jawab phone bolega.</p></div>
+<a class="btn ghost" id="web" href="/m.html">App ke bagair browser mein chalao</a>
+<p class="small" id="where"></p>
+<script>
+const $=(i)=>document.getElementById(i);
+const m=location.hash.match(/k=(fad-[a-f0-9]{16,64})/),key=m?m[1]:"";
+const h=location.hostname,p=location.protocol==="https:"?"3000":(location.port||"80");
+$("where").textContent="Laptop: "+h+":"+p+" · phone aur laptop ek hi Wi-Fi par hon";
+if(!key){$("nokey").hidden=false;$("pair").style.opacity=.4;}
+else{
+  $("pair").href="faheemjarvis://pair?h="+encodeURIComponent(h)+"&p="+encodeURIComponent(p)+"&k="+encodeURIComponent(key);
+  $("web").href="/m.html#k="+key;
+}
+</script></body></html>

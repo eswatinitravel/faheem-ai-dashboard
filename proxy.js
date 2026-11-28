@@ -39,8 +39,8 @@ export function proxy(request) {
     if (!safeEqual(bearer(request.headers), p.key)) return deny(401, "API key ghalat hai. /connect page wali key (fad-...) app mein daalein.");
     return fwd(request);
   }
-  // v3.32 Jarvis Remote: sirf khali page (data nahi). Hukum /api/v1/jarvis par key ke saath jate hain.
-  if (p.enabled && request.method === "GET" && ["/m.html", "/jarvis-manifest.json", "/icon-192.png", "/icon-512.png"].includes(pathname)) return fwd(request);
+  // v3.32 Jarvis Remote: sirf khali page (data nahi). v3.41: /app.html (phone ka pehla page) aur /download/jarvis (APK) bhi. Hukum /api/v1/jarvis par key ke saath jate hain.
+  if (p.enabled && request.method === "GET" && ["/m.html", "/app.html", "/download/jarvis", "/jarvis-manifest.json", "/icon-192.png", "/icon-512.png"].includes(pathname)) return fwd(request);
   if (p.enabled && p.fullLan) {
     const ck = request.cookies.get("fad_phone")?.value || "";
     const q = request.nextUrl.searchParams.get("key") || "";

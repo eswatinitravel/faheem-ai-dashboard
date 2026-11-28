@@ -2,11 +2,13 @@
 // Khatarnak kaam (shutdown, restart, lock waghera) par Jarvis pehle "haan/nahi" poochta hai, phone se bhi.
 import { jarvisTurn } from "../../../../lib/jarvis/brain.js";
 import { isPaused } from "../../../../lib/ops/control";
+import { notePhoneSeen } from "../../../../lib/phone.js";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 180;
 
 export async function POST(req) {
+  try { notePhoneSeen(req.headers.get("user-agent")); } catch {}
   let b; try { b = await req.json(); } catch { return Response.json({ error: "Bad request" }, { status: 400 }); }
   const text = String(b?.text || "").trim().slice(0, 2000);
   if (!text) return Response.json({ error: "Kuch likhein ya bolein." }, { status: 400 });

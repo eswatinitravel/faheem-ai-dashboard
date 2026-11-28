@@ -7,6 +7,7 @@ import Icon from "../components/Icon";
 import ThemeBalls from "../components/ThemeBalls";
 import GestureControl from "../components/GestureControl";
 import JarvisPhone from "../components/JarvisPhone";
+import JarvisLive from "../components/JarvisLive";
 import JarvisVisual, { JV_LOOKS, savedLook, saveLook } from "../components/JarvisVisual";
 import { THEMES, applyTheme, savedTheme } from "../../lib/prefs";
 import { prepareFiles } from "../../lib/attach";
@@ -20,6 +21,8 @@ const EMO_COLOR = { neutral: "var(--hi)", happy: "#5dffa8", sad: "#7aa2ff", angr
 
 export default function Jarvis() {
   const [on, setOn] = useState(false);
+  const [liveMounted, setLiveMounted] = useState(false), [liveOpen, setLiveOpen] = useState(false); // v3.42 Jarvis Live
+  useEffect(() => { try { if (localStorage.getItem("jarvisWake")) setLiveMounted(true); } catch {} }, []);
   const [mode, setMode] = useState("idle"); // idle | listening | thinking | speaking
   const [gender, setGender] = useState("male");
   const [lang, setLang] = useState("roman");
@@ -521,6 +524,8 @@ export default function Jarvis() {
           <button className={"jv-improve jv-hands" + (hands ? " on" : "")} onClick={() => { setNotice(""); setHands((h) => !h); }} aria-pressed={hands} title="Haath se control (camera): khula haath = sunna shuru/band, swipe = theme/persona, pinch = select. Default band." data-jarvis-hands data-gesture-ignore><Icon name="target" size={15} /> Haath se control{hands ? ": On" : ""}</button>
           <button className="jv-improve" onClick={() => setPhoneOpen(true)} title="Phone se Jarvis: QR scan karein" data-gesture-ignore><Icon name="grid" size={15} /> Jarvis Phone</button>
           {phoneOpen && <JarvisPhone onClose={() => setPhoneOpen(false)} />}
+          <button className="jv-improve jv-live" onClick={() => { setLiveMounted(true); setLiveOpen(true); }} title="Jarvis Live: foran jawab, beech mein tokna, screen/camera dikhana, Hey Jarvis, floating orb" data-gesture-ignore data-jarvis-live-btn><Icon name="sparkle" size={15} /> Live</button>
+          {liveMounted && <JarvisLive open={liveOpen} onClose={() => setLiveOpen(false)} gender={gender} name={name} />}
           {hands && <select className="jv-swipe" value={swipeMode} onChange={(e) => setSwipeMode(e.target.value)} aria-label="Swipe se kya badle" title="Swipe se kya badle"><option value="theme">Swipe: Theme</option><option value="persona">Swipe: Persona</option></select>}
           <span className={"jv-dot " + mode} title={mode} />
           <button className="jv-improve" onClick={improve} title="Self-Improve: Jarvis apni baat cheet parh kar khud behtar hota hai" data-jarvis-improve><Icon name="sparkle" size={16} /> Self-Improve</button>

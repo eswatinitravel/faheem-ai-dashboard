@@ -318,3 +318,11 @@
 - Option key GEMINI_LIVE_MODEL (khali = gemini-3.8-live).
 - Ideas: MYRA ULTRA (codeninjavik/myra-ultra, MIT). Koi code copy nahi.
 - Test: npm run test:v342 (34), CI mein.
+
+## 28 Nov 2026 — v3.43.0 (Jarvis Live phone par + WhatsApp naam se)
+- Jarvis Android app mein "● Live" button: Gemini Live se asli waqt ki baat phone par, beech mein tok sakte hain. Echo cancel + speaker. Screen Live ke dauran on rehti hai; app peeche jaye to mic khud band.
+- Token laptop deta hai (/api/v1/live, phone key ke saath); asal Gemini key phone par nahi jati. Har kaam laptop ke Jarvis dimagh se, "haan" hifazat wahi.
+- App mein pehli library: OkHttp 4.12.0 (Apache-2.0), sirf WebSocket ke liye.
+- Purani app: m.html "naya app install karein" batata hai. Naya APK: laptop par Phone se jodo QR -> Jarvis App (APK) download.
+- WhatsApp naam se: "Ali ka number 0300 1234567 save karo", phir "WhatsApp par Ali ko message bhejo ke ...". Phone book sirf laptop par (~/.faheem-ai/contacts.json, 0600). Do ek jaise naam hon to Jarvis andaza nahi lagata.
+- Test: npm run test:v343 (19), CI mein. Android build CI mein.

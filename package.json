@@ -1,6 +1,6 @@
 {
   "name": "faheem-ai-dashboard",
-  "version": "3.42.0",
+  "version": "3.43.0",
   "private": true,
   "scripts": {
     "dev": "node server.mjs --dev",
@@ -17,7 +17,8 @@
     "test:v339": "node scripts/v339-test.mjs",
     "test:v340": "node scripts/v340-test.mjs",
     "test:v341": "node scripts/v341-test.mjs",
-    "test:v342": "node scripts/v342-test.mjs"
+    "test:v342": "node scripts/v342-test.mjs",
+    "test:v343": "node scripts/v343-test.mjs"
   },
   "dependencies": {
     "agentation": "3.1.2",

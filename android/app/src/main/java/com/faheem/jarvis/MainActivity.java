@@ -15,6 +15,7 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
+import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -40,6 +41,8 @@ public class MainActivity extends Activity {
     private TextToSpeech tts;
     private boolean ttsReady = false;
     private boolean listenAfterPermission = false;
+    private boolean liveAfterPermission = false;
+    private LiveSession live; // v3.43 Jarvis Live
 
     @Override
     protected void onCreate(Bundle state) {
@@ -204,9 +207,44 @@ public class MainActivity extends Activity {
         super.onRequestPermissionsResult(code, perms, res);
         if (code != REQ_MIC) return;
         boolean ok = res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED;
+        if (ok && liveAfterPermission) { liveAfterPermission = false; startLive(); }
+        else if (!ok && liveAfterPermission) { liveAfterPermission = false; js("__jarvisLive", "error", JSONObject.quote("Mic ki ijazat nahi di. Phone Settings > Apps > Jarvis > Permissions se dein.")); }
         if (ok && listenAfterPermission) startListening();
         else if (!ok) js("__jarvisMicErr", "Mic ki ijazat nahi di. Phone Settings > Apps > Jarvis > Permissions se dein.", null);
         listenAfterPermission = false;
+    }
+
+    // v3.43 Jarvis Live (Gemini Live, laptop ke token se)
+    private void startLive() {
+        if (!paired()) return;
+        if (Build.VERSION.SDK_INT >= 23 && checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            liveAfterPermission = true;
+            requestPermissions(new String[] { Manifest.permission.RECORD_AUDIO }, REQ_MIC);
+            return;
+        }
+        try { if (tts != null) tts.stop(); } catch (Exception ignored) {}
+        try { if (recognizer != null) recognizer.cancel(); } catch (Exception ignored) {}
+        if (live != null && live.isRunning()) return;
+        live = new LiveSession(this, base(), prefs.getString("key", ""), prefs.getString("gender", "male"), new LiveSession.Ui() {
+            public void state(String s, String note) {
+                js("__jarvisLive", s, JSONObject.quote(note == null ? "" : note));
+                runOnUiThread(() -> {
+                    if ("live".equals(s) || "connecting".equals(s)) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                    else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                });
+            }
+            public void line(String who, String text) { js("__jarvisLiveLine", text, JSONObject.quote(who)); }
+        });
+        live.start();
+    }
+
+    private void stopLive() { if (live != null) live.stop(""); }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // App peeche jaye to mic band (chhupke sunna nahi)
+        if (live != null && live.isRunning()) live.stop("App band hui to Live bhi band kar diya.");
     }
 
     @Override
@@ -216,6 +254,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        try { if (live != null) live.stop(null); } catch (Exception ignored) {}
         try { if (recognizer != null) recognizer.destroy(); } catch (Exception ignored) {}
         try { if (tts != null) tts.shutdown(); } catch (Exception ignored) {}
         super.onDestroy();
@@ -237,6 +276,10 @@ public class MainActivity extends Activity {
             if (ok) runOnUiThread(MainActivity.this::openRemote);
             return ok;
         }
+        @JavascriptInterface public boolean liveSupported() { return true; }
+        @JavascriptInterface public void liveStart() { runOnUiThread(MainActivity.this::startLive); }
+        @JavascriptInterface public void liveStop() { runOnUiThread(MainActivity.this::stopLive); }
+        @JavascriptInterface public void setGender(String g) { prefs.edit().putString("gender", "female".equals(g) ? "female" : "male").apply(); }
         @JavascriptInterface public void retry() { runOnUiThread(MainActivity.this::openHome); }
         @JavascriptInterface public void unpair() {
             prefs.edit().clear().apply();

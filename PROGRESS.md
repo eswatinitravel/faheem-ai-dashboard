@@ -326,3 +326,10 @@
 - Purani app: m.html "naya app install karein" batata hai. Naya APK: laptop par Phone se jodo QR -> Jarvis App (APK) download.
 - WhatsApp naam se: "Ali ka number 0300 1234567 save karo", phir "WhatsApp par Ali ko message bhejo ke ...". Phone book sirf laptop par (~/.faheem-ai/contacts.json, 0600). Do ek jaise naam hon to Jarvis andaza nahi lagata.
 - Test: npm run test:v343 (19), CI mein. Android build CI mein.
+
+## 28 Nov 2026 — v3.44.0 (mobile se mobile + laptop)
+- Jarvis Android app ab phone ke apne kaam bhi karta hai: torch, alarm, timer, call (dialer khulta hai), SMS aur WhatsApp (tayar, Send user ka), camera, map par rasta, phone ki battery/awaz/vibrate, "phone par X kholo", Wi-Fi/Bluetooth/brightness settings, phone par YouTube/Google.
+- Qaida: sirf-phone kaam (torch, call, SMS, alarm, timer, camera, rasta) khud phone par; shared kaam (battery, awaz, app, WhatsApp) sirf "phone/mobile" kehne par; "laptop par ..." hamesha laptop. Baqi sab laptop.
+- Live mein dusra tool phone_kaam (phone par), jarvis_kaam laptop par.
+- Ijazat: alarm (SET_ALARM), contacts (pehli dafa poochta hai). Call/SMS ki ijazat nahi li: app khud call ya SMS nahi kar sakti.
+- Test: npm run test:v344.

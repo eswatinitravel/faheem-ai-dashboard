@@ -1,7 +1,7 @@
 plugins { id "com.android.application" }
 
 def vCode = (System.getenv("JARVIS_VERSION_CODE") ?: "1") as int
-def vName = System.getenv("JARVIS_VERSION_NAME") ?: "3.43.0"
+def vName = System.getenv("JARVIS_VERSION_NAME") ?: "3.44.0"
 
 android {
     namespace "com.faheem.jarvis"

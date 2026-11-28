@@ -339,7 +339,7 @@ export default function Jarvis() {
       if (!r.ok) throw new Error(d.error || r.status);
       pendingRef.current = d.pending || null;
       setEmotion(d.emotion || "neutral");
-      setTurns((t) => [...t, { role: "assistant", content: d.reply, at: Date.now(), brain: d.brain, action: d.action?.name, emotion: d.emotion }]);
+      setTurns((t) => [...t, { role: "assistant", content: d.reply, at: Date.now(), brain: d.brain, action: d.action?.name, emotion: d.emotion, sources: d.sources }]);
       return d;
     } catch (e) { setNotice("Ghalti: " + e.message); return null; }
   }, []);
@@ -389,7 +389,7 @@ export default function Jarvis() {
     if (done) {
       pendingRef.current = done.pending || null;
       setEmotion(done.emotion || "neutral");
-      setTurns((t) => [...t, { role: "assistant", content: done.reply, at: Date.now(), brain: done.brain, action: done.action?.name, emotion: done.emotion }]);
+      setTurns((t) => [...t, { role: "assistant", content: done.reply, at: Date.now(), brain: done.brain, action: done.action?.name, emotion: done.emotion, sources: done.sources }]);
       if (done.tail && !interrupted) push(done.tail);
     }
     finished = true; if (wake) wake(); await speaker;
@@ -612,6 +612,7 @@ export default function Jarvis() {
               {turns.map((t, i) => (
                 <div key={i} className={"jv-msg " + t.role}>
                   <b>{t.role === "user" ? "Aap" : name}</b> {t.content}
+                  {t.role === "assistant" && Array.isArray(t.sources) && t.sources.length > 0 && <small className="jv-src" data-jarvis-sources>Source: {t.sources.slice(0, 4).map((s, k) => <a key={k} href={s.url} target="_blank" rel="noopener noreferrer" style={{ marginRight: 8 }}>{s.site}</a>)}</small>}
                   {t.role === "assistant" && (t.brain || t.action) && <small>{[t.action && "kaam: " + t.action, t.brain].filter(Boolean).join(" · ")}</small>}
                 </div>
               ))}

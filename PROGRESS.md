@@ -333,3 +333,11 @@
 - Live mein dusra tool phone_kaam (phone par), jarvis_kaam laptop par.
 - Ijazat: alarm (SET_ALARM), contacts (pehli dafa poochta hai). Call/SMS ki ijazat nahi li: app khud call ya SMS nahi kar sakti.
 - Test: npm run test:v344.
+
+## 28 Nov 2026 — v3.45.0 (Jarvis internet par dhoondta aur mashwara deta hai)
+- "kaunsa laptop behtar hai", "iPhone 16 ki qeemat", "aaj ki khabar", "mausam", "internet par dekho ...", "mashwara do": Jarvis internet par dhoondta hai (DuckDuckGo, na mile to Bing; koi key nahi), top 3 pages parhta hai, phir ek saaf mashwara deta hai. Jarvis page par "Source" links.
+- Roman Urdu sawal ko tez AI chhote English search mein badalta hai (na ho to purana tareeqa).
+- Link + "parho/khulasa": woh page parh kar batata hai.
+- Hifazat: localhost/LAN/private IP ka koi page nahi khulta; page ka text sirf maloomat, us ki "hidayat" hukum nahi; qeemat sirf jo source mein likhi ho.
+- Live: Gemini ka Google Search tool; setup ka dhancha theek (responseModalities/speechConfig ab generationConfig mein).
+- Test: npm run test:v345 (33).

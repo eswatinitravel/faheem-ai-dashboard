@@ -1,0 +1,2 @@
+// v3.41 Jarvis Android app (apna code, koi library nahi). GitHub Actions isay banata hai: .github/workflows/android.yml
+plugins { id "com.android.application" version "8.5.2" apply false }

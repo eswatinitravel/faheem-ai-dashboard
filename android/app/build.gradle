@@ -1,0 +1,31 @@
+plugins { id "com.android.application" }
+
+def vCode = (System.getenv("JARVIS_VERSION_CODE") ?: "1") as int
+def vName = System.getenv("JARVIS_VERSION_NAME") ?: "3.41.0"
+
+android {
+    namespace "com.faheem.jarvis"
+    compileSdk 34
+    defaultConfig {
+        applicationId "com.faheem.jarvis"
+        minSdk 24
+        targetSdk 34
+        versionCode vCode
+        versionName vName
+    }
+    signingConfigs {
+        // Sirf apne laptop se sideload ke liye. Har build isi chabi se, taake naya APK purane par update ho sake.
+        jarvis {
+            storeFile rootProject.file("jarvis-release.p12")
+            storeType "pkcs12"
+            storePassword "faheemjarvis"
+            keyAlias "jarvis"
+            keyPassword "faheemjarvis"
+        }
+    }
+    buildTypes {
+        release { minifyEnabled false; signingConfig signingConfigs.jarvis }
+        debug { signingConfig signingConfigs.jarvis }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}

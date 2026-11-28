@@ -13,12 +13,13 @@ export default function JarvisPhone({ onClose }) {
     if (r?.error) setErr(r.error); else setD(r);
   };
   // v3.35: HTTPS chal raha ho to wahi (phone page ka apna mic chalta hai)
-  const url = d?.ip && d?.key ? (d.httpsPort ? `https://${d.ip}:${d.httpsPort}/m.html#k=${d.key}` : `http://${d.ip}:${d.port || 3000}/m.html#k=${d.key}`) : "";
+  // v3.41: QR ab Jarvis App page kholta hai (APK + "App se jodo"); wahan "App ke bagair" se purana Remote bhi.
+  const url = d?.ip && d?.key ? `http://${d.ip}:${d.port || 3000}/app.html#k=${d.key}` : "";
   const svg = useMemo(() => { try { return url ? qrSvg(url, { scale: 5 }) : ""; } catch { return ""; } }, [url]);
   return (
     <div className="jvp-back" role="dialog" aria-label="Jarvis Phone" onClick={onClose}>
       <div className="jvp" onClick={(e) => e.stopPropagation()}>
-        <div className="jvp-head"><b>Jarvis Phone</b><button onClick={onClose} aria-label="Band">✕</button></div>
+        <div className="jvp-head"><b>Jarvis App (Android)</b><button onClick={onClose} aria-label="Band">✕</button></div>
         {err && <p className="jvp-err">{err}</p>}
         {!d ? <p>Load ho raha hai...</p> : !d.enabled ? (
           <>
@@ -30,10 +31,10 @@ export default function JarvisPhone({ onClose }) {
             <div className="jvp-qr" dangerouslySetInnerHTML={{ __html: svg }} />
             <ol>
               <li>Phone aur laptop ek hi Wi-Fi par hon.</li>
-              <li>Phone camera se QR scan karein, Jarvis Remote khul jaye ga.</li>
-              <li>Chrome menu (⋮) &gt; <b>Add to Home screen</b>: phone par Jarvis ka icon lag jaye ga.</li>
-              <li>{d.httpsPort ? "Pehli dafa \"Not secure\" aaye to Advanced > Proceed dabayein (apna laptop hai). Phir 🎤 button se bolein." : "Keyboard ka mic daba kar bolein. Seedha 🎤 button ke liye dashboard folder mein PHONE-HTTPS.bat chalayein."}</li>
-              <li>Kaam laptop par hoga, jawab phone par bolega.</li>
+              <li>Phone camera se QR scan karein: Jarvis App ka page khulega.</li>
+              <li><b>Jarvis App download</b> dabayein aur install karein.</li>
+              <li>Wapas usi page par <b>App se jodo</b>. Phir app mein 🎤 daba kar bolein.</li>
+              <li>Kaam laptop par hoga, jawab phone bolega.</li>
             </ol>
             <p className="jvp-small">Key QR ke andar hai, kisi aur ko scan na karne dein. Nayi key: /connect &gt; Rotate.</p>
           </>

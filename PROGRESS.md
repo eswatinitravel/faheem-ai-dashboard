@@ -297,3 +297,12 @@
 - Awaz: "kaun si emails zaroori hain", "email 1 ki tafseel", "email 1 ka jawab sunao", "email 1 ka jawab likho ke ...", "email 1 ka jawab bhejo" + "haan". Jawab usi account se jata hai jahan email aayi.
 - Page: accounts list (test, band/chalu, hatao), "+ Account jodo", Hotmail ka code, har email par tafseel + Jarvis ko hidayat.
 - Test: npm run test:v340 (27), CI mein.
+
+## 28 Nov 2026 — v3.41.0 (Jarvis App: QR scan, APK install, phone se jodo)
+- /connect (Phone se jodo) naya design: upar bara "Jarvis App" QR, teen status (Phone connect, App file, kaun sa phone aakhri dafa bola), 3 qadam: Scan, Install, Jodo. Maid/PocketPal aur API key "Doosri apps" mein.
+- Phone camera se QR scan -> /app.html: "Jarvis App (APK) download" + "App se jodo" (faheemjarvis://pair). Key sirf # mein, server tak nahi jati.
+- Android app (android/ folder, apna Java code, koi library nahi): laptop ka Jarvis Remote, Android ka apna mic (Urdu) aur awaz, isliye HTTPS/PHONE-HTTPS.bat ki zaroorat nahi. Laptop na mile to "Laptop nahi mila" screen, khud dobara koshish. Sirf private Wi-Fi IP aur fad- key maanti hai.
+- GitHub Actions (android.yml) har PR par APK banata hai; main par release "jarvis-android" mein. Laptop pehli zaroorat par wahan se data/jarvis.apk laata hai (din mein ek dafa naya), phone /download/jarvis se leta hai (sirf Phone connect On par).
+- Jarvis modal ka QR bhi ab App page kholta hai.
+- Note: APK apni chabi (android/jarvis-release.p12) se sign hoti hai taake naya APK purane par update ho. Repo private kiya to laptop ko release download ke liye token chahiye hoga.
+- Test: npm run test:v341 (30), CI mein. APK build CI (android) mein.

@@ -37,6 +37,7 @@ jobs:
       - run: npm run test:v342
       - run: npm run test:v343
       - run: npm run test:v344
+      - run: npm run test:v345
 
   full:
     # test:full khud `node server.mjs` (port 3177) chalata hai, is liye pehle build. Yeh suite internet (curl GitHub ZIPs,

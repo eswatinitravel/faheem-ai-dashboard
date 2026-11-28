@@ -1,0 +1,27 @@
+// v3.44 test: phone se phone ke kaam (Android app), laptop ke kaam waise hi. Java ko CI (android.yml) compile karta hai;
+// yahan qawaid aur hifazat ki jaanch.
+import fs from "fs"; import path from "path"; import { fileURLToPath } from "url";
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const read = (f) => fs.readFileSync(path.join(root, f), "utf8");
+let pass = 0, fail = 0;
+const t = (name, ok) => { if (ok) { pass++; console.log("  ok  ", name); } else { fail++; console.log("  FAIL", name); } };
+const P = read("android/app/src/main/java/com/faheem/jarvis/PhoneActions.java");
+const M = read("android/app/src/main/java/com/faheem/jarvis/MainActivity.java");
+const L = read("android/app/src/main/java/com/faheem/jarvis/LiveSession.java");
+const X = read("android/app/src/main/AndroidManifest.xml");
+const H = read("public/m.html");
+for (const k of ["torch", "alarm", "timer", "call", "sms", "camera", "route", "whatsapp", "battery", "volume", "ringer", "panels", "search", "openApp"]) t(`phone kaam: ${k}`, new RegExp(`private Result ${k}\\(String t\\)`).test(P));
+t("call sirf dialer kholta hai (ACTION_DIAL), khud nahi milata", /ACTION_DIAL/.test(P) && !/ACTION_CALL\b/.test(P) && !/CALL_PHONE/.test(X));
+t("SMS sirf tayar (SENDTO), khud nahi bhejta", /ACTION_SENDTO/.test(P) && !/SmsManager/.test(P) && !/SEND_SMS/.test(X));
+t("WhatsApp sirf tayar (wa.me), Send user ka", /wa\.me\//.test(P) && /Send aap khud dabayein/.test(P));
+t("do ek jaise contacts: andaza nahi", /contacts hain\. Poora naam bolein/.test(P));
+t("'laptop par ...' phone nahi pakarta", /\(laptop\|computer\|pc\)/.test(P));
+t("shared kaam sirf 'phone/mobile' kehne par", /if \(!phone\) return NO;/.test(P) && P.indexOf("if (!phone) return NO;") < P.indexOf("whatsapp(t)) != null"));
+t("'phone par 0300.. ko whatsapp' dial nahi karta", /contains\("whatsapp"\) && !t\.matches/.test(P));
+t("m.html: pehle phone, phir laptop", /N\.phoneDo\(text\)/.test(H) && H.indexOf("N.phoneDo(text)") < H.indexOf('fetch("/api/v1/jarvis"'));
+t("bridge phoneDo JSON deta hai", /public String phoneDo\(String text\)/.test(M));
+t("Live: phone_kaam tool + phone par chalta hai", /"phone_kaam"/.test(L) && /phone\.run\(hukum, true\)/.test(L) && /withPhoneTool\(cfg\.getJSONObject\("setup"\)\)/.test(L));
+t("manifest: alarm + contacts, launcher queries", /SET_ALARM/.test(X) && /READ_CONTACTS/.test(X) && /category.LAUNCHER" \/><\/intent>/.test(X));
+t("app version 3.44.0", /"3\.44\.0"/.test(read("android/app/build.gradle")));
+console.log(`\nv3.44: ${pass} pass, ${fail} fail`);
+process.exit(fail ? 1 : 0);

@@ -48,6 +48,7 @@ class LiveSession {
     private final Context ctx;
     private final String base, key, gender;
     private final Ui ui;
+    private final PhoneActions phone;
     private final OkHttpClient http = new OkHttpClient.Builder().readTimeout(0, TimeUnit.MILLISECONDS).pingInterval(20, TimeUnit.SECONDS).build();
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private final ExecutorService tools = Executors.newSingleThreadExecutor();
@@ -63,7 +64,8 @@ class LiveSession {
     private int oldMode = AudioManager.MODE_NORMAL;
     private boolean oldSpeaker = false;
 
-    LiveSession(Context ctx, String base, String key, String gender, Ui ui) {
+    LiveSession(Context ctx, PhoneActions phone, String base, String key, String gender, Ui ui) {
+        this.phone = phone;
         this.ctx = ctx.getApplicationContext(); this.base = base; this.key = key; this.gender = gender; this.ui = ui;
     }
 
@@ -79,7 +81,7 @@ class LiveSession {
                 JSONObject cfg = post(req, 30000);
                 if (!cfg.optBoolean("ok")) { fail(cfg.optString("error", "Live shuru nahi hua.")); return; }
                 String url = cfg.getString("ws") + "?access_token=" + URLEncoder.encode(cfg.getString("token"), "UTF-8");
-                final String setup = cfg.getJSONObject("setup").toString();
+                final String setup = withPhoneTool(cfg.getJSONObject("setup")).toString();
                 ws = http.newWebSocket(new Request.Builder().url(url).build(), new WebSocketListener() {
                     @Override public void onOpen(WebSocket s, Response r) { s.send(setup); }
                     @Override public void onMessage(WebSocket s, String text) { handle(text); }
@@ -106,6 +108,27 @@ class LiveSession {
         track = null;
         restoreAudio();
         if (was || note != null) ui.state("off", note == null ? "" : note);
+    }
+
+    // v3.44: Live mein dusra tool "phone_kaam" (isi phone par), laptop wala "jarvis_kaam" waisa hi.
+    static JSONObject withPhoneTool(JSONObject setup) throws Exception {
+        JSONObject s = setup.has("setup") ? setup.getJSONObject("setup") : setup;
+        JSONArray tools = s.optJSONArray("tools");
+        if (tools == null) { tools = new JSONArray(); s.put("tools", tools); }
+        if (tools.length() == 0) tools.put(new JSONObject().put("functionDeclarations", new JSONArray()));
+        JSONObject t0 = tools.getJSONObject(0);
+        JSONArray fds = t0.optJSONArray("functionDeclarations");
+        if (fds == null) { fds = new JSONArray(); t0.put("functionDeclarations", fds); }
+        fds.put(new JSONObject().put("name", "phone_kaam")
+            .put("description", "User ke ISI Android phone par kaam: torch, phone ki awaz/battery/vibrate, call (dialer khulta hai), SMS, WhatsApp message (user Send dabata hai), alarm, timer, camera, map par rasta, phone par app kholna, Wi-Fi/Bluetooth settings, phone par YouTube/Google. Hukum user ke lafzon mein Roman Urdu mein do.")
+            .put("parameters", new JSONObject().put("type", "OBJECT")
+                .put("properties", new JSONObject().put("hukum", new JSONObject().put("type", "STRING").put("description", "Phone ka hukum, jaise 'torch on karo' ya 'subah 6 baje alarm lagao'")))
+                .put("required", new JSONArray().put("hukum"))));
+        JSONObject si = s.optJSONObject("systemInstruction");
+        if (si != null && si.optJSONArray("parts") != null) {
+            si.getJSONArray("parts").put(new JSONObject().put("text", "User abhi apne Android phone se baat kar raha hai. Phone ke kaam phone_kaam se, laptop ke kaam (laptop/PC/computer, emails, board) jarvis_kaam se. Jahan saaf na ho ke phone ya laptop, mukhtasir pooch lo."));
+        }
+        return setup;
     }
 
     private void fail(String msg) { stop(null); ui.state("error", msg); }
@@ -157,6 +180,11 @@ class LiveSession {
                 String hukum = fc.optJSONObject("args") == null ? "" : fc.getJSONObject("args").optString("hukum");
                 ui.line("tool", "⚙ " + hukum);
                 String reply;
+                if ("phone_kaam".equals(fc.optString("name"))) {
+                    PhoneActions.Result pr = phone.run(hukum, true);
+                    res.put(new JSONObject().put("id", fc.optString("id")).put("name", "phone_kaam").put("response", new JSONObject().put("result", pr.say)));
+                    continue;
+                }
                 try {
                     JSONObject r = post(new JSONObject().put("action", "tool").put("hukum", hukum).put("pending", pending).put("gender", gender), 180000);
                     reply = r.optString("reply", "");

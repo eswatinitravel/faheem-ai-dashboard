@@ -23,7 +23,7 @@ const add=(c,t)=>{const d=document.createElement("div");d.className="m "+c;d.tex
 const N=window.JarvisNative;
 const say=(t)=>{if(N){try{N.speak(t);}catch{}return;}try{const u=new SpeechSynthesisUtterance(t);u.lang="hi-IN";speechSynthesis.cancel();speechSynthesis.speak(u);}catch{}};
 const SRc=window.SpeechRecognition||window.webkitSpeechRecognition;
-if(N){$("mic").hidden=false;$("gear").hidden=false;add("s","🎤 dabayein aur bolein. Jarvis sun kar khud bhej dega.");
+if(N){$("mic").hidden=false;$("gear").hidden=false;add("s","🎤 dabayein aur bolein. Phone ke kaam (torch, call, alarm, 'phone par Instagram kholo') phone par, baqi laptop par.");
  window.__jarvisHeard=(t,fin)=>{$("t").value=t;if(fin){$("mic").classList.remove("on");if(t.trim())$("f").requestSubmit();}};
  window.__jarvisMicState=(s)=>{$("st").textContent=s==="listening"?"sun raha...":"";};
  window.__jarvisMicErr=(m)=>{$("mic").classList.remove("on");$("st").textContent="";add("s",m);};
@@ -40,7 +40,9 @@ $("mic").onclick=()=>{if(N){$("mic").classList.add("on");try{N.quiet();}catch{}N
  r.onresult=(e)=>{let live="";for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)fin+=e.results[i][0].transcript;else live+=e.results[i][0].transcript;}$("t").value=(fin+" "+live).trim();};
  r.onerror=(e)=>{add("s","Mic: "+(e.error||"ghalti"));};
  r.onend=()=>{$("mic").classList.remove("on");if($("t").value.trim())$("f").requestSubmit();};r.start();}catch(err){add("s","Mic nahi chala: "+err.message);}};
-$("f").onsubmit=async(e)=>{e.preventDefault();const text=$("t").value.trim();if(!text||!key)return;$("t").value="";add("u",text);$("st").textContent="soch raha...";
+$("f").onsubmit=async(e)=>{e.preventDefault();const text=$("t").value.trim();if(!text||!key)return;$("t").value="";add("u",text);
+ // v3.44 pehle phone khud (torch, call, alarm...); phone ka kaam na ho to laptop
+ if(N&&N.phoneDo){try{const p=JSON.parse(N.phoneDo(text));if(p.handled){add("j","📱 "+p.say);say(p.say);return;}}catch{}}$("st").textContent="soch raha...";
  try{const r=await fetch("/api/v1/jarvis",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({text,pending,history:hist})});
   const d=await r.json();if(!r.ok){add("j",(d.error&&(d.error.message||d.error))||("Ghalti "+r.status));if(r.status===401){localStorage.removeItem("fadKey");$("cfg").hidden=false;}return;}
   pending=d.pending||null;hist.push({role:"user",content:text},{role:"assistant",content:d.reply});hist=hist.slice(-10);add("j",d.reply);say(d.reply);

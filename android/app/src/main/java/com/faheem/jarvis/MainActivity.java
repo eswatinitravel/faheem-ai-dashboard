@@ -43,6 +43,7 @@ public class MainActivity extends Activity {
     private boolean listenAfterPermission = false;
     private boolean liveAfterPermission = false;
     private LiveSession live; // v3.43 Jarvis Live
+    private PhoneActions phoneActs; // v3.44 phone ke apne kaam
 
     @Override
     protected void onCreate(Bundle state) {
@@ -50,6 +51,7 @@ public class MainActivity extends Activity {
         prefs = getSharedPreferences("jarvis", MODE_PRIVATE);
         try { getWindow().setStatusBarColor(0xff05070f); getWindow().setNavigationBarColor(0xff05070f); } catch (Exception ignored) {}
 
+        phoneActs = new PhoneActions(this);
         web = new WebView(this);
         web.setBackgroundColor(0xff05070f);
         WebSettings s = web.getSettings();
@@ -225,7 +227,7 @@ public class MainActivity extends Activity {
         try { if (tts != null) tts.stop(); } catch (Exception ignored) {}
         try { if (recognizer != null) recognizer.cancel(); } catch (Exception ignored) {}
         if (live != null && live.isRunning()) return;
-        live = new LiveSession(this, base(), prefs.getString("key", ""), prefs.getString("gender", "male"), new LiveSession.Ui() {
+        live = new LiveSession(this, phoneActs, base(), prefs.getString("key", ""), prefs.getString("gender", "male"), new LiveSession.Ui() {
             public void state(String s, String note) {
                 js("__jarvisLive", s, JSONObject.quote(note == null ? "" : note));
                 runOnUiThread(() -> {
@@ -277,6 +279,13 @@ public class MainActivity extends Activity {
             return ok;
         }
         @JavascriptInterface public boolean liveSupported() { return true; }
+        // v3.44: pehle phone khud dekhta hai; {"handled":false} ho to m.html hukum laptop ko bhejta hai
+        @JavascriptInterface public String phoneDo(String text) {
+            PhoneActions.Result r = phoneActs.run(text, false);
+            JSONObject o = new JSONObject();
+            try { o.put("handled", r.handled); o.put("say", r.say); } catch (JSONException ignored) {}
+            return o.toString();
+        }
         @JavascriptInterface public void liveStart() { runOnUiThread(MainActivity.this::startLive); }
         @JavascriptInterface public void liveStop() { runOnUiThread(MainActivity.this::stopLive); }
         @JavascriptInterface public void setGender(String g) { prefs.edit().putString("gender", "female".equals(g) ? "female" : "male").apply(); }

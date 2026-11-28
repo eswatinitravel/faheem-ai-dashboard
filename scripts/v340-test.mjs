@@ -60,7 +60,7 @@ await t("mail-accounts.json 0600 (sirf aap)", () => process.platform === "win32"
 
 const MS = await import("../lib/mail/msauth.js");
 const hot = (await A.listAccounts()).find((a) => a.provider === "outlook");
-await t("Hotmail: Microsoft device code, IMAP+SMTP scope", async () => { const r = await MS.startDeviceLogin(hot.id); return r.userCode === "ABCD-1234" && /microsoft\.com\/link/.test(r.url) && /IMAP\.AccessScope/.test(MS.MS_SCOPES) && /SMTP\.Send/.test(MS.MS_SCOPES); });
+await t("Hotmail: Microsoft device code, IMAP+SMTP scope", async () => { const r = await MS.startDeviceLogin(hot.id); return r.userCode === "ABCD-1234" && /microsoft\.com\/link/.test(r.url) && /IMAP\.AccessAsUser\.All/.test(MS.MS_SCOPES) && /SMTP\.Send/.test(MS.MS_SCOPES); });
 await t("Hotmail: pending phir done, refresh token sirf file mein", async () => { const a = await MS.pollDeviceLogin(hot.id); const b = await MS.pollDeviceLogin(hot.id); const acc = await A.getAccount(hot.id); return a.waiting && b.done && acc.oauth.refresh === "RT1"; });
 await t("Hotmail: purana token refresh hota hai", async () => { await A.patchAccount(hot.id, (x) => { x.oauth.exp = 0; }); const tok = await MS.accessToken(await A.getAccount(hot.id)); return tok === "AT2" && (await A.getAccount(hot.id)).oauth.refresh === "RT2"; });
 

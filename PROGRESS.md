@@ -306,3 +306,15 @@
 - Jarvis modal ka QR bhi ab App page kholta hai.
 - Note: APK apni chabi (android/jarvis-release.p12) se sign hoti hai taake naya APK purane par update ho. Repo private kiya to laptop ko release download ke liye token chahiye hoga.
 - Test: npm run test:v341 (30), CI mein. APK build CI (android) mein.
+
+## 28 Nov 2026 — v3.42.0 (Jarvis Live: MYRA ki khoobiyan, apna code)
+- Jarvis page par "Live" button: Gemini Live (gemini-3.8-live, free tier) se asli waqt ki baat. Beech mein tok sakte hain (barge-in), Jarvis foran ruk jata hai. Baat ka likha hua (transcript) saath dikhta hai.
+- Asal Gemini key browser ko nahi jati: laptop 1 session/30 min ka ephemeral token banata hai (/api/jarvis/live, sirf laptop).
+- Har laptop kaam ek tool "jarvis_kaam" se purane Jarvis dimagh tak: wahi allowlist, wahi "haan" hifazat (band, restart, lock, email bhejna, likhna, app band karna).
+- "Screen dikhao" aur "Camera": Jarvis 1 tasveer/second dekh kar baat karta hai.
+- "Hey Jarvis": page khula ho to naam sun kar Live shuru (Chrome/Edge). "Floating orb": chhota orb har window ke upar (Document Picture-in-Picture, Chrome/Edge 116+), dabane se Live shuru/band, awaz ke saath dhadakta hai.
+- Naye PC kaam: battery/CPU/RAM, brightness (laptop screen), gaana roko/agla/pichla, desktop dikhao/windows wapas/window badlo/bari/chhoti, app saamne lao, app band karo (haan), clipboard parho/daalo, "likho: ..." (haan), WhatsApp par number ko message (tayar karta hai, Send aap dabate hain).
+- Hotmail fix: Microsoft scope ab IMAP.AccessAsUser.All (pehle ghalat AccessScope tha).
+- Option key GEMINI_LIVE_MODEL (khali = gemini-3.8-live).
+- Ideas: MYRA ULTRA (codeninjavik/myra-ultra, MIT). Koi code copy nahi.
+- Test: npm run test:v342 (34), CI mein.
